@@ -1,0 +1,107 @@
+from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.utils import timezone
+from datetime import timedelta
+from django.conf import settings
+
+# Create your models here.
+
+class OTP(models.Model):
+    email = models.EmailField()
+    otp_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+
+    def is_expired(self):
+        expiry_time = self.created_at + timedelta(minutes=10)
+        return timezone.now() > expiry_time
+
+    def __str__(self):
+        return f"OTP for {self.email}"
+
+    class Meta:
+        ordering = ['-created_at']
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, first_name, mobile, password=None, **extra_fields):
+        if not email:
+            raise ValueError('Users must have an email address')
+        email = self.normalize_email(email)
+        user = self.model(
+            email=email,
+            first_name=first_name,
+            mobile=mobile,
+            **extra_fields
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, first_name, mobile, password, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(email, first_name, mobile, password, **extra_fields)
+
+class CustomUser(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=100)
+    mobile = models.CharField(max_length=10)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+
+    objects = CustomUserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'mobile']
+
+    def __str__(self):
+        return self.email
+
+def user_profile_image_path(instance, filename):
+    # file will be uploaded to MEDIA_ROOT/profile_images/user_<id>/<filename>
+    return f'profile_images/user_{instance.user.id}/{filename}'
+
+class Profile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    image1 = models.ImageField(upload_to=user_profile_image_path, blank=True, null=True)
+    image2 = models.ImageField(upload_to=user_profile_image_path, blank=True, null=True)
+
+    def __str__(self):
+        return f"Profile for {self.user.email}"
+
+    @property
+    def first_name(self):
+        return self.user.first_name
+
+    @property
+    def mobile(self):
+        return self.user.mobile
+
+    @property
+    def email(self):
+        return self.user.email
+    
+    
+
+class Settings(models.Model):
+    # Seller Info
+    company_name = models.CharField(max_length=255, blank=True, null=True)
+    seller_address = models.TextField(blank=True, null=True)
+    seller_email = models.EmailField(blank=True, null=True)
+    seller_pan = models.CharField(max_length=20, blank=True, null=True)
+    seller_gstin = models.CharField(max_length=20, blank=True, null=True)
+
+    # Company Bank Details
+    bank_account_holder = models.CharField(max_length=255, blank=True, null=True)
+    bank_name = models.CharField(max_length=255, blank=True, null=True)
+    account_number = models.CharField(max_length=50, blank=True, null=True)
+    ifsc_code = models.CharField(max_length=20, blank=True, null=True)
+    branch = models.CharField(max_length=255, blank=True, null=True)
+    swift_code = models.CharField(max_length=20, blank=True, null=True)
+
+    HSN_codes = models.JSONField(default=list, blank=True, null=True)
+    logo = models.ImageField(upload_to='company_logos/', null=True, blank=True)
+
+    def __str__(self):
+        return f"Settings (ID: {self.id})"
