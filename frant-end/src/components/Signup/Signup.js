@@ -4,6 +4,7 @@ import { Eye, EyeSlash } from "react-bootstrap-icons";
 import "../../styles/Signup.css";
 import Footer from '../Footer';
 import Toast from '../Toast';
+import { signup } from '../services/authApi';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ const Signup = () => {
     alert("OTP sent to email (placeholder)");
   };
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -80,9 +81,18 @@ const Signup = () => {
 
     // Simple signup logic - you can customize this
     // Save user data to localStorage
-    const userData = { email, password, mobile, firstName };
-    localStorage.setItem("signupUser", JSON.stringify(userData));
-    setShowSuccess(true); // Show Toast
+    const data = { email, password, mobile, firstName };
+    try {
+      const result = await signup(data);
+      if (result.message === 'User created successfully') {
+        setShowSuccess(true); // Show Toast
+      } else {
+        setError(result.message || "Signup failed. Username or email might be in use.");
+      }
+    } catch (error) {
+      setError("Network error or server issue.");
+      console.error(error);
+    }
   };
 
   useEffect(() => {
