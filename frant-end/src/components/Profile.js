@@ -1,273 +1,182 @@
-import React, { useState } from "react";
-import Header from "./Header";
-import Toast from "./Toast";
+import React, { useState, useEffect } from "react";
+import { getProfile, updateProfile, sendCurrentEmailOtp, verifyCurrentEmailOtp, sendNewEmailOtp, verifyNewEmailOtp, updateEmail } from "../services/authApi";
+import { toast, ToastContainer } from "react-toastify";
 import "../styles/Profile.css";
 
 const Profile = () => {
-  const [profileData, setProfileData] = useState({
-    email: "user@example.com",
-    firstName: "John",
-    mobileNumber: "+91 9876543210"
-  });
-
-  const [showUpdateEmailModal, setShowUpdateEmailModal] = useState(false);
-  const [showNewEmailModal, setShowNewEmailModal] = useState(false);
-  const [otp, setOtp] = useState("");
+  const [profile, setProfile] = useState(null);
+  const [edit, setEdit] = useState(false);
+  const [form, setForm] = useState({ first_name: "", mobile: "", email: "" });
+  const [emailStep, setEmailStep] = useState(0); 
+  const [currentEmailOtp, setCurrentEmailOtp] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [newOtp, setNewOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [newOtpSent, setNewOtpSent] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [newEmailOtp, setNewEmailOtp] = useState("");
+  const token = localStorage.getItem("token");
 
-  const handleInputChange = (field, value) => {
-    setProfileData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // Fetch profile on mount
+  useEffect(() => {
+    async function fetchProfile() {
+      const token = localStorage.getItem("token");
+      const res = await getProfile(token);
+      if (res.success) {
+        setProfile({
+          email: res.data.email,
+          first_name: res.data.first_name,
+          mobile: res.data.mobile
+        });
+        setForm({
+          first_name: res.data.first_name,
+          mobile: res.data.mobile,
+          email: res.data.email
+        });
+      } else {
+        toast.error("Failed to fetch profile");
+      }
+    }
+    fetchProfile();
+  }, [token]);
+
+  // Handle input changes
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
+  // Save name and mobile
+  const handleSave = async () => {
+    const token = localStorage.getItem("token");
+    const res = await updateProfile(token, {
+      first_name: profile.first_name,
+      mobile: profile.mobile
+    });
+    if (res.success) {
+      toast.success("Profile updated!");
+      setEdit(false);
+      setProfile({ ...profile, first_name: profile.first_name, mobile: profile.mobile });
+    } else {
+      toast.error("Failed to update profile");
+    }
   };
 
-  const handleUpdateEmail = () => {
-    setShowUpdateEmailModal(true);
+  // Start email change process
+  const startEmailChange = async () => {
+    const token = localStorage.getItem("token");
+    const res = await sendCurrentEmailOtp(token);
+    if (res.success) {
+      setEmailStep(1);
+      toast.success("OTP sent to current email");
+    } else {
+      toast.error(res.message || "Failed to send OTP");
+    }
   };
 
-  const handleGetOtp = () => {
-    // Here you would typically send OTP to current email
-    console.log("OTP sent to current email:", profileData.email);
-    setOtpSent(true);
-    showToast("OTP sent to your current email!", "success");
+  // Verify current email OTP
+  const handleVerifyCurrentEmailOtp = async () => {
+    const token = localStorage.getItem("token");
+    const res = await verifyCurrentEmailOtp(token, currentEmailOtp);
+    if (res.success) {
+      setEmailStep(2); // Move to the next step: enter new email
+      toast.success("Current email verified! Enter new email.");
+    } else {
+      toast.error(res.message || "Invalid OTP");
+    }
   };
 
-  const handleGetNewOtp = () => {
-    // Here you would typically send OTP to new email
-    console.log("OTP sent to new email:", newEmail);
-    setNewOtpSent(true);
-    showToast("OTP sent to your new email!", "success");
+  // Send OTP to new email
+  const handleSendNewEmailOtp = async () => {
+    const token = localStorage.getItem("token");
+    const res = await sendNewEmailOtp(token, newEmail);
+    if (res.success) {
+      setEmailStep(3);
+      toast.success("OTP sent to new email");
+    } else {
+      toast.error(res.message || "Failed to send OTP to new email");
+    }
   };
 
-  const handleOldEmailSubmit = () => {
-    // Here you would typically verify OTP for old email
-    console.log("OTP verified for old email:", otp);
-    setShowUpdateEmailModal(false);
-    setShowNewEmailModal(true);
-    setOtpSent(false);
-    setOtp("");
+  // Verify new email OTP
+  const handleVerifyNewEmailOtp = async () => {
+    const token = localStorage.getItem("token");
+    const res = await verifyNewEmailOtp(token, newEmailOtp);
+    if (res.success) {
+      setEmailStep(4);
+      toast.success("New email verified! Click update to finish.");
+    } else {
+      toast.error(res.message || "Invalid OTP");
+    }
   };
 
-  const handleNewEmailSubmit = () => {
-    // Here you would typically verify new email OTP and update email
-    console.log("New email updated:", newEmail);
-    setProfileData(prev => ({
-      ...prev,
-      email: newEmail
-    }));
-    setShowNewEmailModal(false);
-    setNewEmail("");
-    setNewOtp("");
-    setNewOtpSent(false);
+  // Update email in backend
+  const handleUpdateEmail = async () => {
+    const token = localStorage.getItem("token");
+    const res = await updateEmail(token);
+    if (res.success) {
+      toast.success("Email updated!");
+      setProfile({ ...profile, email: newEmail });
+      setForm({ ...form, email: newEmail });
+      setEmailStep(0);
+      setNewEmail("");
+      setNewEmailOtp("");
+      setCurrentEmailOtp("");
+    } else {
+      toast.error(res.message || "Failed to update email");
+    }
   };
 
-  const handleBack = () => {
-    // Navigate back to previous page
-    window.history.back();
-  };
-
-  const handleSave = () => {
-    // Here you would typically save the profile data to backend
-    console.log("Profile data saved:", profileData);
-    showToast("Profile updated successfully!", "success");
-  };
+  if (!profile) return <div>Loading...</div>;
 
   return (
-    <>
-      <Header />
-      {/* Back Button outside profile-container */}
-      {/* Toast Notification outside profile-container, right side */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-          duration={2000}
-        />
-      )}
-      <div className="profile-back-wrapper">
-        <button className="back-button" onClick={handleBack}>
-          {/* Add left arrow icon */}
-          <span style={{fontSize: '1.2em', marginRight: '6px', lineHeight: 1}}>&larr;</span>
-          Back
-        </button>
+    <div>
+      <ToastContainer />
+      <h2>Profile</h2>
+      <div>
+        <label>Name:</label>
+        <input name="first_name" value={form.first_name} onChange={handleChange} disabled={!edit} />
       </div>
-      <div className="profile-container">
-        <div className="profile-content">
-          <h2 className="profile-title">Profile Page</h2>
-          <div className="profile-form">
-            <div className="form-group">
-              <label htmlFor="email">Email:</label>
-              <input
-                type="email"
-                id="email"
-                value={profileData.email}
-                readOnly
-                className="form-input readonly"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="firstName">First Name:</label>
-              <input
-                type="text"
-                id="firstName"
-                value={profileData.firstName}
-                onChange={(e) => handleInputChange("firstName", e.target.value)}
-                className="form-input"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="mobileNumber">Mobile Number:</label>
-              <input
-                type="tel"
-                id="mobileNumber"
-                value={profileData.mobileNumber}
-                onChange={(e) => handleInputChange("mobileNumber", e.target.value)}
-                className="form-input"
-              />
-            </div>
-            <div className="button-group">
-              {/* Update Email Button */}
-              <button className="update-email-btn" onClick={handleUpdateEmail}>
-                Update Email
-              </button>
-              {/* Save Button */}
-              <button className="save-btn" onClick={handleSave}>
-                Save Changes
-              </button>
-            </div>
-          </div>
+      <div>
+        <label>Mobile:</label>
+        <input name="mobile" value={form.mobile} onChange={handleChange} disabled={!edit} />
+      </div>
+      <div>
+        <label>Email:</label>
+        <input name="email" value={form.email} disabled />
+        <button onClick={startEmailChange}>Change Email</button>
+      </div>
+      {edit && <button onClick={handleSave}>Save</button>}
+      {!edit && <button onClick={() => setEdit(true)}>Edit</button>}
+
+      {/* Email change steps */}
+      {emailStep === 1 && (
+        <div>
+          <input
+            value={currentEmailOtp}
+            onChange={e => setCurrentEmailOtp(e.target.value)}
+            placeholder="Enter OTP sent to current email"
+          />
+          <button onClick={handleVerifyCurrentEmailOtp}>Verify Current Email OTP</button>
         </div>
-        {/* First Modal - Old Email OTP */}
-        {showUpdateEmailModal && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <h3>Verify Current Email</h3>
-              <div className="form-group">
-                <label htmlFor="currentEmail">Current Email:</label>
-                <input
-                  type="email"
-                  id="currentEmail"
-                  value={profileData.email}
-                  className="form-input readonly"
-                  readOnly
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="otp">Enter OTP:</label>
-                <div className="otp-input-group">
-                  <input
-                    type="text"
-                    id="otp"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="form-input"
-                    placeholder="Enter OTP sent to your email"
-                    disabled={!otpSent}
-                  />
-                  <button 
-                    className="get-otp-btn" 
-                    onClick={handleGetOtp}
-                    disabled={otpSent}
-                  >
-                    {otpSent ? "OTP Sent" : "Get OTP"}
-                  </button>
-                </div>
-              </div>
-              <div className="modal-buttons">
-                <button 
-                  className="modal-btn cancel-btn" 
-                  onClick={() => {
-                    setShowUpdateEmailModal(false);
-                    setOtpSent(false);
-                    setOtp("");
-                  }}
-                >
-                  Cancel
-                </button>
-                <button 
-                  className="modal-btn submit-btn" 
-                  onClick={handleOldEmailSubmit}
-                  disabled={!otpSent || !otp}
-                >
-                  Submit
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {/* Second Modal - New Email */}
-        {showNewEmailModal && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <h3>Enter New Email</h3>
-              <div className="form-group">
-                <label htmlFor="newEmail">New Email:</label>
-                <input
-                  type="email"
-                  id="newEmail"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  className="form-input"
-                  placeholder="Enter new email address"
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="newOtp">Enter OTP:</label>
-                <div className="otp-input-group">
-                  <input
-                    type="text"
-                    id="newOtp"
-                    value={newOtp}
-                    onChange={(e) => setNewOtp(e.target.value)}
-                    className="form-input"
-                    placeholder="Enter OTP sent to new email"
-                    disabled={!newOtpSent}
-                  />
-                  <button 
-                    className="get-otp-btn" 
-                    onClick={handleGetNewOtp}
-                    disabled={newOtpSent || !newEmail}
-                  >
-                    {newOtpSent ? "OTP Sent" : "Get OTP"}
-                  </button>
-                </div>
-              </div>
-              <div className="modal-buttons">
-                <button 
-                  className="modal-btn cancel-btn" 
-                  onClick={() => {
-                    setShowNewEmailModal(false);
-                    setNewOtpSent(false);
-                    setNewEmail("");
-                    setNewOtp("");
-                  }}
-                >
-                  Cancel
-                </button>
-                <button 
-                  className="modal-btn submit-btn" 
-                  onClick={handleNewEmailSubmit}
-                  disabled={!newOtpSent || !newOtp || !newEmail}
-                >
-                  Submit
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      
-    </>
+      )}
+      {emailStep === 2 && (
+        <div>
+          <input
+            value={newEmail}
+            onChange={e => setNewEmail(e.target.value)}
+            placeholder="Enter new email"
+          />
+          <button onClick={handleSendNewEmailOtp}>Send OTP to New Email</button>
+        </div>
+      )}
+      {emailStep === 3 && (
+        <div>
+          <input value={newEmailOtp} onChange={e => setNewEmailOtp(e.target.value)} placeholder="Enter OTP sent to new email" />
+          <button onClick={handleVerifyNewEmailOtp}>Verify New Email OTP</button>
+        </div>
+      )}
+      {emailStep === 4 && (
+        <div>
+          <button onClick={handleUpdateEmail}>Update Email</button>
+        </div>
+      )}
+    </div>
   );
 };
 

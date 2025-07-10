@@ -30,7 +30,7 @@ const Header = () => {
         onMouseEnter={() => setDropdownOpen(true)}
         onMouseLeave={() => setDropdownOpen(false)}
       >
-        <button ><i class="fa-solid fa-user-gear"></i></button>
+        <button ><i className="fa-solid fa-user-gear"></i></button>
         {dropdownOpen && (
           <div className="profile-dropdown">
             <Link to="/profile" className="dropdown-item">Profile</Link>

@@ -6,6 +6,7 @@ from .views import (
     send_current_email_otp, verify_current_email_otp, send_new_email_otp, verify_new_email_otp, update_email_after_otp
 )
 from .views_settings import settings_view
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 urlpatterns = [
     # AUTHENTICATION APIS
@@ -30,4 +31,5 @@ urlpatterns = [
 
     # SETTINGS API
     path('auth/settings/', settings_view, name='settings'),
+    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
 ]

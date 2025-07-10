@@ -4,6 +4,7 @@ import { Eye, EyeSlash } from "react-bootstrap-icons";
 import "../../styles/Signup.css";
 import Footer from '../Footer';
 import Toast from '../Toast';
+import { sendSignupOtp, resendSignupOtp, verifySignupOtp, register } from "../../services/authApi";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -18,94 +19,136 @@ const Signup = () => {
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [otpRequested, setOtpRequested] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Timer for resend OTP
   useEffect(() => {
     let interval = null;
-    if (timer > 0) {
+    if (otpRequested && timer > 0) {
       setCanResend(false);
       interval = setInterval(() => {
         setTimer((prev) => prev - 1);
       }, 1000);
-    } else {
+    } else if (otpRequested && timer <= 0) {
       setCanResend(true);
       if (interval) clearInterval(interval);
     }
     return () => interval && clearInterval(interval);
-  }, [timer]);
+  }, [timer, otpRequested]);
 
-  const handleResendOtp = () => {
-    if (!canResend) return;
-    setTimer(60);
-    setCanResend(false);
-    alert("Resend OTP (placeholder)");
-  };
-
-  const handleGetOtp = () => {
-    setOtpRequested(true);
-    setTimer(60);
-    setCanResend(false);
-    alert("OTP sent to email (placeholder)");
-  };
-
-  const handleSignup = (e) => {
+  // Send OTP
+  const handleGetOtp = async (e) => {
     e.preventDefault();
     setError("");
+    if (!email) {
+      setError("Please enter your email first.");
+      return;
+    }
+    const res = await sendSignupOtp(email);
+    if (res.success) {
+      setOtpRequested(true);
+      setTimer(60);
+      setShowSuccess(true);
+    } else {
+      setError(res.message || "Failed to send OTP.");
+    }
+  };
 
+  // Resend OTP
+  const handleResendOtp = async (e) => {
+    e.preventDefault();
+    if (!canResend) return;
+    setError("");
+    const res = await resendSignupOtp(email);
+    if (res.success) {
+      setTimer(60);
+      setCanResend(false);
+      setShowSuccess(true);
+    } else {
+      setError(res.message || "Failed to resend OTP.");
+    }
+  };
+
+  // Verify OTP
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!otp) {
+      setError("Please enter the OTP.");
+      return;
+    }
+    const res = await verifySignupOtp(email, otp);
+    if (res.success) {
+      setOtpVerified(true);
+      setShowSuccess(true);
+    } else {
+      setError(res.message || "OTP verification failed.");
+    }
+  };
+
+  // Signup
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setError("");
     // Basic validation
     if (!email || !mobile || !firstName || !password || !confirmPassword) {
       setError("Please fill in all fields");
       return;
     }
-
     if (!email.includes('@')) {
       setError("Please enter a valid email address");
       return;
     }
-
     if (mobile.length !== 10) {
       setError("Please enter a valid 10-digit mobile number");
       return;
     }
-
     if (password.length < 6) {
       setError("Password must be at least 6 characters long");
       return;
     }
-
     if (password !== confirmPassword) {
       setError("Passwords do not match!");
       return;
     }
-
-    // Simple signup logic - you can customize this
-    // Save user data to localStorage
-    const userData = { email, password, mobile, firstName };
-    localStorage.setItem("signupUser", JSON.stringify(userData));
-    setShowSuccess(true); // Show Toast
-  };
-
-  useEffect(() => {
-    if (showSuccess) {
-      const timer = setTimeout(() => {
-        setShowSuccess(false);
-        navigate("/login");
-      }, 2000);
-      return () => clearTimeout(timer);
+    if (!otpVerified) {
+      setError("Please verify your OTP before signing up.");
+      return;
     }
-  }, [showSuccess, navigate]);
+    // Register with backend
+    const res = await register({
+      first_name: firstName,
+      email,
+      mobile,
+      password,
+      password2: confirmPassword
+    });
+    if (res.success) {
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        navigate("/");
+      }, 2000);
+    } else {
+      setError(res.message || "Signup failed.");
+    }
+  };
 
   return (
     <>
       <section className="auth-section">
         {showSuccess && (
           <Toast
-            message="Signup successful! Please login."
+            message={
+              otpVerified
+                ? "OTP verified! You can now sign up."
+                : otpRequested
+                ? "OTP sent to your email."
+                : "Signup successful! Please login."
+            }
             type="success"
-            onClose={() => {
-              setShowSuccess(false);
-              navigate("/login");
-            }}
+            onClose={() => setShowSuccess(false)}
             duration={2000}
           />
         )}
@@ -116,11 +159,9 @@ const Signup = () => {
               alt="Signup visual"
             />
           </div>
-
           <div className="auth-form-container">
             <form onSubmit={handleSignup} className="auth-form">
               <h2 className="auth-title">Create an Account</h2>
-
               {error && <div className="auth-error">{error}</div>}
 
               <label>First Name</label>
@@ -139,6 +180,7 @@ const Signup = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="Enter your email"
+                disabled={otpRequested}
               />
 
               <label>OTP</label>
@@ -150,14 +192,25 @@ const Signup = () => {
                   required
                   placeholder="Enter OTP"
                   style={{ flex: 5, minWidth: "0" }}
+                  disabled={!otpRequested || otpVerified}
                 />
                 <button
                   type="button"
                   className="auth-button"
-                  style={{ padding: "12px 15px",marginBottom:"20px", fontSize: "13px", marginLeft: "5px", minWidth: "50px", maxWidth: "90px", whiteSpace: "nowrap", height: "100%" }}
+                  style={{ padding: "12px 15px", marginBottom: "20px", fontSize: "13px", marginLeft: "5px", minWidth: "50px", maxWidth: "90px", whiteSpace: "nowrap", height: "100%" }}
                   onClick={handleGetOtp}
+                  disabled={otpRequested}
                 >
                   Get OTP
+                </button>
+                <button
+                  type="button"
+                  className="auth-button"
+                  style={{ padding: "12px 15px", marginBottom: "20px", fontSize: "13px", marginLeft: "5px", minWidth: "50px", maxWidth: "90px", whiteSpace: "nowrap", height: "100%" }}
+                  onClick={handleVerifyOtp}
+                  disabled={!otpRequested || otpVerified}
+                >
+                  Verify OTP
                 </button>
               </div>
               {otpRequested && (
@@ -175,14 +228,16 @@ const Signup = () => {
               )}
 
               <label>Mobile Number</label>
-              <input type="tel" 
-              name="mobile" 
-              pattern="[0-9]{10}" 
-              maxlength="10" 
-              placeholder="Enter 10-digit mobile number" 
-              required 
+              <input
+                type="tel"
+                name="mobile"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                pattern="[0-9]{10}"
+                maxLength="10"
+                placeholder="Enter 10-digit mobile number"
+                required
               />
-
 
               <label>Password</label>
               <div className="password-field">
@@ -209,7 +264,7 @@ const Signup = () => {
                 />
               </div>
 
-              <button type="submit" className="auth-button">
+              <button type="submit" className="auth-button" disabled={!otpVerified}>
                 Signup
               </button>
 
