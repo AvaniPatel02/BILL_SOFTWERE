@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeSlash } from "react-bootstrap-icons";
 import "../../styles/Signup.css";
-import Footer from '../Footer';
+import Footer from './Footer';
 import Toast from '../Toast';
 import { sendSignupOtp, resendSignupOtp, verifySignupOtp, register } from "../../services/authApi";
 

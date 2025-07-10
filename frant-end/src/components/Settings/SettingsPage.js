@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../Sidebar';
-import Header from '../Header';
+import Sidebar from '../Dashboard/Sidebar';
+import Header from '../Dashboard/Header';
 import '../../styles/Settings.css';
 // import { ToastContainer, toast } from 'react-toastify';
 // import 'react-toastify/dist/ReactToastify.css';

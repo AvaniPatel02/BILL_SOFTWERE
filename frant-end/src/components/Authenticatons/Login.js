@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Eye, EyeSlash } from "react-bootstrap-icons";
 import { Link } from "react-router-dom";
 import "../../styles/Login.css";
-import Footer from "../Footer";
+import Footer from "./Footer";
 import { login } from "../../services/authApi";
 import {
   forgotPasswordSendOtp,
