@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import Sidebar from '../Sidebar';
-import Header from '../Header';
+import React, { useState, useEffect } from 'react';
+import Sidebar from '../Dashboard/Sidebar';
+import Header from '../Dashboard/Header';
 import '../../styles/Settings.css';
 // import { ToastContainer, toast } from 'react-toastify';
 // import 'react-toastify/dist/ReactToastify.css';
 import Toast from '../Toast';
+import { fetchSettings, updateSettings } from '../../services/settingsApi';
 
 const SettingsPage = () => {
   const [formData, setFormData] = useState({
@@ -20,10 +21,34 @@ const SettingsPage = () => {
     branch: '',
     swift_code: '',
     HSN_codes: [],
+    logo: null,
     logoUrl: '',
   });
   const [loading, setLoading] = useState(false);
   const [newHsn, setNewHsn] = useState('');
+  const [token, setToken] = useState(""); // Get your JWT token from auth context or localStorage
+
+  useEffect(() => {
+    // Get token from localStorage or context
+    const t = localStorage.getItem("accessToken");
+    setToken(t);
+
+    if (t) {
+      setLoading(true);
+      fetchSettings(t).then(res => {
+        if (res.success && res.data) {
+          setFormData(prev => ({
+            ...prev,
+            ...res.data,
+            HSN_codes: Array.isArray(res.data.HSN_codes) ? res.data.HSN_codes : [],
+            logoUrl: res.data.logo ? res.data.logo : '',
+            logo: null,
+          }));
+        }
+        setLoading(false);
+      });
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -48,17 +73,24 @@ const SettingsPage = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, logoUrl: reader.result }));
-      };
-      reader.readAsDataURL(file);
+      setFormData((prev) => ({
+        ...prev,
+        logo: file,
+        logoUrl: URL.createObjectURL(file),
+      }));
     }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    alert('Form data saved locally!');
+    setLoading(true);
+    const res = await updateSettings(formData, token);
+    setLoading(false);
+    if (res.success) {
+      alert("Settings updated successfully!");
+    } else {
+      alert("Failed to update settings.");
+    }
   };
 
   return (
@@ -73,7 +105,7 @@ const SettingsPage = () => {
               <input
                 type="text"
                 name="company_name"
-                value={formData.company_name}
+                value={formData.company_name || ""}
                 onChange={handleChange}
                 disabled={loading}
                 placeholder="Company name"
@@ -84,7 +116,7 @@ const SettingsPage = () => {
               <input
                 type="text"
                 name="seller_pan"
-                value={formData.seller_pan}
+                value={formData.seller_pan || ""}
                 onChange={handleChange}
                 disabled={loading}
                 placeholder="PAN Number"
@@ -97,7 +129,7 @@ const SettingsPage = () => {
               <label>Seller Address</label>
               <textarea
                 name="seller_address"
-                value={formData.seller_address}
+                value={formData.seller_address || ""}
                 onChange={handleChange}
                 rows={4}
                 placeholder="Seller Address"
@@ -112,7 +144,7 @@ const SettingsPage = () => {
               <input
                 type="text"
                 name="seller_gstin"
-                value={formData.seller_gstin}
+                value={formData.seller_gstin || ""}
                 onChange={handleChange}
                 disabled={loading}
                 placeholder="GST Number"
@@ -123,7 +155,7 @@ const SettingsPage = () => {
               <input
                 type="email"
                 name="seller_email"
-                value={formData.seller_email}
+                value={formData.seller_email || ""}
                 onChange={handleChange}
                 disabled={loading}
                 placeholder="Email"
@@ -137,7 +169,7 @@ const SettingsPage = () => {
               <input
                 type="text"
                 name="bank_name"
-                value={formData.bank_name}
+                value={formData.bank_name || ""}
                 onChange={handleChange}
                 disabled={loading}
                 placeholder="Bank Name"
@@ -148,7 +180,7 @@ const SettingsPage = () => {
               <input
                 type="text"
                 name="account_number"
-                value={formData.account_number}
+                value={formData.account_number || ""}
                 onChange={handleChange}
                 disabled={loading}
                 placeholder="Account Number"
@@ -162,7 +194,7 @@ const SettingsPage = () => {
               <input
                 type="text"
                 name="ifsc_code"
-                value={formData.ifsc_code}
+                value={formData.ifsc_code || ""}
                 onChange={handleChange}
                 disabled={loading}
                 placeholder="IFSC Code"
@@ -173,7 +205,7 @@ const SettingsPage = () => {
               <input
                 type="text"
                 name="bank_account_holder"
-                value={formData.bank_account_holder}
+                value={formData.bank_account_holder || ""}
                 onChange={handleChange}
                 disabled={loading}
                 placeholder="A/c Holder's Name"
@@ -187,7 +219,7 @@ const SettingsPage = () => {
               <input
                 type="text"
                 name="branch"
-                value={formData.branch}
+                value={formData.branch || ""}
                 onChange={handleChange}
                 disabled={loading}
                 placeholder="Branch"
@@ -198,7 +230,7 @@ const SettingsPage = () => {
               <input
                 type="text"
                 name="swift_code"
-                value={formData.swift_code}
+                value={formData.swift_code || ""}
                 onChange={handleChange}
                 disabled={loading}
                 placeholder="SWIFT Code"
