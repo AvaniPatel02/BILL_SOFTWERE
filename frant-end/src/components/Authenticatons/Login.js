@@ -11,6 +11,7 @@ import {
   resetPassword
 } from "../../services/authApi"; // adjust the path as needed
 import { ToastContainer, toast } from "react-toastify";
+import Dashboard from '../Dashboard/Dashboard';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -43,20 +44,30 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError(""); // clear previous error
-    const response = await fetch('http://localhost:8000/api/login/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await response.json();
-    console.log(data); // See what you get
+    setLoading(true);
+    
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+      console.log("LOGIN RESPONSE:", data);
 
-    if (response.ok && data.access) {
-      localStorage.setItem("accessToken", data.access);
-      // Redirect to dashboard or show success
-      navigate("/dashboard");
-    } else {
-      setLoginError("Invalid email or password");
+      if (response.ok && data.tokens && data.tokens.access) {
+        localStorage.setItem("accessToken", data.tokens.access);
+        setLoginError(""); // <-- YEH LINE IMPORTANT HAI
+        navigate("/dashboard");
+      } else {
+        setLoginError(data.message || "Invalid email or password");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setLoginError("Network error. Please check your connection.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -237,7 +248,9 @@ const Login = () => {
                 </span>
               </div>
 
-              <button type="submit" className="auth-button">Login</button>
+              <button type="submit" className="auth-button" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
+              </button>
 
               <p className="auth-footer-text">
                 Don't have an account? <Link to="/signup">Signup</Link>

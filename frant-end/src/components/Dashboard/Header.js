@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import '../styles/Header.css';
-import logo from '../logo.svg';
-import { Link } from 'react-router-dom';
+import '../../styles/Header.css';
+import logo from '../../logo.svg';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Header = () => {
   // Add a class to body when sidebar is hovered (using events)
@@ -19,6 +19,33 @@ const Header = () => {
   }, []);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleProfileClick = () => setDropdownOpen((open) => !open);
+  const handleClickOutside = (event) => {
+    if (
+      dropdownOpen &&
+      !event.target.closest('.header-profile')
+    ) {
+      setDropdownOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    navigate('/login');
+  };
 
   return (
     <header className="custom-header">
@@ -27,15 +54,13 @@ const Header = () => {
       </div>
       <div 
         className="header-profile"
-        onMouseEnter={() => setDropdownOpen(true)}
-        onMouseLeave={() => setDropdownOpen(false)}
       >
-        <button ><i className="fa-solid fa-user-gear"></i></button>
+        <button onClick={handleProfileClick}><i className="fa-solid fa-user-gear"></i></button>
         {dropdownOpen && (
           <div className="profile-dropdown">
             <Link to="/profile" className="dropdown-item">Profile</Link>
-            <div className="dropdown-item ">Update Logo</div>
-            <div className="dropdown-item">Logout</div>
+            <Link to="/update-logo" className="dropdown-item">Update Logo</Link>
+            <div className="dropdown-item logout-item" onClick={handleLogout}>Logout</div>
           </div>
         )}
       </div>
