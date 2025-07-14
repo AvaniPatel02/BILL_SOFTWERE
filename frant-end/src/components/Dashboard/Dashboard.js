@@ -1,4 +1,7 @@
 import React from "react";
+
+import "../../styles/Dashboard.css";
+
 import Header from "./Header";
 import "../../styles/Dashboard.css";
 import { useNavigate } from 'react-router-dom';

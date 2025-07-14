@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { getProfile, updateProfile, sendCurrentEmailOtp, verifyCurrentEmailOtp, sendNewEmailOtp, verifyNewEmailOtp, updateEmail } from "../../services/authApi";
 import { toast, ToastContainer } from "react-toastify";
+
 import { useNavigate } from "react-router-dom";
 import Header from "./Header";
+
 import "../../styles/Profile.css";
 
 const Profile = () => {

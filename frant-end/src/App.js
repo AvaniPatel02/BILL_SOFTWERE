@@ -12,6 +12,7 @@ import Sidebar from './components/Dashboard/Sidebar';
 import SettingsPage from './components/Settings/SettingsPage';
 import Profile from './components/Dashboard/Profile';
 import { useLocation } from 'react-router-dom';
+
 import { useEffect } from "react";
 import { getProfile, updateProfile, sendCurrentEmailOtp, verifyCurrentEmailOtp, sendNewEmailOtp, verifyNewEmailOtp, updateEmail } from "./services/authApi";
 import UpdateLogo from './components/Dashboard/UpdateLogo';
@@ -20,7 +21,9 @@ import Bills from './components/Bills/Bills';
 
 function MainLayout() {
   const location = useLocation();
+
   const showSidebar = ["/dashboard", "/settings", "/profile", "/update-logo", "/taxinvoices"].includes(location.pathname);
+
 
   return (
     <div className="App" style={{ display: 'flex' }}>
@@ -32,6 +35,7 @@ function MainLayout() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/taxinvoices" element={<TaxInvoices />} />
           <Route path="/update-logo" element={<UpdateLogo />} />
+
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/bills" element={<Bills />} />
