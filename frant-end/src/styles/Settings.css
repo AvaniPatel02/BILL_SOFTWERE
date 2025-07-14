@@ -98,7 +98,7 @@ input[type="file"],
 textarea,
 select {
   padding: 10px 15px;
-  font-size: 14px;
+  font-size: 16px;
   border-radius: 6px;
   border: 1px solid #ccc;
   width: 100%;
@@ -292,4 +292,3 @@ select:focus {
 .button-sumbit-banking:hover {
   background-color: #2a75a7;
 }
-

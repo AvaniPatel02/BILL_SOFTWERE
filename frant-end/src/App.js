@@ -4,20 +4,23 @@ import {
   Route,
 } from 'react-router-dom';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import Signup from './components/Signup/Signup';
-import Login from './components/Login/Login';
-import Dashboard from './components/Dashboard';
-import Payment from './components/Payment';
-import Sidebar from './components/Sidebar';
-import { useLocation } from 'react-router-dom';
+import Signup from './components/Authenticatons/Signup';
+import Login from './components/Authenticatons/Login';
+import Dashboard from './components/Dashboard/Dashboard';
+// import Payment from './components/Dashboard/Payment';
+import Sidebar from './components/Dashboard/Sidebar';
 import SettingsPage from './components/Settings/SettingsPage';
-import Profile from './components/Profile';
+import Profile from './components/Dashboard/Profile';
+import { useLocation } from 'react-router-dom';
 import { useEffect } from "react";
 import { getProfile, updateProfile, sendCurrentEmailOtp, verifyCurrentEmailOtp, sendNewEmailOtp, verifyNewEmailOtp, updateEmail } from "./services/authApi";
+import UpdateLogo from './components/Dashboard/UpdateLogo';
+import TaxInvoices from './components/TaxInvoices/TaxInvoices';
+import Bills from './components/Bills/Bills';
 
 function MainLayout() {
   const location = useLocation();
-  const showSidebar = ["/dashboard", "/payment", "/settings", "/profile"].includes(location.pathname);
+  const showSidebar = ["/dashboard", "/settings", "/profile", "/update-logo", "/taxinvoices"].includes(location.pathname);
 
   return (
     <div className="App" style={{ display: 'flex' }}>
@@ -27,9 +30,11 @@ function MainLayout() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/payment" element={<Payment />} />
+          <Route path="/taxinvoices" element={<TaxInvoices />} />
+          <Route path="/update-logo" element={<UpdateLogo />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/bills" element={<Bills />} />
         </Routes>
       </div>
     </div>

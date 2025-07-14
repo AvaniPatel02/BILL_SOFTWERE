@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../Dashboard/Sidebar';
-import Header from '../Dashboard/Header';
+// import Header from '../Dashboard/Header';
 import '../../styles/Settings.css';
 // import { ToastContainer, toast } from 'react-toastify';
 // import 'react-toastify/dist/ReactToastify.css';
@@ -19,7 +19,7 @@ const SettingsPage = () => {
     ifsc_code: '',
     bank_account_holder: '',
     branch: '',
-    swift_code: '',
+    swift_code: '', 
     HSN_codes: [],
     logo: null,
     logoUrl: '',
@@ -41,7 +41,7 @@ const SettingsPage = () => {
             ...prev,
             ...res.data,
             HSN_codes: Array.isArray(res.data.HSN_codes) ? res.data.HSN_codes : [],
-            logoUrl: res.data.logo ? res.data.logo : '',
+            logoUrl: res.data.logo ? `http://localhost:8000${res.data.logo}` : '',
             logo: null,
           }));
         }

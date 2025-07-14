@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/Footer.css';
+import '../../styles/Footer.css';
 import { FaFacebook, FaTwitter, FaInstagram } from 'react-icons/fa';
 
 const Footer = () => {
@@ -18,4 +18,4 @@ const Footer = () => {
   );
 };
 
-export default Footer; 
+export default Footer;
