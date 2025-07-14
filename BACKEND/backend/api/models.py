@@ -105,3 +105,70 @@ class Settings(models.Model):
 
     def __str__(self):
         return f"Settings (ID: {self.id})"
+
+
+class Invoice(models.Model):
+    # User
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+
+    # Buyer Info (required fields)
+    buyer_name = models.CharField(max_length=255)
+    buyer_address = models.TextField()
+    buyer_gst = models.CharField(max_length=20, blank=True, null=True)
+    
+    # Consignee Info (optional)
+    consignee_name = models.CharField(max_length=255, blank=True, null=True)
+    consignee_address = models.TextField(blank=True, null=True)
+    consignee_gst = models.CharField(max_length=20, blank=True, null=True)
+
+    # Invoice details (date is required)
+    financial_year = models.CharField(max_length=9, default='2025-2026')
+    invoice_number = models.CharField(max_length=20, default="01-2025/2026")
+    invoice_date = models.DateField()
+    
+    # Optional fields
+    delivery_note = models.CharField(max_length=255, blank=True, null=True, default='')
+    payment_mode = models.CharField(max_length=100, blank=True, null=True, default='')
+    delivery_note_date = models.DateField(null=True, blank=True)
+    destination = models.CharField(max_length=255, blank=True, null=True, default='')
+    terms_to_delivery = models.CharField(max_length=255, blank=True, null=True, default='')
+
+    # Country and Currency Info
+    country = models.CharField(max_length=255, default='India')
+    currency = models.CharField(max_length=10, default='INR')
+    currency_symbol = models.CharField(max_length=5, default='₹')
+    state = models.CharField(max_length=50, default="Gujarat")
+
+    # Product details
+    particulars = models.CharField(max_length=255, blank=True, null=True, default='Consultancy')
+    total_hours = models.FloatField(blank=True, null=True, default=0.0)
+    rate = models.FloatField(blank=True, null=True, default=0.0)
+    base_amount = models.FloatField()
+    total_amount = models.FloatField()
+
+    # Tax details
+    cgst = models.FloatField(blank=True, null=True, default=0.0)
+    sgst = models.FloatField(blank=True, null=True, default=0.0)
+    igst = models.FloatField(blank=True, null=True, default=0.0)
+    total_with_gst = models.FloatField()
+    amount_in_words = models.CharField(max_length=255, blank=True, null=True)
+    taxtotal = models.FloatField(blank=True, null=True, default=0.0)
+
+    # Remarks
+    remark = models.TextField(blank=True, null=True, default='')
+
+    # Currency conversion
+    exchange_rate = models.FloatField(blank=True, null=True, default=1.0)
+    inr_equivalent = models.FloatField(blank=True, null=True)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Country flag
+    country_flag = models.URLField(max_length=300, blank=True, null=True)
+
+    def __str__(self):
+        return f"Invoice {self.invoice_number} - {self.buyer_name}"
+
+
