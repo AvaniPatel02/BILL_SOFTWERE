@@ -20,22 +20,35 @@ const Header = () => {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Dropdown ko close karne ke liye, jab bahar click ho
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const dropdown = document.querySelector('.profile-dropdown');
+      const btn = document.querySelector('.header-profile button');
+      if (dropdownOpen && dropdown && !dropdown.contains(event.target) && btn && !btn.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
   return (
     <header className="custom-header">
       <div className="header-center">
         <img src={logo} alt="Logo" className="header-logo" />
       </div>
-      <div 
-        className="header-profile"
-        onMouseEnter={() => setDropdownOpen(true)}
-        onMouseLeave={() => setDropdownOpen(false)}
-      >
-        <button ><i className="fa-solid fa-user-gear"></i></button>
+      <div className="header-profile">
+        <button onClick={() => setDropdownOpen((open) => !open)}><i className="fa-solid fa-user-gear"></i></button>
         {dropdownOpen && (
           <div className="profile-dropdown">
             <Link to="/profile" className="dropdown-item">Profile</Link>
-            <div className="dropdown-item ">Update Logo</div>
-            <div className="dropdown-item">Logout</div>
+            <Link to="/update-logo" className="dropdown-item">Update Logo</Link>
+            <div className="dropdown-item logout-item">Logout</div>
           </div>
         )}
       </div>
@@ -43,4 +56,4 @@ const Header = () => {
   );
 };
 
-export default Header; 
+export default Header;

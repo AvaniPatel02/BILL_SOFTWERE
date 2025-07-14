@@ -1,0 +1,75 @@
+.bills-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.bills-content {
+  display: flex;
+  flex: 1;
+}
+
+.bills-main {
+  flex: 1;
+  padding: 24px;
+  background: #f9f9f9;
+}
+
+.bills-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.bills-tabs button {
+  padding: 8px 20px;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  font-weight: bold;
+}
+
+.bills-tabs .active {
+  background: #fff;
+  border-bottom: 2px solid #007bff;
+}
+
+.bills-tab-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 0 4px 4px 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.bills-table-container {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.bills-table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.bills-table-container th,
+.bills-table-container td {
+  padding: 10px 16px;
+  border: 1px solid #e0e0e0;
+  text-align: left;
+}
+
+.bills-table-container th {
+  background: #f1f1f1;
+  font-weight: bold;
+}
+
+.bills-table-container tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.active-year-row {
+  background: #007bff !important;
+  color: #fff;
+} 
