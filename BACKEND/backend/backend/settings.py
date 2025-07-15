@@ -173,3 +173,5 @@ CORS_ALLOWED_ORIGINS = [
 
 SESSION_COOKIE_SAMESITE = "None"
 SESSION_COOKIE_SECURE = False  # Set to True if using HTTPS
+
+CORS_ALLOW_ALL_ORIGINS = True  # For development only! Use CORS_ALLOWED_ORIGINS in production.

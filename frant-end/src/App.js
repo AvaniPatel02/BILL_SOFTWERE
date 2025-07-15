@@ -18,6 +18,7 @@ import { getProfile, updateProfile, sendCurrentEmailOtp, verifyCurrentEmailOtp, 
 import UpdateLogo from './components/Dashboard/UpdateLogo';
 import TaxInvoices from './components/TaxInvoices/TaxInvoices';
 import Bills from './components/Bills/Bills';
+import YearBills from './components/Bills/YearBills';
 
 function MainLayout() {
   const location = useLocation();
@@ -39,6 +40,7 @@ function MainLayout() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/bills" element={<Bills />} />
+          <Route path="/bills/:year" element={<YearBills />} />
         </Routes>
       </div>
     </div>

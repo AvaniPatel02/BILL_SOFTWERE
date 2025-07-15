@@ -2,8 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import YearBills from './components/Bills/YearBills';
 
-import reportWebVitals from './reportWebVitals';
+// import reportWebVitals from './reportWebVitals';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 
@@ -13,4 +14,4 @@ root.render(
     <App />
   </React.StrictMode>
 );
-reportWebVitals();
+// reportWebVitals();
