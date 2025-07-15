@@ -4,6 +4,9 @@ from rest_framework import status, viewsets, permissions
 from num2words import num2words
 from .models import Invoice
 from rest_framework import serializers
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from datetime import datetime
 
 # Serializer for Invoice
 class InvoiceSerializer(serializers.ModelSerializer):
@@ -22,6 +25,9 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     queryset = Invoice.objects.all().order_by('-created_at')
     serializer_class = InvoiceSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class InvoiceCalculationView(APIView):
     """
@@ -67,9 +73,9 @@ class InvoiceCalculationView(APIView):
 
         # Amount in words (Indian style if possible)
         try:
-            amount_in_words = num2words(total_with_gst, lang='en_IN').title() + ' Only'
+            amount_in_words = num2words(int(round(total_with_gst)), lang='en_IN').title() + ' Only'
         except NotImplementedError:
-            amount_in_words = num2words(total_with_gst, lang='en').title() + ' Only'
+            amount_in_words = num2words(int(round(total_with_gst)), lang='en').title() + ' Only'
 
         # Invoice number generation
         invoice_number = None
@@ -98,4 +104,38 @@ class InvoiceCalculationView(APIView):
             "inr_equivalent": inr_equivalent,
             "amount_in_words": amount_in_words,
             "invoice_number": invoice_number,
-        }, status=status.HTTP_200_OK) 
+        }, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_next_invoice_number(request):
+    current_date = datetime.now().date()
+    if current_date.month >= 4:
+        financial_year_start = current_date.year
+    else:
+        financial_year_start = current_date.year - 1
+    financial_year_end = financial_year_start + 1
+    financial_year = f"{financial_year_start}/{financial_year_end}"
+    invoices = Invoice.objects.filter(
+        financial_year=financial_year,
+        user=request.user
+    ).order_by('-invoice_number')
+    print(f"[DEBUG] User: {request.user}, Financial Year: {financial_year}")
+    print(f"[DEBUG] Found {invoices.count()} invoices for this user/year.")
+    last_invoice = invoices.first()
+    if last_invoice:
+        print(f"[DEBUG] Last invoice number: {last_invoice.invoice_number}")
+        try:
+            num_part = last_invoice.invoice_number.split('-')[0]
+            next_num = int(num_part) + 1
+        except (ValueError, IndexError, AttributeError):
+            next_num = 1
+    else:
+        print("[DEBUG] No previous invoice found. Starting at 1.")
+        next_num = 1
+    invoice_number = f"{next_num:02d}-{financial_year}"
+    print(f"[DEBUG] Next invoice number to return: {invoice_number}")
+    return Response({
+        'invoice_number': invoice_number,
+        'financial_year': financial_year
+    }) 

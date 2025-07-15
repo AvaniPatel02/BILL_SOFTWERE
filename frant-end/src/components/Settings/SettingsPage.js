@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../Dashboard/Sidebar';
-// import Header from '../Dashboard/Header';
 import '../../styles/Settings.css';
-// import { ToastContainer, toast } from 'react-toastify';
-// import 'react-toastify/dist/ReactToastify.css';
 import Toast from '../Toast';
 import { fetchSettings, updateSettings } from '../../services/settingsApi';
 
 const SettingsPage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     company_name: '',
     seller_pan: '',
@@ -26,29 +25,39 @@ const SettingsPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [newHsn, setNewHsn] = useState('');
-  const [token, setToken] = useState(""); // Get your JWT token from auth context or localStorage
+  // Always get token from localStorage
+  const token = localStorage.getItem('access_token');
 
   useEffect(() => {
-    // Get token from localStorage or context
-    const t = localStorage.getItem("accessToken");
-    setToken(t);
-
-    if (t) {
-      setLoading(true);
-      fetchSettings(t).then(res => {
-        if (res.success && res.data) {
-          setFormData(prev => ({
-            ...prev,
-            ...res.data,
-            HSN_codes: Array.isArray(res.data.HSN_codes) ? res.data.HSN_codes : [],
-            logoUrl: res.data.logo ? `http://localhost:8000${res.data.logo}` : '',
-            logo: null,
-          }));
-        }
-        setLoading(false);
-      });
+    if (!token) {
+      navigate('/login');
     }
-  }, []);
+  }, [token, navigate]);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch('http://localhost:8000/api/auth/settings/', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          throw new Error('Failed to fetch settings');
+        }
+        const data = await res.json();
+        setFormData(prev => ({
+          ...data.data,
+          logoUrl: data.data.logo_url || '', // Use the backend's logo_url
+          logo: null // Reset file input
+        }));
+      } catch (err) {
+        setFormData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, [token]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -84,7 +93,30 @@ const SettingsPage = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const res = await updateSettings(formData, token);
+
+    // Prepare FormData for file upload
+    const data = new FormData();
+    data.append('company_name', formData.company_name);
+    data.append('seller_pan', formData.seller_pan);
+    data.append('seller_address', formData.seller_address);
+    data.append('seller_gstin', formData.seller_gstin);
+    data.append('seller_email', formData.seller_email);
+    data.append('bank_name', formData.bank_name);
+    data.append('account_number', formData.account_number);
+    data.append('ifsc_code', formData.ifsc_code);
+    data.append('bank_account_holder', formData.bank_account_holder);
+    data.append('branch', formData.branch);
+    data.append('swift_code', formData.swift_code);
+
+    // HSN_codes as JSON string (if backend expects array, otherwise adjust)
+    data.append('HSN_codes', JSON.stringify(formData.HSN_codes));
+
+    // Only append logo if a new file is selected
+    if (formData.logo) {
+      data.append('logo', formData.logo);
+    }
+
+    const res = await updateSettings(data, token);
     setLoading(false);
     if (res.success) {
       alert("Settings updated successfully!");
