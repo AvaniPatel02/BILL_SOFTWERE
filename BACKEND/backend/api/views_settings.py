@@ -7,12 +7,12 @@ from .serializers import SettingsSerializer
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def settings_view(request):
-    settings_obj, created = Settings.objects.get_or_create(id=1)
+    settings_obj, created = Settings.objects.get_or_create(user=request.user)
     if request.method == 'GET':
-        serializer = SettingsSerializer(settings_obj)
+        serializer = SettingsSerializer(settings_obj, context={'request': request})
         return Response({"success": True, "message": "Settings fetched successfully.", "data": serializer.data})
     elif request.method == 'PUT':
-        serializer = SettingsSerializer(settings_obj, data=request.data, partial=True)
+        serializer = SettingsSerializer(settings_obj, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response({"success": True, "message": "Settings updated successfully.", "data": serializer.data})

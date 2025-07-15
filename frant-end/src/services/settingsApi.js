@@ -9,23 +9,19 @@ export async function fetchSettings(token) {
   return res.json();
 }
 
-export async function updateSettings(data, token) {
-  const formData = new FormData();
-  for (const key in data) {
-    if (key === "HSN_codes") {
-      formData.append(key, JSON.stringify(data[key]));
-    } else if (key === "logo" && data.logo instanceof File) {
-      formData.append("logo", data.logo);
-    } else if (data[key] !== undefined && data[key] !== null) {
-      formData.append(key, data[key]);
-    }
+export const updateSettings = async (formData, token) => {
+  try {
+    const res = await fetch('http://localhost:8000/api/auth/settings/', {
+      method: 'PUT', // or 'POST' if your backend expects POST
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // Do NOT set 'Content-Type' header when sending FormData!
+      },
+      body: formData,
+    });
+    const data = await res.json();
+    return { success: res.ok, data };
+  } catch (err) {
+    return { success: false, error: err };
   }
-  const res = await fetch(API_URL, {
-    method: "PUT",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-    body: formData,
-  });
-  return res.json();
-}
+};

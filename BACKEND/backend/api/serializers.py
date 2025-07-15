@@ -79,6 +79,18 @@ class ProfileSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 class SettingsSerializer(serializers.ModelSerializer):
+    logo_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Settings
-        fields = '__all__'
+        fields = [
+            'company_name', 'seller_pan', 'seller_address', 'seller_gstin', 'seller_email',
+            'bank_name', 'account_number', 'ifsc_code', 'bank_account_holder', 'branch',
+            'swift_code', 'HSN_codes', 'logo', 'logo_url'
+        ]
+
+    def get_logo_url(self, obj):
+        request = self.context.get('request')
+        if obj.logo and hasattr(obj.logo, 'url'):
+            return request.build_absolute_uri(obj.logo.url)
+        return None
