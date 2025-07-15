@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 from .views_settings import settings_view
-from .views_invoice import InvoiceCalculationView, InvoiceViewSet
+from .views_invoice import InvoiceCalculationView, InvoiceViewSet, get_next_invoice_number
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.routers import DefaultRouter
 
@@ -35,6 +35,7 @@ urlpatterns = [
 
     # INVOICE CALCULATION API
     path('calculate_invoice/', InvoiceCalculationView.as_view(), name='calculate-invoice'),
+    path('get_next_invoice_number/', get_next_invoice_number, name='get_next_invoice_number'),
 ]
 
 urlpatterns += router.urls
