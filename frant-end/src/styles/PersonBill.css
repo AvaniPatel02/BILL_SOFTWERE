@@ -1,0 +1,105 @@
+.personbill-container {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  margin-top: 2rem;
+}
+
+.personbill-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.personbill-back-btn {
+  background: #eee;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-right: 1rem;
+  transition: background 0.2s;
+}
+.personbill-back-btn:hover {
+  background: #ddd;
+}
+
+.personbill-title {
+  flex: 1 1;
+  text-align: end;
+  color: #333;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+.personbill-new-btn {
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.personbill-new-btn:hover {
+  background: #388e3c;
+}
+
+.personbill-table-container {
+  overflow-x: auto;
+}
+
+.personbill-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.personbill-table th, .personbill-table td {
+  border: 1px solid #e0e0e0;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.personbill-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.personbill-action-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  margin-right: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+.personbill-action-btn:last-child {
+  margin-right: 0;
+}
+.personbill-action-btn:hover {
+  background: #0d47a1;
+}
+
+.personbill-header-group {
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 18px 26px;
+  margin-bottom: 18px;
+  box-shadow: 1px 1px 19px 0px #d9d5d5;
+  border-radius: 10px;
+}
+
+.personbill-table-outer {
+  margin-top: 1.5rem;
+} 

@@ -26,4 +26,15 @@ export const saveInvoice = async (data, token) => {
     throw new Error(JSON.stringify(errorData));
   }
   return response.json();
+};
+
+export const fetchInvoicesByYear = async (year, token) => {
+  const response = await fetch(`http://localhost:8000/api/invoices/?year=${year}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    }
+  });
+  if (!response.ok) throw new Error('Failed to fetch invoices');
+  return response.json();
 }; 

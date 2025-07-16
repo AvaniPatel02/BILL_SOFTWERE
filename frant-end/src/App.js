@@ -18,6 +18,9 @@ import { getProfile, updateProfile, sendCurrentEmailOtp, verifyCurrentEmailOtp, 
 import UpdateLogo from './components/Dashboard/UpdateLogo';
 import TaxInvoices from './components/TaxInvoices/TaxInvoices';
 import Bills from './components/Bills/Bills';
+import YearBills from './components/Bills/YearBills';
+import PersonBill from './components/Bills/PersonBill';
+import Banking from "./components/Dashboard/Banking";
 import Address from './components/Dashboard/Address';
 import Clients from './components/Dashboard/Clients';
 
@@ -33,6 +36,16 @@ function MainLayout() {
         <Routes>
           <Route path="/signup" element={<Signup />} />
           <Route path="/" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/banking" element={<Banking />} />
+          <Route path="/taxinvoices" element={<TaxInvoices />} />
+          <Route path="/update-logo" element={<UpdateLogo />} />
+
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/bills" element={<Bills />} />
+          <Route path="/bills/:year" element={<YearBills />} />
+          <Route path="/bills/:year/:buyerName" element={<PersonBill />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/taxinvoices" element={<ProtectedRoute><TaxInvoices /></ProtectedRoute>} />
           <Route path="/update-logo" element={<ProtectedRoute><UpdateLogo /></ProtectedRoute>} />

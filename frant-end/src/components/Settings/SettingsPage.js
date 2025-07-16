@@ -102,7 +102,7 @@ const SettingsPage = () => {
     data.append('branch', formData.branch);
     data.append('swift_code', formData.swift_code);
 
-    // HSN_codes as JSON string (if backend expects array, otherwise adjust)
+    // HSN_codes as JSON string (backend expects JSONField)
     data.append('HSN_codes', JSON.stringify(formData.HSN_codes));
 
     // Only append logo if a new file is selected
@@ -110,12 +110,21 @@ const SettingsPage = () => {
       data.append('logo', formData.logo);
     }
 
-    const res = await updateSettings(data, token);
+    const res = await fetch('http://localhost:8000/api/auth/settings/', {
+      method: 'PUT', // Changed from 'PATCH' to 'PUT'
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // Do NOT set 'Content-Type' header when sending FormData!
+      },
+      body: data,
+    });
     setLoading(false);
-    if (res.success) {
+    if (res.ok) {
       alert("Settings updated successfully!");
     } else {
-      alert("Failed to update settings.");
+      // Show backend error details for debugging
+      console.log('Backend error:', res.data);
+      alert("Failed to update settings. " + (res.data && JSON.stringify(res.data)));
     }
   };
 

@@ -52,7 +52,10 @@ const Login = () => {
     console.log(data); // See what you get
 
     if (response.ok && data.access) {
-      localStorage.setItem("access_token", data.access);
+      localStorage.setItem("access_token", data.access); // Store access token with correct key
+      if (data.refresh) {
+        localStorage.setItem("refresh_token", data.refresh); // Store refresh token if present
+      }
       // Redirect to dashboard or show success
       navigate("/dashboard");
     } else {
