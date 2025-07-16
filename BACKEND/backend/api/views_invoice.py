@@ -22,9 +22,11 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
 # ViewSet for CRUD operations
 class InvoiceViewSet(viewsets.ModelViewSet):
-    queryset = Invoice.objects.all().order_by('-created_at')
     serializer_class = InvoiceSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Invoice.objects.filter(user=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -138,4 +140,4 @@ def get_next_invoice_number(request):
     return Response({
         'invoice_number': invoice_number,
         'financial_year': financial_year
-    }) 
+    })
