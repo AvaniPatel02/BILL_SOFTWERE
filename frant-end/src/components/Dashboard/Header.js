@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import '../../styles/Header.css';
 import logo from '../../logo.svg';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Header = () => {
+  const navigate = useNavigate();
   // Add a class to body when sidebar is hovered (using events)
   useEffect(() => {
     const sidebar = document.querySelector('.sidebar-fixed');
@@ -37,6 +38,14 @@ const Header = () => {
     };
   }, [dropdownOpen]);
 
+  // Logout handler
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    // Remove any other auth-related items if needed
+    navigate('/');
+  };
+
   return (
     <header className="custom-header">
       <div className="header-center">
@@ -48,7 +57,7 @@ const Header = () => {
           <div className="profile-dropdown">
             <Link to="/profile" className="dropdown-item">Profile</Link>
             <Link to="/update-logo" className="dropdown-item">Update Logo</Link>
-            <div className="dropdown-item logout-item">Logout</div>
+            <div className="dropdown-item logout-item" onClick={handleLogout}>Logout</div>
           </div>
         )}
       </div>

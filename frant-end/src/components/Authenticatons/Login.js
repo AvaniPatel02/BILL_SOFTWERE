@@ -52,7 +52,7 @@ const Login = () => {
     console.log(data); // See what you get
 
     if (response.ok && data.access) {
-      localStorage.setItem("accessToken", data.access);
+      localStorage.setItem("access_token", data.access);
       // Redirect to dashboard or show success
       navigate("/dashboard");
     } else {

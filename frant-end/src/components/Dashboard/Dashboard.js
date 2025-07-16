@@ -16,7 +16,7 @@ const Dashboard = () => {
         {/* Clients */}
         <div className="stat-card bg-grey">
           <img
-            src="https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif"
+            src="dash-client.gif"
             alt="Total Clients"
             className="stat-icon"
             style={{ height: "80px", marginBottom: "0px" }}
@@ -28,7 +28,7 @@ const Dashboard = () => {
         {/* Total Bills */}
         <div className="stat-card bg-green">
           <img
-            src="https://media.giphy.com/media/26ufnwz3wDUli7GU0/giphy.gif"
+            src="https://cdn.dribbble.com/userupload/26806182/file/original-46e1551746edbbe3a03b91edf46663f8.gif"
             alt="Total Bills"
             className="stat-icon"
             style={{ height: "80px", marginBottom: "0px" }}
@@ -40,7 +40,7 @@ const Dashboard = () => {
         {/* Employees */}
         <div className="stat-card bg-yellow">
           <img
-            src="https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif"
+            src="https://www.xanikainfotech.com/assets/images/shapes/usside.gif"
             alt="Total Employees"
             className="stat-icon"
             style={{ height: "80px", marginBottom: "0px" }}
@@ -52,7 +52,7 @@ const Dashboard = () => {
         {/* New Bill */}
         <div className="stat-card bg-blue" onClick={() => navigate('/taxinvoices')} style={{ cursor: 'pointer' }}>
           <img
-            src="https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif"
+            src="/2.gif"
             alt="New Bill"
             className="stat-icon"
             style={{ height: "80px", marginBottom: "0px" }}

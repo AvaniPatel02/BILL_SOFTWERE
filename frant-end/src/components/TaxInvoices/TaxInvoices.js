@@ -4,7 +4,7 @@ import '../../styles/TaxInvoices.css';
 import html2pdf from 'html2pdf.js';
 import { fetchSettings } from '../../services/settingsApi';
 import { calculateInvoice, saveInvoice } from '../../services/calculateInvoiceApi';
-
+import { fetchNextInvoiceNumber as fetchNextInvoiceNumberApi, fetchInvoiceNumberForDate as fetchInvoiceNumberForDateApi } from '../../services/taxInvoiceApi';
 
 
 const sentenceCase = (str) => {
@@ -47,6 +47,7 @@ const Taxinvoices = () => {
   const [financialYear, setFinancialYear] = useState('');
   const [loadingInvoiceNumber, setLoadingInvoiceNumber] = useState(true);
   const [formDisabled, setFormDisabled] = useState(false);
+  const [exchangeRate, setExchangeRate] = useState(null);
   // Fetch settings from backend on mount
   useEffect(() => {
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
@@ -90,6 +91,55 @@ const Taxinvoices = () => {
       setShowInsideIndia(false);
     } else {
       setShowInsideIndia(true);
+    }
+  }, [selectedCountry]);
+
+  const fallbackRates = {
+    PKR: 0.30, // 1 PKR = 0.30 INR (example, update as per latest)
+    XOF: 0.14, // 1 XOF = 0.14 INR (example, update as per latest)
+    // Add more as needed
+  };
+
+  useEffect(() => {
+    if (selectedCountry.name !== 'India') {
+      // Try exchangerate.host first
+      fetch(`https://api.exchangerate.host/latest?base=${selectedCountry.code}&symbols=INR`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.rates && data.rates.INR) {
+            setExchangeRate(data.rates.INR);
+          } else {
+            // Try open.er-api.com as fallback
+            fetch(`https://open.er-api.com/v6/latest/${selectedCountry.code}`)
+              .then(res2 => res2.json())
+              .then(data2 => {
+                if (data2 && data2.rates && data2.rates.INR) {
+                  setExchangeRate(data2.rates.INR);
+                } else if (fallbackRates[selectedCountry.code]) {
+                  setExchangeRate(fallbackRates[selectedCountry.code]);
+                } else {
+                  setExchangeRate(null);
+                }
+              })
+              .catch(() => {
+                if (fallbackRates[selectedCountry.code]) {
+                  setExchangeRate(fallbackRates[selectedCountry.code]);
+                } else {
+                  setExchangeRate(null);
+                }
+              });
+          }
+        })
+        .catch(() => {
+          // If first API fails, try fallback
+          if (fallbackRates[selectedCountry.code]) {
+            setExchangeRate(fallbackRates[selectedCountry.code]);
+          } else {
+            setExchangeRate(null);
+          }
+        });
+    } else {
+      setExchangeRate(null);
     }
   }, [selectedCountry]);
   // Fetch calculation from backend when relevant fields change
@@ -161,17 +211,34 @@ const Taxinvoices = () => {
     setLoadingInvoiceNumber(true);
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     try {
-      const res = await fetch('http://localhost:8000/api/get_next_invoice_number/', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setInvoiceNumber(data.invoice_number);
-        setFinancialYear(data.financial_year);
-      } else {
-        setInvoiceNumber('');
-        setFinancialYear('');
-      }
+      const data = await fetchNextInvoiceNumberApi(token); // Use service function
+      setInvoiceNumber(data.invoice_number);
+      setFinancialYear(data.financial_year);
+    } catch (e) {
+      setInvoiceNumber('');
+      setFinancialYear('');
+    } finally {
+      setLoadingInvoiceNumber(false);
+    }
+  };
+
+  // Add this function to fetch invoice number for a given date
+  const fetchInvoiceNumberForDate = async (newDate) => {
+    setLoadingInvoiceNumber(true);
+    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+    try {
+      const payload = {
+        invoice_date: newDate,
+        base_amount: baseAmount || 0,
+        country: selectedCountry.name,
+        state: selectedState,
+        total_hours: totalHours,
+        rate: rate,
+        hns_code: hnsSelect
+      };
+      const data = await fetchInvoiceNumberForDateApi(token, payload); // Use service function
+      setInvoiceNumber(data.invoice_number);
+      setFinancialYear(data.financial_year);
     } catch (e) {
       setInvoiceNumber('');
       setFinancialYear('');
@@ -225,9 +292,9 @@ const Taxinvoices = () => {
             <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 700 }}>New Tax Invoice</h1>
           </div>
           {/* Show invoice number at the top */}
-          <div style={{ marginBottom: '16px', textAlign: 'center', fontSize: '1.2rem', fontWeight: 600 }}>
+          {/* <div style={{ marginBottom: '16px', textAlign: 'center', fontSize: '1.2rem', fontWeight: 600 }}>
             Invoice Number: {loadingInvoiceNumber ? 'Loading...' : (invoiceNumber || 'Not available')}
-          </div>
+          </div> */}
           <div className="taxinvoices-content-inner">
 
             {/* start form */}
@@ -297,7 +364,10 @@ const Taxinvoices = () => {
                       <tr>
                         <td>Date</td>
                         <td>
-                          <input type="date" id="datePicker" value={date} onChange={e => setDate(e.target.value)} />
+                          <input type="date" id="datePicker" value={date} onChange={e => {
+                            setDate(e.target.value);
+                            fetchInvoiceNumberForDate(e.target.value);
+                          }} />
                         </td>
                       </tr>
                       <tr>
@@ -383,6 +453,22 @@ const Taxinvoices = () => {
                           <div className="lut outside-india" style={{ display: showInsideIndia ? 'none' : 'block' }}>
                             <h4>Declare under LUT </h4>
                           </div>
+                          {!showInsideIndia && (
+                            <>
+                              {exchangeRate === null
+                                ? (
+                                  <div style={{ marginTop: '8px', color: 'red' }}>
+                                    Exchange rate not available for {selectedCountry.code}
+                                  </div>
+                                )
+                                : (
+                                  <div style={{ marginTop: '8px', fontWeight: 'bold', color: '#333' }}>
+                                    1 {selectedCountry.code} = {exchangeRate} INR
+                                  </div>
+                                )
+                              }
+                            </>
+                          )}
                           <input type="hidden" id="currencyTitle" value={selectedCountry.code} />
                           <input type="hidden" id="currencySymbole" value={selectedCountry.symbol} />
                         </div>
@@ -523,6 +609,40 @@ const Taxinvoices = () => {
               {/* amont in words */}
               <div className="row">
                 <div className="col-xs-12">
+                  {/* Show INR equivalent for non-India countries if exchange rate and total_with_gst are available */}
+                  {!showInsideIndia && exchangeRate && calculationResult.total_with_gst && (() => {
+                    const inrEquivalentRaw = Number(calculationResult.total_with_gst) * Number(exchangeRate);
+                    const inrEquivalent = Math.round(inrEquivalentRaw); // round to nearest integer
+                    // Helper to convert number to words (simple version)
+                    function inrAmountInWords(num) {
+                      if (!num || isNaN(num)) return '';
+                      const a = [ '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen' ];
+                      const b = [ '', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety' ];
+                      function inWords(n) {
+                        if (n < 20) return a[n];
+                        if (n < 100) return b[Math.floor(n/10)] + (n%10 ? ' ' + a[n%10] : '');
+                        if (n < 1000) return a[Math.floor(n/100)] + ' Hundred' + (n%100 ? ' and ' + inWords(n%100) : '');
+                        if (n < 100000) return inWords(Math.floor(n/1000)) + ' Thousand' + (n%1000 ? ' ' + inWords(n%1000) : '');
+                        if (n < 10000000) return inWords(Math.floor(n/100000)) + ' Lakh' + (n%100000 ? ' ' + inWords(n%100000) : '');
+                        return inWords(Math.floor(n/10000000)) + ' Crore' + (n%10000000 ? ' ' + inWords(n%10000000) : '');
+                      }
+                      const rupees = Math.round(num); // use rounded value
+                      let words = '';
+                      if (rupees > 0) words += inWords(rupees) + ' Rupees';
+                      if (words) words += ' Only';
+                      return words;
+                    }
+                    return (
+                      <div className="table-bordered black-bordered amount-box" style={{ marginBottom: '8px',  display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '56px' }}>
+                        <span style={{ width: '100%', textAlign: 'start', fontWeight: 500, fontSize: '1.15rem' }}>
+                          {inrAmountInWords(inrEquivalent)}
+                        </span>
+                        <span style={{ width: '100%', textAlign: 'end', fontWeight: 600, fontSize: '1.25rem' }}>
+                          INR Equivalent: ₹ {inrEquivalent.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    );
+                  })()}
                   <div className="table-bordered black-bordered amount-box">
                     <div>
                       <strong>Amount Chargeable (in words):</strong><br />
@@ -608,7 +728,7 @@ const Taxinvoices = () => {
                   </table>
                 </div>}
                 <div>
-                  {!showInsideIndia && <div className="col-xs-12 outside-india">
+                  {showInsideIndia && <div className="col-xs-12 inside-india">
                     <div>
                       <strong>Tax Amount (in words):</strong>
                       <span id="total-tax-in-words"><span className='currency-text'>{selectedCountry.code}</span> {calculationResult.total_tax_in_words}</span>
@@ -668,6 +788,18 @@ const Taxinvoices = () => {
                       alert('Invoice number is not loaded yet. Please wait.');
                       return;
                     }
+                    // Only require state if country is India
+                    if (selectedCountry.name === 'India' && !selectedState) {
+                      alert('Please select a state for India.');
+                      return;
+                    }
+                    const isForeign = selectedCountry.name !== 'India';
+                    const exchange_rate = isForeign && exchangeRate ? Number(exchangeRate) : 1;
+                    const totalWithGst = calculationResult.total_with_gst == null ? 0 : Number(calculationResult.total_with_gst);
+                    const inr_equivalent = isForeign && exchangeRate && totalWithGst
+                      ? Number((totalWithGst * exchange_rate).toFixed(2))
+                      : 0;
+
                     const invoiceData = {
                       buyer_name: billTo.title,
                       buyer_address: billTo.address,
@@ -686,7 +818,7 @@ const Taxinvoices = () => {
                       country: selectedCountry.name,
                       currency: selectedCountry.code,
                       currency_symbol: selectedCountry.symbol,
-                      state: selectedState,
+                      state: selectedCountry.name === 'India' ? selectedState : 'N/A',
                       particulars: gstConsultancy || '',
                       total_hours: parseNumber(totalHours),
                       rate: parseNumber(rate),
@@ -699,8 +831,8 @@ const Taxinvoices = () => {
                       amount_in_words: calculationResult.amount_in_words || '',
                       taxtotal: calculationResult.taxtotal == null ? 0 : Number(calculationResult.taxtotal),
                       remark: remark || '',
-                      exchange_rate: 1,
-                      inr_equivalent: calculationResult.inr_equivalent == null ? 0 : Number(calculationResult.inr_equivalent),
+                      exchange_rate: exchange_rate,
+                      inr_equivalent: inr_equivalent,
                       country_flag: '',
                     };
                     if (!formDisabled) {

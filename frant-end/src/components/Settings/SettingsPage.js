@@ -30,21 +30,15 @@ const SettingsPage = () => {
 
   useEffect(() => {
     if (!token) {
-      navigate('/login');
+      navigate('/');
     }
   }, [token, navigate]);
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    const getSettings = async () => {
       setLoading(true);
       try {
-        const res = await fetch('http://localhost:8000/api/auth/settings/', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) {
-          throw new Error('Failed to fetch settings');
-        }
-        const data = await res.json();
+        const data = await fetchSettings(token); // Use service function
         setFormData(prev => ({
           ...data.data,
           logoUrl: data.data.logo_url || '', // Use the backend's logo_url
@@ -56,7 +50,7 @@ const SettingsPage = () => {
         setLoading(false);
       }
     };
-    fetchSettings();
+    getSettings();
   }, [token]);
 
   const handleChange = (e) => {

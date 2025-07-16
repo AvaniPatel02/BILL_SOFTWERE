@@ -6,7 +6,7 @@ from .models import Invoice
 from rest_framework import serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from datetime import datetime
+from datetime import datetime, date
 
 # Serializer for Invoice
 class InvoiceSerializer(serializers.ModelSerializer):
@@ -22,12 +22,24 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
 # ViewSet for CRUD operations
 class InvoiceViewSet(viewsets.ModelViewSet):
-    queryset = Invoice.objects.all().order_by('-created_at')
     serializer_class = InvoiceSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        return Invoice.objects.filter(user=self.request.user).order_by('-created_at')
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+def get_financial_year(dt):
+    if isinstance(dt, str):
+        dt = datetime.strptime(dt, "%Y-%m-%d").date()
+    if dt.month >= 4:
+        start_year = dt.year
+    else:
+        start_year = dt.year - 1
+    end_year = start_year + 1
+    return f"{start_year}/{end_year}"
 
 class InvoiceCalculationView(APIView):
     """
@@ -44,7 +56,20 @@ class InvoiceCalculationView(APIView):
         rate = float(data.get('rate', 0) or 0)
         base_amount = float(data.get('base_amount', 0) or 0)
         exchange_rate = float(data.get('exchange_rate', 1) or 1)
-        financial_year = data.get('financial_year')
+        invoice_date_str = data.get('invoice_date')
+        invoice_date = None
+        if invoice_date_str:
+            try:
+                invoice_date = datetime.strptime(invoice_date_str, "%Y-%m-%d").date()
+            except Exception:
+                invoice_date = datetime.now().date()
+        else:
+            invoice_date = datetime.now().date()
+        financial_year = get_financial_year(invoice_date)
+
+        print(f"DEBUG: invoice_date_str = {invoice_date_str}")
+        print(f"DEBUG: invoice_date = {invoice_date}")
+        print(f"DEBUG: financial_year = {financial_year}")
 
         # Calculate base amount if not provided
         if not base_amount and total_hours and rate:
@@ -79,11 +104,10 @@ class InvoiceCalculationView(APIView):
 
         # Invoice number generation
         invoice_number = None
-        if financial_year:
-            # Find the latest invoice for the given financial year
-            latest_invoice = Invoice.objects.filter(financial_year=financial_year).order_by('-invoice_number').first()
+        user = request.user if request.user.is_authenticated else None
+        if financial_year and user:
+            latest_invoice = Invoice.objects.filter(financial_year=financial_year, user=user).order_by('-invoice_number').first()
             if latest_invoice and latest_invoice.invoice_number:
-                # Extract the numeric part and increment
                 import re
                 match = re.search(r'(\d+)', latest_invoice.invoice_number)
                 if match:
@@ -104,6 +128,7 @@ class InvoiceCalculationView(APIView):
             "inr_equivalent": inr_equivalent,
             "amount_in_words": amount_in_words,
             "invoice_number": invoice_number,
+            "financial_year": financial_year,
         }, status=status.HTTP_200_OK)
 
 @api_view(['GET'])

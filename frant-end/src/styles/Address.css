@@ -1,0 +1,32 @@
+.year_container {
+  padding: 24px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.header-bar {
+  margin-bottom: 24px;
+}
+
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.custom-table th, .custom-table td {
+  border: 1px solid #e5e7eb;
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.custom-table th {
+  background: #f1f3f4;
+  font-weight: 600;
+  color: black;
+}
+
+.text-center {
+  text-align: center;
+} 

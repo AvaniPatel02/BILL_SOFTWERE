@@ -377,28 +377,37 @@
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.45); /* dim background */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9998;
+  padding: 0;
+}
+
+/* Utility class to lock body scroll when modal is open */
+.body-modal-open {
+  overflow: hidden !important;
+  height: 100vh !important;
 }
 
 .modal {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.13);
-  padding: 28px 20px 20px 20px;
-  min-width: 320px;
-  max-width: 90vw;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  position: relative;
-  border: 1px solid #e3e8f0;
-  animation: modalSlideIn 0.3s ease;
+    background: #fff !important;
+    border-radius: 16px !important;
+    min-width: 340px !important;
+    max-width: 95vw !important;
+    width: 400px !important;
+    min-height: 120px !important;
+    color: #222 !important;
+    z-index: 9998 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    position: relative !important;
+    border: none !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18) !important;
+    animation: modalSlideIn 0.3s ease !important;
+    padding: 32px 28px 24px 28px !important;
 }
 
 @keyframes modalSlideIn {
@@ -614,4 +623,4 @@
 .profile-content, .back-button {
   position: relative;
   z-index: 2;
-} 
+}

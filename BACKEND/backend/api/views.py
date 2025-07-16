@@ -99,7 +99,20 @@ def send_otp(request):
     OTP.objects.filter(email=email).delete()
     OTP.objects.create(email=email, otp_code=otp_code)
     subject = 'Email Verification OTP'
-    message = f'Your OTP is: {otp_code}\nThis OTP will expire in 10 minutes.'
+    message = f"""
+Welcome to Invoice Management!
+
+Thank you for signing up. To complete your registration, please verify your email address using the One-Time Password (OTP) below:
+
+🔐 Your OTP is: {otp_code}
+
+This OTP is valid for 10 minutes. Please do not share this code with anyone.
+
+If you did not create an account with us, you can safely ignore this email.
+
+Best regards,
+The Invoice Management Team
+"""
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
     return Response({"success": True, "message": "OTP sent successfully to your email.", "data": {"email": email}}, status=status.HTTP_200_OK)
 
@@ -115,7 +128,20 @@ def resend_otp(request):
     OTP.objects.filter(email=email).delete()
     OTP.objects.create(email=email, otp_code=otp_code)
     subject = 'Your Resent OTP Code'
-    message = f'Your new OTP is: {otp_code}\nThis OTP will expire in 10 minutes.'
+    message = f"""
+Welcome to Invoice Management!
+
+Here is your new One-Time Password (OTP) to complete your registration:
+
+🔐 Your new OTP is: {otp_code}
+
+This OTP is valid for 10 minutes. Please do not share this code with anyone.
+
+If you did not create an account with us, you can safely ignore this email.
+
+Best regards,
+The Invoice Management Team
+"""
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
     return Response({"success": True, "message": "OTP resent successfully to your email.", "data": {"email": email}}, status=status.HTTP_200_OK)
 
@@ -231,14 +257,16 @@ def verify_current_email_otp(request):
     if otp.otp_code == otp_code and not otp.is_expired():
         otp.is_verified = True
         otp.save()
-        request.session['current_email_otp_verified'] = True
-        return Response({"success": True, "message": "Current email OTP verified."})
+        # Return a flag to the frontend
+        return Response({"success": True, "message": "Current email OTP verified.", "current_email_otp_verified": True})
     return Response({"success": False, "message": "Invalid or expired OTP."}, status=400)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def send_new_email_otp(request):
-    if not request.session.get('current_email_otp_verified'):
+    # Require the flag in the request
+    current_email_otp_verified = request.data.get('current_email_otp_verified')
+    if not current_email_otp_verified:
         return Response({"success": False, "message": "Current email OTP not verified."}, status=400)
     new_email = request.data.get('new_email')
     if not new_email:
@@ -255,13 +283,14 @@ def send_new_email_otp(request):
         [new_email],
         fail_silently=False
     )
-    request.session['pending_new_email'] = new_email
-    return Response({"success": True, "message": "OTP sent to new email."})
+    # Return the new email to the frontend for tracking
+    return Response({"success": True, "message": "OTP sent to new email.", "pending_new_email": new_email})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def verify_new_email_otp(request):
-    new_email = request.session.get('pending_new_email')
+    user = request.user
+    new_email = request.data.get('new_email')
     otp_code = request.data.get('otp_code')
     if not new_email:
         return Response({"success": False, "message": "No new email pending verification."}, status=400)
@@ -272,24 +301,28 @@ def verify_new_email_otp(request):
     if otp.otp_code == otp_code and not otp.is_expired():
         otp.is_verified = True
         otp.save()
-        request.session['new_email_otp_verified'] = True
-        return Response({"success": True, "message": "New email OTP verified."})
+        # Update the user's email immediately
+        user.email = new_email
+        user.save()
+        if hasattr(user, 'profile'):
+            user.profile.save()
+        return Response({"success": True, "message": "New email OTP verified and email updated.", "new_email_otp_verified": True, "pending_new_email": new_email})
     return Response({"success": False, "message": "Invalid or expired OTP."}, status=400)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_email_after_otp(request):
     user = request.user
-    if not (request.session.get('current_email_otp_verified') and request.session.get('new_email_otp_verified')):
+    # Require both verifications and the new email in the request
+    current_email_otp_verified = request.data.get('current_email_otp_verified')
+    new_email_otp_verified = request.data.get('new_email_otp_verified')
+    new_email = request.data.get('new_email')
+    if not (current_email_otp_verified and new_email_otp_verified):
         return Response({"success": False, "message": "Both OTPs must be verified."}, status=400)
-    new_email = request.session.get('pending_new_email')
     if not new_email:
         return Response({"success": False, "message": "No new email to update."}, status=400)
     user.email = new_email
     user.save()
     if hasattr(user, 'profile'):
         user.profile.save()
-    request.session.pop('current_email_otp_verified', None)
-    request.session.pop('new_email_otp_verified', None)
-    request.session.pop('pending_new_email', None)
     return Response({"success": True, "message": "Email updated successfully."})
