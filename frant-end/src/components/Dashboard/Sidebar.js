@@ -39,6 +39,12 @@ const Sidebar = () => {
             <span>Clients</span>
           </Link>
         </li>
+        <li className={`nav-item${location.pathname === "/employee" ? " active" : ""}`}>
+          <Link to="/employee" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', width: '100%', height: '100%' }}>
+            <i className="fas fa-user-tie"></i>
+            <span>Employee</span>
+          </Link>
+        </li>
         <li className={`nav-item${location.pathname === "/bknadd" ? " active" : ""}`}>
           <Link to="/bknadd" className="nav-link-full">
             <i className="fas fa-plus-circle"></i>
