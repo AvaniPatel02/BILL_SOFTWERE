@@ -4,6 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import OTP
 from .models import Profile
 from .models import Settings
+from .models import BankAccount, CashEntry
 
 User = get_user_model()
 
@@ -93,4 +94,31 @@ class SettingsSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if obj.logo and hasattr(obj.logo, 'url'):
             return request.build_absolute_uri(obj.logo.url)
-        return None
+        return ""
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        for field in self.Meta.fields:
+            if rep[field] is None:
+                if field == "HSN_codes":
+                    rep[field] = []
+                else:
+                    rep[field] = ""
+        return rep
+
+class BankAccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = ['id', 'bank_name', 'account_number', 'amount']
+
+class CashEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CashEntry
+        fields = ['id', 'amount', 'date', 'description']
+
+# Employee serializer for salary management
+from .models import Employee
+class EmployeeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = '__all__'

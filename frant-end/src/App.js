@@ -12,9 +12,6 @@ import SettingsPage from './components/Settings/SettingsPage';
 import Profile from './components/Dashboard/Profile';
 import { useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
-
-import { useEffect } from "react";
-import { getProfile, updateProfile, sendCurrentEmailOtp, verifyCurrentEmailOtp, sendNewEmailOtp, verifyNewEmailOtp, updateEmail } from "./services/authApi";
 import UpdateLogo from './components/Dashboard/UpdateLogo';
 import TaxInvoices from './components/TaxInvoices/TaxInvoices';
 import Bills from './components/Bills/Bills';
