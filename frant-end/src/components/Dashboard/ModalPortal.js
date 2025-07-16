@@ -4,4 +4,4 @@ const ModalPortal = ({ children }) => {
   return createPortal(children, document.body);
 };
 
-export default ModalPortal; 
+export default ModalPortal;

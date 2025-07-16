@@ -7,11 +7,11 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import Signup from './components/Authenticatons/Signup';
 import Login from './components/Authenticatons/Login';
 import Dashboard from './components/Dashboard/Dashboard';
-// import Payment from './components/Dashboard/Payment';
 import Sidebar from './components/Dashboard/Sidebar';
 import SettingsPage from './components/Settings/SettingsPage';
 import Profile from './components/Dashboard/Profile';
 import { useLocation } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import { useEffect } from "react";
 import { getProfile, updateProfile, sendCurrentEmailOtp, verifyCurrentEmailOtp, sendNewEmailOtp, verifyNewEmailOtp, updateEmail } from "./services/authApi";
@@ -21,12 +21,13 @@ import Bills from './components/Bills/Bills';
 import YearBills from './components/Bills/YearBills';
 import PersonBill from './components/Bills/PersonBill';
 import Banking from "./components/Dashboard/Banking";
+import Address from './components/Dashboard/Address';
+import Clients from './components/Dashboard/Clients';
 
 function MainLayout() {
   const location = useLocation();
 
   const showSidebar = ["/dashboard", "/settings", "/profile", "/update-logo", "/taxinvoices"].includes(location.pathname);
-
 
   return (
     <div className="App" style={{ display: 'flex' }}>
@@ -45,11 +46,20 @@ function MainLayout() {
           <Route path="/bills" element={<Bills />} />
           <Route path="/bills/:year" element={<YearBills />} />
           <Route path="/bills/:year/:buyerName" element={<PersonBill />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/taxinvoices" element={<ProtectedRoute><TaxInvoices /></ProtectedRoute>} />
+          <Route path="/update-logo" element={<ProtectedRoute><UpdateLogo /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/bills" element={<ProtectedRoute><Bills /></ProtectedRoute>} />
+          <Route path="/address" element={<ProtectedRoute><Address /></ProtectedRoute>} />
+          <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
         </Routes>
       </div>
     </div>
   );
 }
+
 
 function App() {
   return (

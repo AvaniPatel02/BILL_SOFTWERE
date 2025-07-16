@@ -27,13 +27,17 @@ const Sidebar = () => {
             <span>Bills</span>
           </Link>
         </li>
-        <li className="nav-item">
-          <i className="fas fa-map-marker-alt"></i>
-          <span>Address</span>
+        <li className={`nav-item${location.pathname === "/address" ? " active" : ""}`}>
+          <Link to="/address" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', width: '100%', height: '100%' }}>
+            <i className="fas fa-map-marker-alt"></i>
+            <span>Address</span>
+          </Link>
         </li>
-        <li className="nav-item">
-          <i className="fas fa-users"></i>
-          <span>Clients</span>
+        <li className={`nav-item${location.pathname === "/clients" ? " active" : ""}`}>
+          <Link to="/clients" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', width: '100%', height: '100%' }}>
+            <i className="fas fa-users"></i>
+            <span>Clients</span>
+          </Link>
         </li>
         <li className="nav-item">
           <i className="fas fa-calculator"></i>

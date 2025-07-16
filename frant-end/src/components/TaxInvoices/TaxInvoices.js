@@ -4,7 +4,7 @@ import '../../styles/TaxInvoices.css';
 import html2pdf from 'html2pdf.js';
 import { fetchSettings } from '../../services/settingsApi';
 import { calculateInvoice, saveInvoice } from '../../services/calculateInvoiceApi';
-
+import { fetchNextInvoiceNumber as fetchNextInvoiceNumberApi, fetchInvoiceNumberForDate as fetchInvoiceNumberForDateApi } from '../../services/taxInvoiceApi';
 
 
 const sentenceCase = (str) => {
@@ -211,17 +211,34 @@ const Taxinvoices = () => {
     setLoadingInvoiceNumber(true);
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     try {
-      const res = await fetch('http://localhost:8000/api/get_next_invoice_number/', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setInvoiceNumber(data.invoice_number);
-        setFinancialYear(data.financial_year);
-      } else {
-        setInvoiceNumber('');
-        setFinancialYear('');
-      }
+      const data = await fetchNextInvoiceNumberApi(token); // Use service function
+      setInvoiceNumber(data.invoice_number);
+      setFinancialYear(data.financial_year);
+    } catch (e) {
+      setInvoiceNumber('');
+      setFinancialYear('');
+    } finally {
+      setLoadingInvoiceNumber(false);
+    }
+  };
+
+  // Add this function to fetch invoice number for a given date
+  const fetchInvoiceNumberForDate = async (newDate) => {
+    setLoadingInvoiceNumber(true);
+    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+    try {
+      const payload = {
+        invoice_date: newDate,
+        base_amount: baseAmount || 0,
+        country: selectedCountry.name,
+        state: selectedState,
+        total_hours: totalHours,
+        rate: rate,
+        hns_code: hnsSelect
+      };
+      const data = await fetchInvoiceNumberForDateApi(token, payload); // Use service function
+      setInvoiceNumber(data.invoice_number);
+      setFinancialYear(data.financial_year);
     } catch (e) {
       setInvoiceNumber('');
       setFinancialYear('');
@@ -347,7 +364,10 @@ const Taxinvoices = () => {
                       <tr>
                         <td>Date</td>
                         <td>
-                          <input type="date" id="datePicker" value={date} onChange={e => setDate(e.target.value)} />
+                          <input type="date" id="datePicker" value={date} onChange={e => {
+                            setDate(e.target.value);
+                            fetchInvoiceNumberForDate(e.target.value);
+                          }} />
                         </td>
                       </tr>
                       <tr>
@@ -773,6 +793,13 @@ const Taxinvoices = () => {
                       alert('Please select a state for India.');
                       return;
                     }
+                    const isForeign = selectedCountry.name !== 'India';
+                    const exchange_rate = isForeign && exchangeRate ? Number(exchangeRate) : 1;
+                    const totalWithGst = calculationResult.total_with_gst == null ? 0 : Number(calculationResult.total_with_gst);
+                    const inr_equivalent = isForeign && exchangeRate && totalWithGst
+                      ? Number((totalWithGst * exchange_rate).toFixed(2))
+                      : 0;
+
                     const invoiceData = {
                       buyer_name: billTo.title,
                       buyer_address: billTo.address,
@@ -804,8 +831,8 @@ const Taxinvoices = () => {
                       amount_in_words: calculationResult.amount_in_words || '',
                       taxtotal: calculationResult.taxtotal == null ? 0 : Number(calculationResult.taxtotal),
                       remark: remark || '',
-                      exchange_rate: 1,
-                      inr_equivalent: calculationResult.inr_equivalent == null ? 0 : Number(calculationResult.inr_equivalent),
+                      exchange_rate: exchange_rate,
+                      inr_equivalent: inr_equivalent,
                       country_flag: '',
                     };
                     if (!formDisabled) {

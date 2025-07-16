@@ -1,7 +1,7 @@
-const API_URL = "http://localhost:8000/api/auth/settings/"; // Adjust if your endpoint is different
+import BASE_URL from "./apiConfig";
 
 export async function fetchSettings(token) {
-  const res = await fetch(API_URL, {
+  const res = await fetch(`${BASE_URL}/auth/settings/`, {
     headers: {
       "Authorization": `Bearer ${token}`,
     },
@@ -11,7 +11,7 @@ export async function fetchSettings(token) {
 
 export const updateSettings = async (formData, token) => {
   try {
-    const res = await fetch('http://localhost:8000/api/auth/settings/', {
+    const res = await fetch(`${BASE_URL}/auth/settings/`, {
       method: 'PUT', // or 'POST' if your backend expects POST
       headers: {
         Authorization: `Bearer ${token}`,

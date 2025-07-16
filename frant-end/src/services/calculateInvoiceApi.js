@@ -1,7 +1,9 @@
 // frant-end/src/services/calculateInvoiceApi.js
 
+import BASE_URL from "./apiConfig";
+
 export const calculateInvoice = async (data) => {
-  const response = await fetch('http://localhost:8000/api/calculate_invoice/', {
+  const response = await fetch(`${BASE_URL}/calculate_invoice/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -11,7 +13,7 @@ export const calculateInvoice = async (data) => {
 };
 
 export const saveInvoice = async (data, token) => {
-  const response = await fetch('http://localhost:8000/api/invoices/', {
+  const response = await fetch(`${BASE_URL}/invoices/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
