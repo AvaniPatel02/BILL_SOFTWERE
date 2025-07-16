@@ -77,6 +77,7 @@ const Dashboard = () => {
               { icon: "fas fa-university", label: "Banking", route: "/banking" },
               { icon: "fas fa-cog", label: "Settings" },
               { icon: "fas fa-image", label: "Update Logo" },
+              { icon: "fas fa-plus-circle", label: "Bank Add", route: "/bank-add" },
             ].map((item, idx) => (
               <div
                 className="sidebar-card"
