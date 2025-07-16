@@ -23,6 +23,7 @@ import PersonBill from './components/Bills/PersonBill';
 import Banking from "./components/Dashboard/Banking";
 import Address from './components/Dashboard/Address';
 import Clients from './components/Dashboard/Clients';
+import BankAdd from './components/Dashboard/BankAdd';
 
 function MainLayout() {
   const location = useLocation();
@@ -42,6 +43,7 @@ function MainLayout() {
           <Route path="/update-logo" element={<UpdateLogo />} />
 
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/bank-add" element={<BankAdd />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/bills" element={<Bills />} />
           <Route path="/bills/:year" element={<YearBills />} />

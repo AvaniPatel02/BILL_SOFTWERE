@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { getProfile, updateProfile, sendCurrentEmailOtp, verifyCurrentEmailOtp, sendNewEmailOtp, verifyNewEmailOtp, updateEmail } from "../../services/authApi";
 import { toast, ToastContainer } from "react-toastify";
-
 import { useNavigate } from "react-router-dom";
 import Header from "./Header";
 import ModalPortal from "./ModalPortal";
-import ModalPortal from "./ModalPortal";
-
 import "../../styles/Profile.css";
 
 const Profile = () => {
@@ -16,16 +13,10 @@ const Profile = () => {
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState({ first_name: "", mobile: "", email: "" });
 
-  const [showCurrentEmailModal, setShowCurrentEmailModal] = useState(false);
-  const [showNewEmailModal, setShowNewEmailModal] = useState(false);
-
+  // Email change modals and OTP states
   const [showCurrentEmailModal, setShowCurrentEmailModal] = useState(false);
   const [showNewEmailModal, setShowNewEmailModal] = useState(false);
   const [currentEmailOtp, setCurrentEmailOtp] = useState("");
-  const [currentEmailOtpSent, setCurrentEmailOtpSent] = useState(false);
-  const [currentEmailOtpLoading, setCurrentEmailOtpLoading] = useState(false);
-  const [currentEmailOtpError, setCurrentEmailOtpError] = useState("");
-  const [currentEmailOtpVerified, setCurrentEmailOtpVerified] = useState(false);
   const [currentEmailOtpSent, setCurrentEmailOtpSent] = useState(false);
   const [currentEmailOtpLoading, setCurrentEmailOtpLoading] = useState(false);
   const [currentEmailOtpError, setCurrentEmailOtpError] = useState("");
@@ -36,44 +27,31 @@ const Profile = () => {
   const [newEmailOtpLoading, setNewEmailOtpLoading] = useState(false);
   const [newEmailOtpError, setNewEmailOtpError] = useState("");
   const [newEmailOtpVerified, setNewEmailOtpVerified] = useState(false);
-  const [newEmailOtpSent, setNewEmailOtpSent] = useState(false);
-  const [newEmailOtpLoading, setNewEmailOtpLoading] = useState(false);
-  const [newEmailOtpError, setNewEmailOtpError] = useState("");
-  const [newEmailOtpVerified, setNewEmailOtpVerified] = useState(false);
 
   // Fetch profile on mount
   useEffect(() => {
     async function fetchProfile() {
       try {
         setLoading(true);
-        const token = localStorage.getItem("accessToken"); // Changed from "token" to "accessToken"
-        console.log("Token found:", !!token); // Debug log
-        
+        const token = localStorage.getItem("accessToken");
         if (!token) {
           toast.error("No authentication token found. Please login again.");
           setLoading(false);
           return;
         }
-
-        console.log("Fetching profile from:", "http://localhost:8000/api/auth/profile/"); // Debug log
         const res = await getProfile(token);
-        console.log("Profile response:", res); // Debug log
-        
         if (res.success) {
           const profileData = {
             email: res.data.email,
             first_name: res.data.first_name,
             mobile: res.data.mobile
           };
-          console.log("Setting profile data:", profileData); // Debug log
           setProfile(profileData);
           setForm(profileData);
         } else {
-          console.error("Profile fetch failed:", res); // Debug log
           toast.error(res.message || "Failed to fetch profile");
         }
       } catch (error) {
-        console.error("Error fetching profile:", error);
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
           toast.error("Cannot connect to server. Please check if backend is running.");
         } else {
@@ -94,17 +72,15 @@ const Profile = () => {
   // Save name and mobile
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("accessToken"); // Changed from "token" to "accessToken"
+      const token = localStorage.getItem("accessToken");
       if (!token) {
         toast.error("No authentication token found. Please login again.");
         return;
       }
-
       const res = await updateProfile(token, {
         first_name: form.first_name,
         mobile: form.mobile
       });
-      
       if (res.success) {
         toast.success("Profile updated successfully!");
         setProfile({ ...profile, first_name: form.first_name, mobile: form.mobile });
@@ -113,7 +89,6 @@ const Profile = () => {
         toast.error(res.message || "Failed to update profile");
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
       toast.error("Network error while updating profile");
     }
   };
@@ -138,32 +113,14 @@ const Profile = () => {
     setCurrentEmailOtpLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
-  // Handler to open current email modal and send OTP
-  const handleOpenChangeEmail = async () => {
-    setShowCurrentEmailModal(true);
-    setCurrentEmailOtp("");
-    setCurrentEmailOtpSent(false);
-    setCurrentEmailOtpError("");
-    setCurrentEmailOtpVerified(false);
-    setCurrentEmailOtpLoading(true);
-    try {
-      const token = localStorage.getItem("accessToken");
       const res = await sendCurrentEmailOtp(token);
       if (res.success) {
         setCurrentEmailOtpSent(true);
         toast.success("OTP sent to your current email");
-        setCurrentEmailOtpSent(true);
-        toast.success("OTP sent to your current email");
       } else {
-        setCurrentEmailOtpError(res.message || "Failed to send OTP");
         setCurrentEmailOtpError(res.message || "Failed to send OTP");
         toast.error(res.message || "Failed to send OTP");
       }
-    } catch (err) {
-      setCurrentEmailOtpError("Network error");
-      toast.error("Network error");
-    } finally {
-      setCurrentEmailOtpLoading(false);
     } catch (err) {
       setCurrentEmailOtpError("Network error");
       toast.error("Network error");
@@ -173,14 +130,10 @@ const Profile = () => {
   };
 
   // Handler to verify current email OTP
-  // Handler to verify current email OTP
   const handleVerifyCurrentEmailOtp = async () => {
     setCurrentEmailOtpLoading(true);
     setCurrentEmailOtpError("");
-    setCurrentEmailOtpLoading(true);
-    setCurrentEmailOtpError("");
     try {
-      const token = localStorage.getItem("accessToken");
       const token = localStorage.getItem("accessToken");
       const res = await verifyCurrentEmailOtp(token, currentEmailOtp);
       if (res.success) {
@@ -193,17 +146,7 @@ const Profile = () => {
         setNewEmailOtpError("");
         setNewEmailOtpVerified(false);
         toast.success("OTP verified. Enter new email.");
-        setCurrentEmailOtpVerified(true);
-        setShowCurrentEmailModal(false);
-        setShowNewEmailModal(true);
-        setNewEmail("");
-        setNewEmailOtp("");
-        setNewEmailOtpSent(false);
-        setNewEmailOtpError("");
-        setNewEmailOtpVerified(false);
-        toast.success("OTP verified. Enter new email.");
       } else {
-        setCurrentEmailOtpError(res.message || "Invalid OTP");
         setCurrentEmailOtpError(res.message || "Invalid OTP");
         toast.error(res.message || "Invalid OTP");
       }
@@ -212,32 +155,20 @@ const Profile = () => {
       toast.error("Network error");
     } finally {
       setCurrentEmailOtpLoading(false);
-    } catch (err) {
-      setCurrentEmailOtpError("Network error");
-      toast.error("Network error");
-    } finally {
-      setCurrentEmailOtpLoading(false);
     }
   };
 
   // Handler to send OTP to new email
-  // Handler to send OTP to new email
   const handleSendNewEmailOtp = async () => {
-    setNewEmailOtpLoading(true);
-    setNewEmailOtpError("");
     setNewEmailOtpLoading(true);
     setNewEmailOtpError("");
     try {
       const token = localStorage.getItem("accessToken");
-      // Pass the current_email_otp_verified flag
       const res = await sendNewEmailOtp(token, newEmail, currentEmailOtpVerified);
       if (res.success) {
         setNewEmailOtpSent(true);
-        setNewEmailOtpSent(true);
         toast.success("OTP sent to new email");
       } else {
-        setNewEmailOtpError(res.message || "Failed to send OTP");
-        toast.error(res.message || "Failed to send OTP");
         setNewEmailOtpError(res.message || "Failed to send OTP");
         toast.error(res.message || "Failed to send OTP");
       }
@@ -246,24 +177,15 @@ const Profile = () => {
       toast.error("Network error");
     } finally {
       setNewEmailOtpLoading(false);
-    } catch (err) {
-      setNewEmailOtpError("Network error");
-      toast.error("Network error");
-    } finally {
-      setNewEmailOtpLoading(false);
     }
   };
 
   // Handler to verify new email OTP and update email
-  // Handler to verify new email OTP and update email
   const handleVerifyNewEmailOtp = async () => {
-    setNewEmailOtpLoading(true);
-    setNewEmailOtpError("");
     setNewEmailOtpLoading(true);
     setNewEmailOtpError("");
     try {
       const token = localStorage.getItem("accessToken");
-      // Pass new_email to verifyNewEmailOtp
       const res = await verifyNewEmailOtp(token, newEmail, newEmailOtp);
       if (res.success) {
         setNewEmailOtpVerified(true);
@@ -286,12 +208,6 @@ const Profile = () => {
   // Handler to close modals
   const handleCloseCurrentEmailModal = () => {
     setShowCurrentEmailModal(false);
-  // Handler to close modals
-  const handleCloseCurrentEmailModal = () => {
-    setShowCurrentEmailModal(false);
-  };
-  const handleCloseNewEmailModal = () => {
-    setShowNewEmailModal(false);
   };
   const handleCloseNewEmailModal = () => {
     setShowNewEmailModal(false);
@@ -420,9 +336,6 @@ const Profile = () => {
               <button className="update-email-btn" onClick={handleOpenChangeEmail} type="button">
                 <i className="fas fa-exchange-alt"></i> Change Email
               </button>
-              <button className="update-email-btn" onClick={handleOpenChangeEmail} type="button">
-                <i className="fas fa-exchange-alt"></i> Change Email
-              </button>
             </div>
 
             <div className="button-group">
@@ -500,62 +413,8 @@ const Profile = () => {
               <div className="modal-buttons">
                 <button className="modal-btn cancel-btn" onClick={handleCloseNewEmailModal} disabled={newEmailOtpLoading}>Cancel</button>
                 <button className="modal-btn submit-btn" onClick={handleVerifyNewEmailOtp} disabled={newEmailOtpLoading || !newEmail || !newEmailOtp}>Submit</button>
-        </div>
-      </div>
-      {/* Current Email OTP Modal */}
-      {showCurrentEmailModal && (
-        <ModalPortal>
-          <div className="modal-overlay">
-            <div className="modal">
-              <div className="modal-header">
-                <i className="fas fa-envelope"></i>
-                <h3>Verify Current Email</h3>
-              </div>
-              <div className="form-group">
-                <label>Current Email</label>
-                <input className="form-input readonly" value={profile.email} disabled />
-              </div>
-              <div className="form-group">
-                <label>Enter OTP</label>
-                <input className="form-input" value={currentEmailOtp} onChange={e => setCurrentEmailOtp(e.target.value)} maxLength={6} />
-              </div>
-              {currentEmailOtpError && <div className="error-text">{currentEmailOtpError}</div>}
-              <div className="modal-buttons">
-                <button className="modal-btn cancel-btn" onClick={handleCloseCurrentEmailModal} disabled={currentEmailOtpLoading}>Cancel</button>
-                <button className="modal-btn submit-btn" onClick={handleVerifyCurrentEmailOtp} disabled={currentEmailOtpLoading || !currentEmailOtp}>Submit</button>
               </div>
             </div>
-          </div>
-        </ModalPortal>
-      )}
-      {/* New Email OTP Modal */}
-      {showNewEmailModal && (
-        <ModalPortal>
-          <div className="modal-overlay">
-            <div className="modal">
-              <div className="modal-header">
-                <i className="fas fa-envelope-open"></i>
-                <h3>Enter New Email</h3>
-              </div>
-              <div className="form-group">
-                <label>New Email</label>
-                <input className="form-input" value={newEmail} onChange={e => setNewEmail(e.target.value)} type="email" />
-              </div>
-              <div className="form-group otp-input-group">
-                <input className="form-input" value={newEmailOtp} onChange={e => setNewEmailOtp(e.target.value)} maxLength={6} placeholder="Enter OTP" />
-                <button className="get-otp-btn" onClick={handleSendNewEmailOtp} disabled={newEmailOtpLoading || !newEmail} type="button">
-                  {newEmailOtpLoading ? "Sending..." : "Get OTP"}
-                </button>
-              </div>
-              {newEmailOtpError && <div className="error-text">{newEmailOtpError}</div>}
-              <div className="modal-buttons">
-                <button className="modal-btn cancel-btn" onClick={handleCloseNewEmailModal} disabled={newEmailOtpLoading}>Cancel</button>
-                <button className="modal-btn submit-btn" onClick={handleVerifyNewEmailOtp} disabled={newEmailOtpLoading || !newEmail || !newEmailOtp}>Submit</button>
-              </div>
-            </div>
-          </div>
-        </ModalPortal>
-      )}
           </div>
         </ModalPortal>
       )}

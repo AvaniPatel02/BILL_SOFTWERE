@@ -39,6 +39,12 @@ const Sidebar = () => {
             <span>Clients</span>
           </Link>
         </li>
+        <li className={`nav-item${location.pathname === "/bknadd" ? " active" : ""}`}>
+          <Link to="/bknadd" className="nav-link-full">
+            <i className="fas fa-plus-circle"></i>
+            <span>BKN Add</span>
+          </Link>
+        </li>
         <li className="nav-item">
           <i className="fas fa-calculator"></i>
           <span>Accounting</span>
