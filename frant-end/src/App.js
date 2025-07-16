@@ -24,11 +24,12 @@ import Banking from "./components/Dashboard/Banking";
 import Address from './components/Dashboard/Address';
 import Clients from './components/Dashboard/Clients';
 import BankAdd from './components/Dashboard/BankAdd';
+import Employee from './components/Dashboard/Employee';
 
 function MainLayout() {
   const location = useLocation();
 
-  const showSidebar = ["/dashboard", "/settings", "/profile", "/update-logo", "/taxinvoices"].includes(location.pathname);
+  const showSidebar = ["/dashboard", "/settings", "/profile", "/update-logo", "/taxinvoices", "/employee"].includes(location.pathname);
 
   return (
     <div className="App" style={{ display: 'flex' }}>
@@ -41,9 +42,9 @@ function MainLayout() {
           <Route path="/banking" element={<Banking />} />
           <Route path="/taxinvoices" element={<TaxInvoices />} />
           <Route path="/update-logo" element={<UpdateLogo />} />
+          <Route path="/employee" element={<ProtectedRoute><Employee /></ProtectedRoute>} />
 
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/bank-add" element={<BankAdd />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/bills" element={<Bills />} />
           <Route path="/bills/:year" element={<YearBills />} />
@@ -56,6 +57,7 @@ function MainLayout() {
           <Route path="/bills" element={<ProtectedRoute><Bills /></ProtectedRoute>} />
           <Route path="/address" element={<ProtectedRoute><Address /></ProtectedRoute>} />
           <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+          <Route path="/bknadd" element={<ProtectedRoute><BankAdd /></ProtectedRoute>} />
         </Routes>
       </div>
     </div>

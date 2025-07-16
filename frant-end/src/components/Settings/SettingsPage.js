@@ -111,10 +111,10 @@ const SettingsPage = () => {
     }
 
     const res = await fetch('http://localhost:8000/api/auth/settings/', {
-      method: 'PUT', // Changed from 'PATCH' to 'PUT'
+      method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
-        // Do NOT set 'Content-Type' header when sending FormData!
+        // 'Content-Type' नहीं डालना है
       },
       body: data,
     });
@@ -122,9 +122,9 @@ const SettingsPage = () => {
     if (res.ok) {
       alert("Settings updated successfully!");
     } else {
-      // Show backend error details for debugging
-      console.log('Backend error:', res.data);
-      alert("Failed to update settings. " + (res.data && JSON.stringify(res.data)));
+      const errorData = await res.json().catch(() => ({}));
+      console.log('Backend error:', errorData);
+      alert("Failed to update settings. " + (errorData && JSON.stringify(errorData)));
     }
   };
 

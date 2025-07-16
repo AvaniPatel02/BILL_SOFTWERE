@@ -33,7 +33,7 @@ const Profile = () => {
     async function fetchProfile() {
       try {
         setLoading(true);
-        const token = localStorage.getItem("accessToken");
+        const token = localStorage.getItem("access_token");
         if (!token) {
           toast.error("No authentication token found. Please login again.");
           setLoading(false);
@@ -72,7 +72,7 @@ const Profile = () => {
   // Save name and mobile
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem("access_token");
       if (!token) {
         toast.error("No authentication token found. Please login again.");
         return;
@@ -112,7 +112,7 @@ const Profile = () => {
     setCurrentEmailOtpVerified(false);
     setCurrentEmailOtpLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem("access_token");
       const res = await sendCurrentEmailOtp(token);
       if (res.success) {
         setCurrentEmailOtpSent(true);
@@ -134,7 +134,7 @@ const Profile = () => {
     setCurrentEmailOtpLoading(true);
     setCurrentEmailOtpError("");
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem("access_token");
       const res = await verifyCurrentEmailOtp(token, currentEmailOtp);
       if (res.success) {
         setCurrentEmailOtpVerified(true);
@@ -163,7 +163,7 @@ const Profile = () => {
     setNewEmailOtpLoading(true);
     setNewEmailOtpError("");
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem("access_token");
       const res = await sendNewEmailOtp(token, newEmail, currentEmailOtpVerified);
       if (res.success) {
         setNewEmailOtpSent(true);
@@ -185,7 +185,7 @@ const Profile = () => {
     setNewEmailOtpLoading(true);
     setNewEmailOtpError("");
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem("access_token");
       const res = await verifyNewEmailOtp(token, newEmail, newEmailOtp);
       if (res.success) {
         setNewEmailOtpVerified(true);
