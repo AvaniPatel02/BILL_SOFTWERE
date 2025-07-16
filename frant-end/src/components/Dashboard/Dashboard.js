@@ -55,7 +55,7 @@ const Dashboard = () => {
               {/* New Bill */}
               <div className="stat-card bg-blue" onClick={() => navigate('/taxinvoices')} style={{ cursor: 'pointer' }}>
                 <img
-                  src="/new-bill.gif"
+                  src="2.gif"
                   alt="New Bill"
                   className="stat-icon"
                   style={{ height: "80px", marginBottom: "0px" }}
@@ -73,11 +73,13 @@ const Dashboard = () => {
               { icon: "fas fa-map-marker-alt", label: "Address" },
               { icon: "fas fa-users", label: "Clients" },
               { icon: "fas fa-user-tie", label: "Employee", route: "/employee" },
+              { icon: "fas fa-map-marker-alt", label: "Address" ,route: "/address"},
+              { icon: "fas fa-users", label: "Clients", route: "/clients" },
               { icon: "fas fa-calculator", label: "Accounting" },
               { icon: "fas fa-balance-scale", label: "Balance Sheet" },
               { icon: "fas fa-university", label: "Banking", route: "/banking" },
-              { icon: "fas fa-cog", label: "Settings" },
-              { icon: "fas fa-image", label: "Update Logo" },
+              { icon: "fas fa-cog", label: "Settings" ,route: "/settings"},
+              { icon: "fas fa-image", label: "Update Logo" ,route: "/update-logo"},
               { icon: "fas fa-plus-circle", label: "Bank Add", route: "/bank-add" },
             ].map((item, idx) => (
               <div
