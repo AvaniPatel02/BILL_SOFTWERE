@@ -19,6 +19,8 @@ import UpdateLogo from './components/Dashboard/UpdateLogo';
 import TaxInvoices from './components/TaxInvoices/TaxInvoices';
 import Bills from './components/Bills/Bills';
 import YearBills from './components/Bills/YearBills';
+import PersonBill from './components/Bills/PersonBill';
+import Banking from "./components/Dashboard/Banking";
 
 function MainLayout() {
   const location = useLocation();
@@ -34,6 +36,7 @@ function MainLayout() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/banking" element={<Banking />} />
           <Route path="/taxinvoices" element={<TaxInvoices />} />
           <Route path="/update-logo" element={<UpdateLogo />} />
 
@@ -41,6 +44,7 @@ function MainLayout() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/bills" element={<Bills />} />
           <Route path="/bills/:year" element={<YearBills />} />
+          <Route path="/bills/:year/:buyerName" element={<PersonBill />} />
         </Routes>
       </div>
     </div>
