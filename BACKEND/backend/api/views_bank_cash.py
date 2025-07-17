@@ -59,6 +59,16 @@ def bank_account_restore(request, pk):
     bank.restore()
     return Response({'message': 'Bank account restored'}, status=200)
 
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def bank_account_permanent_delete(request, pk):
+    try:
+        bank = BankAccount.objects.get(pk=pk, user=request.user, is_deleted=True)
+    except BankAccount.DoesNotExist:
+        return Response({'message': 'Not found'}, status=404)
+    bank.delete()
+    return Response({'message': 'Bank account permanently deleted'}, status=204)
+
 # CASH ENTRIES
 
 @api_view(['GET', 'POST'])
@@ -111,4 +121,14 @@ def cash_entry_restore(request, pk):
     except CashEntry.DoesNotExist:
         return Response({'message': 'Not found'}, status=404)
     entry.restore()
-    return Response({'message': 'Cash entry restored'}, status=200) 
+    return Response({'message': 'Cash entry restored'}, status=200)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def cash_entry_permanent_delete(request, pk):
+    try:
+        entry = CashEntry.objects.get(pk=pk, user=request.user, is_deleted=True)
+    except CashEntry.DoesNotExist:
+        return Response({'message': 'Not found'}, status=404)
+    entry.delete()
+    return Response({'message': 'Cash entry permanently deleted'}, status=204) 

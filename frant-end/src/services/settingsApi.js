@@ -1,11 +1,8 @@
 import BASE_URL from "./apiConfig";
+import { authFetch } from "./authApi";
 
-export async function fetchSettings(token) {
-  const res = await fetch(`${BASE_URL}/auth/settings/`, {
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-  });
+export async function fetchSettings() {
+  const res = await authFetch(`${BASE_URL}/auth/settings/`);
   return res.json();
 }
 

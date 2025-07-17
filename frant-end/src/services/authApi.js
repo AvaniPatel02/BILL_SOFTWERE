@@ -1,5 +1,45 @@
 import BASE_URL from "./apiConfig";
 
+export async function refreshAccessToken(refreshToken) {
+  const res = await fetch(`${BASE_URL}/login/refresh/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh: refreshToken }),
+  });
+  if (!res.ok) throw new Error("Failed to refresh token");
+  return res.json(); // { access: "newAccessToken" }
+}
+
+export async function authFetch(url, options = {}) {
+  let accessToken = localStorage.getItem("access_token");
+  let refreshToken = localStorage.getItem("refresh_token");
+
+  options.headers = {
+    ...(options.headers || {}),
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  let res = await fetch(url, options);
+
+  if (res.status === 401 && refreshToken) {
+    // Try to refresh the token
+    try {
+      const data = await refreshAccessToken(refreshToken);
+      localStorage.setItem("access_token", data.access);
+      // Retry the original request with new token
+      options.headers.Authorization = `Bearer ${data.access}`;
+      res = await fetch(url, options);
+    } catch (err) {
+      // Refresh failed, force logout
+      localStorage.clear();
+      window.location.href = "/login";
+      throw new Error("Session expired. Please log in again.");
+    }
+  }
+
+  return res;
+}
+
 // Signup: Step 1 - Send OTP
 export const sendSignupOtp = async (email) => {
   const res = await fetch(`${BASE_URL}/auth/send-otp/`, {

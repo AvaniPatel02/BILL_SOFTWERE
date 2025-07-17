@@ -112,6 +112,8 @@ class BankAccountSerializer(serializers.ModelSerializer):
         fields = ['id', 'bank_name', 'account_number', 'amount']
 
 class CashEntrySerializer(serializers.ModelSerializer):
+    date = serializers.DateField(format='%d-%m-%Y', input_formats=['%Y-%m-%d'])
+
     class Meta:
         model = CashEntry
         fields = ['id', 'amount', 'date', 'description']
@@ -119,6 +121,35 @@ class CashEntrySerializer(serializers.ModelSerializer):
 # Employee serializer for salary management
 from .models import Employee
 class EmployeeSerializer(serializers.ModelSerializer):
+    joining_date = serializers.SerializerMethodField()
+
     class Meta:
         model = Employee
         fields = '__all__'
+
+    def get_joining_date(self, obj):
+        return obj.joining_date.strftime('%d-%m-%Y') if obj.joining_date else ""
+
+# Invoice serializer
+from .models import Invoice
+class InvoiceSerializer(serializers.ModelSerializer):
+    invoice_date = serializers.SerializerMethodField()
+    delivery_note_date = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+    updated_at = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Invoice
+        fields = '__all__'
+
+    def get_invoice_date(self, obj):
+        return obj.invoice_date.strftime('%d-%m-%Y') if obj.invoice_date else ""
+
+    def get_delivery_note_date(self, obj):
+        return obj.delivery_note_date.strftime('%d-%m-%Y') if obj.delivery_note_date else ""
+
+    def get_created_at(self, obj):
+        return obj.created_at.strftime('%d-%m-%Y') if obj.created_at else ""
+
+    def get_updated_at(self, obj):
+        return obj.updated_at.strftime('%d-%m-%Y') if obj.updated_at else ""
