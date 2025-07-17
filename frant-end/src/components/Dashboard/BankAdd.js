@@ -1,18 +1,23 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 import "../../styles/BankAdd.css";
 import Modal from "react-modal";
-
-const initialBanks = [
-  { id: 1, bank_name: "SBI", account_number: "1234567890", amount: 5000 },
-  { id: 2, bank_name: "HDFC", account_number: "9876543210", amount: 12000 },
-];
-const initialCashEntries = [
-  { id: 1, amount: 2000, date: "2024-07-01", description: "Office petty cash" },
-  { id: 2, amount: 1500, date: "2024-07-10", description: "Snacks" },
-];
+import {
+  fetchBanks,
+  addBank,
+  updateBank,
+  deleteBank,
+  fetchDeletedBanks,
+  restoreBank,
+  fetchCashEntries,
+  addCashEntry,
+  updateCashEntry,
+  deleteCashEntry,
+  fetchDeletedCashEntries,
+  restoreCashEntry,
+} from "../../services/bankCashApi";
 
 function formatDate(date) {
   if (!date) return "-";
@@ -23,8 +28,8 @@ Modal.setAppElement("#root"); // for accessibility
 
 const BankAdd = () => {
   const navigate = useNavigate();
-  const [banks, setBanks] = useState(initialBanks);
-  const [cashEntries, setCashEntries] = useState(initialCashEntries);
+  const [banks, setBanks] = useState([]);
+  const [cashEntries, setCashEntries] = useState([]);
   const [deletedBanks, setDeletedBanks] = useState([]);
   const [deletedCashEntries, setDeletedCashEntries] = useState([]);
   const [showCashModal, setShowCashModal] = useState(false);
@@ -39,6 +44,25 @@ const BankAdd = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Fetch all data on mount
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      fetchBanks(),
+      fetchCashEntries(),
+      fetchDeletedBanks(),
+      fetchDeletedCashEntries(),
+    ])
+      .then(([banksData, cashData, deletedBanksData, deletedCashData]) => {
+        setBanks(banksData);
+        setCashEntries(cashData);
+        setDeletedBanks(deletedBanksData);
+        setDeletedCashEntries(deletedCashData);
+      })
+      .catch(() => setError("Failed to fetch data"))
+      .finally(() => setLoading(false));
+  }, []);
+
   // Handlers for Bank
   const resetForm = () => {
     setFormData({ bank_name: "", account_number: "", confirm_account_number: "", amount: "" });
@@ -50,21 +74,29 @@ const BankAdd = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      if (formData.account_number !== formData.confirm_account_number) {
-        setError("Account numbers do not match");
-        setLoading(false);
-        return;
-      }
-      if (editingBank) {
-        setBanks(banks.map((b) => (b.id === editingBank.id ? { ...editingBank, ...formData, amount: Number(formData.amount) } : b)));
-        setShowBankModal(false);
-      } else {
-        setBanks([...banks, { ...formData, id: Date.now(), amount: Number(formData.amount) }]);
-      }
-      resetForm();
+    setError("");
+    if (formData.account_number !== formData.confirm_account_number) {
+      setError("Account numbers do not match");
       setLoading(false);
-    }, 500);
+      return;
+    }
+    const payload = {
+      bank_name: formData.bank_name,
+      account_number: formData.account_number,
+      amount: formData.amount,
+    };
+    const apiCall = editingBank
+      ? updateBank(editingBank.id, payload)
+      : addBank(payload);
+
+    apiCall
+      .then(() => fetchBanks().then(setBanks))
+      .catch(() => setError("Failed to save bank"))
+      .finally(() => {
+        resetForm();
+        setShowBankModal(false);
+        setLoading(false);
+      });
   };
   // Open modal for new bank (blank form)
   const openBankModal = () => {
@@ -83,15 +115,27 @@ const BankAdd = () => {
     });
     setShowBankModal(true);
   };
+  // Soft delete bank (backend)
   const handleDeleteBank = (id) => {
-    const bank = banks.find((b) => b.id === id);
-    setBanks(banks.filter((b) => b.id !== id));
-    setDeletedBanks([...deletedBanks, bank]);
+    setLoading(true);
+    deleteBank(id)
+      .then(() => {
+        fetchBanks().then(setBanks);
+        fetchDeletedBanks().then(setDeletedBanks);
+      })
+      .catch(() => setError("Failed to delete bank"))
+      .finally(() => setLoading(false));
   };
+  // Restore bank (backend)
   const handleRestoreBank = (id) => {
-    const bank = deletedBanks.find((b) => b.id === id);
-    setDeletedBanks(deletedBanks.filter((b) => b.id !== id));
-    setBanks([...banks, bank]);
+    setLoading(true);
+    restoreBank(id)
+      .then(() => {
+        fetchBanks().then(setBanks);
+        fetchDeletedBanks().then(setDeletedBanks);
+      })
+      .catch(() => setError("Failed to restore bank"))
+      .finally(() => setLoading(false));
   };
 
   // Close modal for bank (reset form)
@@ -112,16 +156,24 @@ const BankAdd = () => {
   const handleCashSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      if (editingCashEntry) {
-        setCashEntries(cashEntries.map((c) => (c.id === editingCashEntry.id ? { ...editingCashEntry, ...cashFormData, amount: Number(cashFormData.amount) } : c)));
+    setError("");
+    const payload = {
+      amount: cashFormData.amount,
+      date: cashFormData.date,
+      description: cashFormData.description,
+    };
+    const apiCall = editingCashEntry
+      ? updateCashEntry(editingCashEntry.id, payload)
+      : addCashEntry(payload);
+
+    apiCall
+      .then(() => fetchCashEntries().then(setCashEntries))
+      .catch(() => setError("Failed to save cash entry"))
+      .finally(() => {
+        resetCashForm();
         setShowCashModal(false);
-      } else {
-        setCashEntries([...cashEntries, { ...cashFormData, id: Date.now(), amount: Number(cashFormData.amount) }]);
-      }
-      resetCashForm();
-      setLoading(false);
-    }, 500);
+        setLoading(false);
+      });
   };
   // Open modal for new cash entry (blank form)
   const openCashModal = () => {
@@ -139,15 +191,27 @@ const BankAdd = () => {
     });
     setShowCashModal(true);
   };
+  // Soft delete cash entry (backend)
   const handleDeleteCashEntry = (id) => {
-    const entry = cashEntries.find((c) => c.id === id);
-    setCashEntries(cashEntries.filter((c) => c.id !== id));
-    setDeletedCashEntries([...deletedCashEntries, entry]);
+    setLoading(true);
+    deleteCashEntry(id)
+      .then(() => {
+        fetchCashEntries().then(setCashEntries);
+        fetchDeletedCashEntries().then(setDeletedCashEntries);
+      })
+      .catch(() => setError("Failed to delete cash entry"))
+      .finally(() => setLoading(false));
   };
+  // Restore cash entry (backend)
   const handleRestoreCashEntry = (id) => {
-    const entry = deletedCashEntries.find((c) => c.id === id);
-    setDeletedCashEntries(deletedCashEntries.filter((c) => c.id !== id));
-    setCashEntries([...cashEntries, entry]);
+    setLoading(true);
+    restoreCashEntry(id)
+      .then(() => {
+        fetchCashEntries().then(setCashEntries);
+        fetchDeletedCashEntries().then(setDeletedCashEntries);
+      })
+      .catch(() => setError("Failed to restore cash entry"))
+      .finally(() => setLoading(false));
   };
 
   // Modal open/close handlers
@@ -157,22 +221,36 @@ const BankAdd = () => {
   const openRecycleModal = () => setShowRecycleModal(true);
   const closeRecycleModal = () => setShowRecycleModal(false);
 
-  // Soft delete logic
+  // Soft delete logic (calls backend)
   const confirmDelete = () => {
     if (!deleteTarget) return;
+    setLoading(true);
     if (deleteTarget.type === 'bank') {
-      const bank = banks.find((b) => b.id === deleteTarget.id);
-      setBanks(banks.filter((b) => b.id !== deleteTarget.id));
-      setDeletedBanks([...deletedBanks, bank]);
+      deleteBank(deleteTarget.id)
+        .then(() => {
+          fetchBanks().then(setBanks);
+          fetchDeletedBanks().then(setDeletedBanks);
+        })
+        .catch(() => setError("Failed to delete bank"))
+        .finally(() => {
+          closeDeleteModal();
+          setLoading(false);
+        });
     } else if (deleteTarget.type === 'cash') {
-      const entry = cashEntries.find((c) => c.id === deleteTarget.id);
-      setCashEntries(cashEntries.filter((c) => c.id !== deleteTarget.id));
-      setDeletedCashEntries([...deletedCashEntries, entry]);
+      deleteCashEntry(deleteTarget.id)
+        .then(() => {
+          fetchCashEntries().then(setCashEntries);
+          fetchDeletedCashEntries().then(setDeletedCashEntries);
+        })
+        .catch(() => setError("Failed to delete cash entry"))
+        .finally(() => {
+          closeDeleteModal();
+          setLoading(false);
+        });
     }
-    closeDeleteModal();
   };
 
-  // Permanent delete handlers
+  // Permanent delete handlers (local only, optional)
   const handlePermanentDeleteBank = (id) => {
     setDeletedBanks(deletedBanks.filter((b) => b.id !== id));
   };
