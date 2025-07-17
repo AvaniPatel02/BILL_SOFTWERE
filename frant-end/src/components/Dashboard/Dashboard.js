@@ -84,7 +84,7 @@ const Dashboard = () => {
             ].map((item, idx) => (
               <div
                 className="sidebar-card"
-                key={item.label}
+                key={item.label + '-' + idx}
                 onClick={() => item.route && navigate(item.route)}
                 style={item.route ? { cursor: "pointer" } : {}}
               >

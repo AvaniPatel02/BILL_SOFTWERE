@@ -40,7 +40,6 @@ function MainLayout() {
           <Route path="/taxinvoices" element={<TaxInvoices />} />
           <Route path="/update-logo" element={<UpdateLogo />} />
           <Route path="/employee" element={<ProtectedRoute><Employee /></ProtectedRoute>} />
-
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/bills" element={<Bills />} />
@@ -54,7 +53,7 @@ function MainLayout() {
           <Route path="/bills" element={<ProtectedRoute><Bills /></ProtectedRoute>} />
           <Route path="/address" element={<ProtectedRoute><Address /></ProtectedRoute>} />
           <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
-          <Route path="/bknadd" element={<ProtectedRoute><BankAdd /></ProtectedRoute>} />
+          <Route path="/bank-add" element={<ProtectedRoute><BankAdd /></ProtectedRoute>} />
         </Routes>
       </div>
     </div>
