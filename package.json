@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "dayjs": "^1.11.13",
     "react-modal": "^3.16.3"
   }
 }
