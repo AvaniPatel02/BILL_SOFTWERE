@@ -1,0 +1,215 @@
+/* Buyer Page Modern Styles */
+.buyer-content {
+  flex: 1;
+  padding: 40px;
+  background: #f6f8fa;
+  min-height: 80vh;
+}
+
+.buyer-header-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.buyer-back-btn {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  margin-right: 18px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,123,255,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.buyer-back-btn:hover {
+  background: #0056b3;
+  box-shadow: 0 4px 16px rgba(0,123,255,0.13);
+}
+
+.buyer-newbill-btn {
+  background: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 28px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 28px;
+  margin-left: 2px;
+  box-shadow: 0 2px 8px rgba(40,167,69,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.buyer-newbill-btn:hover {
+  background: #218838;
+  box-shadow: 0 4px 16px rgba(40,167,69,0.13);
+}
+
+.buyer-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.buyer-modal {
+  background: #fff;
+  padding: 32px 28px 24px 28px;
+  border-radius: 14px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  min-width: 340px;
+  max-width: 95vw;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.buyer-modal h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #222;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.buyer-modal label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+
+.buyer-modal input,
+.buyer-modal textarea,
+.buyer-modal select {
+  margin-top: 4px;
+  padding: 9px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  font-size: 15px;
+  font-family: inherit;
+  background: #f8fafc;
+  transition: border 0.2s;
+}
+
+.buyer-modal input:focus,
+.buyer-modal textarea:focus,
+.buyer-modal select:focus {
+  border: 1.5px solid #007bff;
+  outline: none;
+}
+
+.buyer-modal textarea {
+  min-height: 48px;
+}
+
+.buyer-modal-btns {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.buyer-modal-save {
+  background: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 22px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.buyer-modal-save:hover {
+  background: #218838;
+}
+
+.buyer-modal-cancel {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 22px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.buyer-modal-cancel:hover {
+  background: #b52a37;
+}
+
+.buyer-table-outer {
+  margin-top: 36px;
+  overflow-x: auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  background: #fff;
+  padding: 18px 0 8px 0;
+}
+
+.buyer-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.buyer-table th, .buyer-table td {
+  padding: 12px 18px;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: left;
+  font-size: 15px;
+}
+
+.buyer-table th {
+  background: #f3f6fa;
+  color: #222;
+  font-weight: 700;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.buyer-table tr:last-child td {
+  border-bottom: none;
+}
+
+.buyer-table tr {
+  transition: background 0.18s;
+}
+
+.buyer-table tr:hover {
+  background: #f0f6ff;
+}
+
+.buyer-table tr:nth-child(even) {
+  background: #f9fbfd;
+}
+
+@media (max-width: 700px) {
+  .buyer-content {
+    padding: 12px;
+  }
+  .buyer-table th, .buyer-table td {
+    padding: 8px 6px;
+    font-size: 13px;
+  }
+  .buyer-modal {
+    min-width: 90vw;
+    padding: 18px 8px 12px 8px;
+  }
+} 

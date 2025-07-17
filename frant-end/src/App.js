@@ -22,6 +22,7 @@ import Address from './components/Dashboard/Address';
 import Clients from './components/Dashboard/Clients';
 import BankAdd from './components/Dashboard/BankAdd';
 import Employee from './components/Dashboard/Employee';
+import Buyer from './components/Dashboard/Buyer';
 
 function MainLayout() {
   const location = useLocation();
@@ -45,6 +46,7 @@ function MainLayout() {
           <Route path="/bills" element={<Bills />} />
           <Route path="/bills/:year" element={<YearBills />} />
           <Route path="/bills/:year/:buyerName" element={<PersonBill />} />
+          <Route path="/buyer" element={<ProtectedRoute><Buyer /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/taxinvoices" element={<ProtectedRoute><TaxInvoices /></ProtectedRoute>} />
           <Route path="/update-logo" element={<ProtectedRoute><UpdateLogo /></ProtectedRoute>} />
