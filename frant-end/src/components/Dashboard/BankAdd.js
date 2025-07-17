@@ -17,11 +17,13 @@ import {
   deleteCashEntry,
   fetchDeletedCashEntries,
   restoreCashEntry,
+  permanentDeleteBank,
+  permanentDeleteCashEntry,
 } from "../../services/bankCashApi";
 
 function formatDate(date) {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString();
+  return date; // Already formatted by backend
 }
 
 Modal.setAppElement("#root"); // for accessibility
@@ -157,6 +159,11 @@ const BankAdd = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    if (!cashFormData.date) {
+      setError("Date is required");
+      setLoading(false);
+      return;
+    }
     const payload = {
       amount: cashFormData.amount,
       date: cashFormData.date,
@@ -252,10 +259,20 @@ const BankAdd = () => {
 
   // Permanent delete handlers (local only, optional)
   const handlePermanentDeleteBank = (id) => {
-    setDeletedBanks(deletedBanks.filter((b) => b.id !== id));
+    if (!window.confirm("Are you sure you want to permanently delete this bank account?")) return;
+    setLoading(true);
+    permanentDeleteBank(id)
+      .then(() => fetchDeletedBanks().then(setDeletedBanks))
+      .catch(() => setError("Failed to permanently delete bank"))
+      .finally(() => setLoading(false));
   };
   const handlePermanentDeleteCash = (id) => {
-    setDeletedCashEntries(deletedCashEntries.filter((c) => c.id !== id));
+    if (!window.confirm("Are you sure you want to permanently delete this cash entry?")) return;
+    setLoading(true);
+    permanentDeleteCashEntry(id)
+      .then(() => fetchDeletedCashEntries().then(setDeletedCashEntries))
+      .catch(() => setError("Failed to permanently delete cash entry"))
+      .finally(() => setLoading(false));
   };
 
   return (
