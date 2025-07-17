@@ -1,24 +1,171 @@
-/* Banking.css - Styles for the Banking component */
+/* Modern Banking Page Styles */
 
 .banking-container {
+  background: #f8f9fb;
+  min-height: 100vh;
+  padding: 0;
   display: flex;
+  flex-direction: column;
 }
 
-.banking-content {
-  flex: 1;
-  padding: 2rem;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+.container {
+  max-width: 700px;
+  margin: 32px auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 32px 24px 40px 24px;
+}
+
+.banking-header-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32px;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 .banking-title {
-  font-size: 2rem;
-  margin-bottom: 1rem;
+  font-size: 2.2rem;
+  font-weight: 700;
   color: #2d3a4b;
+  text-align: center;
+  margin: 0;
 }
 
-.banking-description {
-  font-size: 1.1rem;
-  color: #555;
+.banking-section-box {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 16px rgba(44,62,80,0.07);
+  padding: 32px 24px 24px 24px;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+}
+
+.banking-action-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.banking-action-btn {
+  flex: 1 1 0;
+  min-width: 140px;
+  min-height: 70px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f7fa;
+  border: 2px solid #222;
+  border-radius: 10px;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.18s, border 0.18s, color 0.18s;
+  margin: 0;
+}
+.banking-action-btn:hover, .banking-action-btn:focus {
+  background: #1976d2;
+  color: #fff;
+  border-color: #1976d2;
+}
+
+.banking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.banking-form h3 {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #1976d2;
+}
+
+.banking-input {
+  padding: 12px 14px;
+  border: 1.5px solid #cfd8dc;
+  border-radius: 7px;
+  font-size: 1.08rem;
+  outline: none;
+  transition: border 0.2s;
+  background: #f8fafc;
+  color: #222;
+  height: 50px;
+}
+.banking-input:focus {
+  border: 1.5px solid #1976d2;
+  background: #fff;
+}
+
+.banking-form-btn-row {
+  display: flex;
+  gap: 18px;
+  margin-top: 10px;
+}
+
+.banking-form-btn {
+  flex: 1;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 12px 0;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+  box-shadow: 0 2px 8px rgba(25,118,210,0.07);
+}
+.banking-form-btn:hover, .banking-form-btn:focus {
+  background: #1251a3;
+}
+
+@media (max-width: 900px) {
+  .container {
+    max-width: 98vw;
+    padding: 16px 4vw 24px 4vw;
+  }
+  .banking-section-box {
+    padding: 18px 4vw 18px 4vw;
+  }
+}
+
+@media (max-width: 600px) {
+  .banking-action-row {
+    flex-direction: column;
+    gap: 14px;
+    padding: 0;
+  }
+  .banking-action-btn {
+    min-width: 100%;
+    min-height: 54px;
+    font-size: 1.05rem;
+  }
+  .container {
+    padding: 8px 2vw 16px 2vw;
+  }
+  .banking-section-box {
+    padding: 10px 2vw 10px 2vw;
+  }
+  .banking-form {
+    max-width: 100%;
+    padding: 0;
+  }
 } 

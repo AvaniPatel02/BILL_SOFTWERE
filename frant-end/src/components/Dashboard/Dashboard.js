@@ -67,7 +67,7 @@ const Dashboard = () => {
           </div>
           {/* Sidebar Items as Cards */}
           <div className="sidebar-cards-container">
-            {[
+            {[{ icon: "fas fa-user", label: "Buyername", route: "/buyer" },
               { icon: "fas fa-user", label: "Profile" },
               { icon: "fas fa-file-invoice", label: "Bills", route: "/bills" },
               { icon: "fas fa-map-marker-alt", label: "Address" },
