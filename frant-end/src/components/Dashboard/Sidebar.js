@@ -51,9 +51,11 @@ const Sidebar = () => {
             <span>BKN Add</span>
           </Link>
         </li>
-        <li className="nav-item">
-          <i className="fas fa-calculator"></i>
-          <span>Accounting</span>
+        <li className={`nav-item${location.pathname === "/accounting" ? " active" : ""}`}>
+          <Link to="/accounting" className="nav-link-full">
+            <i className="fas fa-calculator"></i>
+            <span>Accounting</span>
+          </Link>
         </li>
         <li className="nav-item">
           <i className="fas fa-balance-scale"></i>
