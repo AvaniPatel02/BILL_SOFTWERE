@@ -23,6 +23,7 @@ import Clients from './components/Dashboard/Clients';
 import BankAdd from './components/Dashboard/BankAdd';
 import Employee from './components/Dashboard/Employee';
 import Buyer from './components/Dashboard/Buyer';
+// import Accounting from './components/Dashboard/Accounting';
 
 function MainLayout() {
   const location = useLocation();
@@ -56,6 +57,7 @@ function MainLayout() {
           <Route path="/address" element={<ProtectedRoute><Address /></ProtectedRoute>} />
           <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
           <Route path="/bank-add" element={<ProtectedRoute><BankAdd /></ProtectedRoute>} />
+          {/* <Route path="/accounting" element={<Accounting />} /> */}
         </Routes>
       </div>
     </div>

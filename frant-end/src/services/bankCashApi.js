@@ -62,6 +62,15 @@ export const restoreBank = (id) =>
     return res.json();
   });
 
+export const permanentDeleteBank = (id) =>
+  fetch(`${BASE_URL}/bank-accounts/${id}/permanent-delete/`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  }).then((res) => {
+    if (!res.ok && res.status !== 204) throw new Error("Failed to permanently delete bank");
+    return res;
+  });
+
 // CASH ENTRIES
 export const fetchCashEntries = () =>
   fetch(`${BASE_URL}/cash-entries/`, {
@@ -115,4 +124,13 @@ export const restoreCashEntry = (id) =>
   }).then((res) => {
     if (!res.ok) throw new Error("Failed to restore cash entry");
     return res.json();
+  });
+
+export const permanentDeleteCashEntry = (id) =>
+  fetch(`${BASE_URL}/cash-entries/${id}/permanent-delete/`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  }).then((res) => {
+    if (!res.ok && res.status !== 204) throw new Error("Failed to permanently delete cash entry");
+    return res;
   }); 

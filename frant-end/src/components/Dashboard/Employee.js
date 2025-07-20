@@ -5,6 +5,7 @@ import "../../styles/Employee.css";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import dayjs from 'dayjs';
+import { fetchEmployees, addEmployee, softDeleteEmployee, fetchDeletedEmployees, restoreEmployee } from "../../services/employeeApi";
 
 const Employee = () => {
     const navigate = useNavigate();
@@ -12,14 +13,14 @@ const Employee = () => {
     const [form, setForm] = useState({
         name: "",
         email: "",
-        joiningDate: "",
+        joining_date: "",
         salary: "",
-        mobile: ""
+        number: ""
     });
     const [employees, setEmployees] = useState([]);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [editIndex, setEditIndex] = useState(null);
-    const [editForm, setEditForm] = useState({ name: '', email: '', joiningDate: '', salary: '', mobile: '' });
+    const [editForm, setEditForm] = useState({ name: '', email: '', joining_date: '', salary: '', number: '' });
     const [deletedEmployees, setDeletedEmployees] = useState([]);
     const [showDeletedModal, setShowDeletedModal] = useState(false);
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -31,10 +32,43 @@ const Employee = () => {
     const [newSalary, setNewSalary] = useState('');
     const [incrementError, setIncrementError] = useState('');
 
+    // Fetch employees from backend on mount
+    React.useEffect(() => {
+        const loadEmployees = async () => {
+            try {
+                const token = localStorage.getItem("access_token");
+                if (!token) return;
+                const data = await fetchEmployees(token);
+                setEmployees(data);
+            } catch (err) {
+                // Optionally handle error
+            }
+        };
+        loadEmployees();
+    }, []);
+
+    // Fetch deleted employees from backend
+    const loadDeletedEmployees = async () => {
+        try {
+            const token = localStorage.getItem("access_token");
+            if (!token) return;
+            const data = await fetchDeletedEmployees(token);
+            setDeletedEmployees(data);
+        } catch (err) {
+            // Optionally handle error
+        }
+    };
+
+    // Show deleted employees modal and load data
+    const handleShowDeletedModal = () => {
+        setShowDeletedModal(true);
+        loadDeletedEmployees();
+    };
+
     // Helper to calculate duration
-    const getDuration = (joiningDate) => {
-        if (!joiningDate) return '';
-        const start = dayjs(joiningDate);
+    const getDuration = (joining_date) => {
+        if (!joining_date) return '';
+        const start = dayjs(joining_date);
         const now = dayjs();
         const years = now.diff(start, 'year');
         const months = now.diff(start.add(years, 'year'), 'month');
@@ -48,17 +82,31 @@ const Employee = () => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    // Add actionHistory to new employees
-    const handleAddEmployee = (e) => {
+    // Add actionHistory to new employees and send to backend
+    const handleAddEmployee = async (e) => {
         e.preventDefault();
-        setEmployees([...employees, { ...form, actionHistory: [{ action: 'Added', date: dayjs().format('YYYY-MM-DD HH:mm') }] }]);
-        setShowModal(false);
-        setForm({ name: "", email: "", joiningDate: "", salary: "", mobile: "" });
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+        const employeeData = {
+            name: form.name,
+            email: form.email,
+            joining_date: form.joining_date,
+            salary: form.salary,
+            number: form.number
+        };
+        try {
+            const saved = await addEmployee(token, employeeData);
+            setEmployees([...employees, saved]);
+            setShowModal(false);
+            setForm({ name: "", email: "", joining_date: "", salary: "", number: "" });
+        } catch (err) {
+            // Optionally handle error
+        }
     };
 
     const handleCancel = () => {
         setShowModal(false);
-        setForm({ name: "", email: "", joiningDate: "", salary: "", mobile: "" });
+        setForm({ name: "", email: "", joining_date: "", salary: "", number: "" });
     };
 
     // Modal close on overlay click
@@ -101,15 +149,18 @@ const Employee = () => {
         setShowConfirmDelete(true);
     };
 
-    // Delete
-    const handleConfirmDelete = () => {
-        const emp = { ...employees[deleteIndex] };
-        if (!emp.actionHistory) emp.actionHistory = [];
-        emp.actionHistory = [...(emp.actionHistory || []), { action: 'Deleted', date: dayjs().format('YYYY-MM-DD HH:mm') }];
-        setDeletedEmployees([...deletedEmployees, emp]);
-        setEmployees(employees.filter((_, i) => i !== deleteIndex));
-        setShowConfirmDelete(false);
-        setDeleteIndex(null);
+    // Delete (soft delete)
+    const handleConfirmDelete = async () => {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+        try {
+            await softDeleteEmployee(token, employees[deleteIndex].id);
+            setEmployees(employees.filter((_, i) => i !== deleteIndex));
+            setShowConfirmDelete(false);
+            setDeleteIndex(null);
+        } catch (err) {
+            // Optionally handle error
+        }
     };
 
     const handleCancelDelete = () => {
@@ -118,12 +169,18 @@ const Employee = () => {
     };
 
     // Restore
-    const handleRestoreEmployee = (idx) => {
-        const emp = { ...deletedEmployees[idx] };
-        if (!emp.actionHistory) emp.actionHistory = [];
-        emp.actionHistory = [...(emp.actionHistory || []), { action: 'Restored', date: dayjs().format('YYYY-MM-DD HH:mm') }];
-        setEmployees([...employees, emp]);
-        setDeletedEmployees(deletedEmployees.filter((_, i) => i !== idx));
+    const handleRestoreEmployee = async (idx) => {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+        try {
+            await restoreEmployee(token, deletedEmployees[idx].id);
+            // Remove from deleted list and reload active employees
+            loadDeletedEmployees();
+            const active = await fetchEmployees(token);
+            setEmployees(active);
+        } catch (err) {
+            // Optionally handle error
+        }
     };
 
     // Increment (open modal)
@@ -192,7 +249,7 @@ const Employee = () => {
                             <div></div>
                             <div style={{ display: 'flex', gap: '10px' }}>
                                 <button className="employee-add-btn" onClick={() => setShowModal(true)}>Add Employee</button>
-                                <button className="employee-action-btn employee-view-btn" onClick={() => setShowDeletedModal(true)}>Deleted Employees</button>
+                                <button className="employee-action-btn employee-view-btn" onClick={handleShowDeletedModal}>Deleted Employees</button>
                             </div>
                         </div>
                         <div className="employee-content">
@@ -205,7 +262,7 @@ const Employee = () => {
                                             <th>Email</th>
                                             <th>Joining Date</th>
                                             <th>Salary</th>
-                                            <th>Mobile</th>
+                                            <th>Mobile No.</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -214,14 +271,14 @@ const Employee = () => {
                                             <tr key={idx}>
                                                 <td>{emp.name}</td>
                                                 <td>{emp.email}</td>
-                                                <td>{emp.joiningDate}</td>
+                                                <td>{emp.joining_date}</td>
                                                 <td>{emp.salary}</td>
-                                                <td>{emp.mobile}</td>
+                                                <td>{emp.number}</td>
                                                 <td>
-                                                    <button className="employee-action-btn employee-edit-btn" onClick={() => handleEditClick(idx)}>Edit</button>
-                                                    <button className="employee-action-btn employee-delete-btn" onClick={() => handleDeleteClick(idx)}>Delete</button>
                                                     <button className="employee-action-btn employee-view-btn" onClick={() => handleViewClick(idx)}>View</button>
+                                                    <button className="employee-action-btn employee-edit-btn" onClick={() => handleEditClick(idx)}>Edit</button>
                                                     <button className="employee-action-btn employee-increment-btn" onClick={() => handleIncrement(idx)}>Increment</button>
+                                                    <button className="employee-action-btn employee-delete-btn" onClick={() => handleDeleteClick(idx)}>Delete</button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -248,15 +305,15 @@ const Employee = () => {
                         </div>
                         <div className="employee-form-group">
                             <label>Joining Date</label>
-                            <input type="date" name="joiningDate" value={form.joiningDate} onChange={handleInputChange} required />
+                            <input type="date" name="joining_date" value={form.joining_date} onChange={handleInputChange} required />
                         </div>
                         <div className="employee-form-group">
                             <label>Salary</label>
                             <input type="number" name="salary" value={form.salary} onChange={handleInputChange} required />
                         </div>
                         <div className="employee-form-group">
-                            <label>Mobile Number</label>
-                            <input type="text" name="mobile" value={form.mobile} onChange={handleInputChange} required />
+                            <label>number Number</label>
+                            <input type="text" name="number" value={form.number} onChange={handleInputChange} required />
                         </div>
                         <div className="employee-modal-actions">
                             <button type="submit" className="employee-add-btn">Add Employee</button>
@@ -281,15 +338,15 @@ const Employee = () => {
                         </div>
                         <div className="employee-form-group">
                             <label>Joining Date</label>
-                            <input type="date" name="joiningDate" value={editForm.joiningDate} onChange={handleEditInputChange} required />
+                            <input type="date" name="joining_date" value={editForm.joining_date} onChange={handleEditInputChange} required />
                         </div>
                         <div className="employee-form-group">
                             <label>Salary</label>
                             <input type="number" name="salary" value={editForm.salary} onChange={handleEditInputChange} required />
                         </div>
                         <div className="employee-form-group">
-                            <label>Mobile Number</label>
-                            <input type="text" name="mobile" value={editForm.mobile} onChange={handleEditInputChange} required />
+                            <label>number Number</label>
+                            <input type="text" name="number" value={editForm.number} onChange={handleEditInputChange} required />
                         </div>
                         <div className="employee-modal-actions">
                             <button type="submit" className="employee-add-btn">Update</button>
@@ -313,7 +370,7 @@ const Employee = () => {
                                     <th>Email</th>
                                     <th>Joining Date</th>
                                     <th>Salary</th>
-                                    {/* <th>Mobile</th> */}
+                                    {/* <th>number</th> */}
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -322,9 +379,9 @@ const Employee = () => {
                                     <tr key={idx}>
                                         <td>{emp.name}</td>
                                         <td>{emp.email}</td>
-                                        <td>{emp.joiningDate}</td>
+                                        <td>{emp.joining_date}</td>
                                         <td>{emp.salary}</td>
-                                        {/* <td>{emp.mobile}</td> */}
+                                        {/* <td>{emp.number}</td> */}
                                         <td>
                                             <button className="employee-action-btn employee-edit-btn" onClick={() => handleRestoreEmployee(idx)}>Restore</button>
                                         </td>
@@ -388,10 +445,10 @@ const Employee = () => {
                                     <tbody>
                                         <tr><th>Name</th><td>{emp.name}</td></tr>
                                         <tr><th>Email</th><td>{emp.email}</td></tr>
-                                        <tr><th>Joining Date</th><td>{emp.joiningDate}</td></tr>
+                                        <tr><th>Joining Date</th><td>{emp.joining_date}</td></tr>
                                         <tr><th>Salary</th><td>{emp.salary}</td></tr>
-                                        <tr><th>Mobile</th><td>{emp.mobile}</td></tr>
-                                        <tr><th>Company Duration</th><td>{getDuration(emp.joiningDate)}</td></tr>
+                                        <tr><th>number</th><td>{emp.number}</td></tr>
+                                        <tr><th>Company Duration</th><td>{getDuration(emp.joining_date)}</td></tr>
                                     </tbody>
                                 </table>
                                 <h3 className="employee-action-history-title">Action History</h3>

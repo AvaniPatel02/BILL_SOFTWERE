@@ -7,6 +7,7 @@ from rest_framework import serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, date
+import json
 
 # Serializer for Invoice
 class InvoiceSerializer(serializers.ModelSerializer):
@@ -48,28 +49,35 @@ class InvoiceCalculationView(APIView):
     """
     def post(self, request):
         data = request.data
+        if isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except Exception:
+                return Response({'error': 'Invalid JSON.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Extract fields
         country = data.get('country', 'India')
         state = data.get('state', 'Gujarat')
-        total_hours = float(data.get('total_hours', 0) or 0)
-        rate = float(data.get('rate', 0) or 0)
-        base_amount = float(data.get('base_amount', 0) or 0)
-        exchange_rate = float(data.get('exchange_rate', 1) or 1)
+        try:
+            total_hours = float(data.get('total_hours', 0) or 0)
+            rate = float(data.get('rate', 0) or 0)
+            base_amount = float(data.get('base_amount', 0) or 0)
+            exchange_rate = float(data.get('exchange_rate', 1) or 1)
+        except (TypeError, ValueError):
+            return Response({'error': 'Invalid number in total_hours, rate, base_amount, or exchange_rate.'}, status=status.HTTP_400_BAD_REQUEST)
         invoice_date_str = data.get('invoice_date')
         invoice_date = None
-        if invoice_date_str:
-            try:
-                invoice_date = datetime.strptime(invoice_date_str, "%Y-%m-%d").date()
-            except Exception:
-                invoice_date = datetime.now().date()
-        else:
-            invoice_date = datetime.now().date()
+        if not invoice_date_str:
+            return Response({'error': 'invoice_date is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            invoice_date = datetime.strptime(invoice_date_str, "%Y-%m-%d").date()
+        except Exception:
+            return Response({'error': 'Invalid invoice_date format. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
         financial_year = get_financial_year(invoice_date)
 
-        print(f"DEBUG: invoice_date_str = {invoice_date_str}")
-        print(f"DEBUG: invoice_date = {invoice_date}")
-        print(f"DEBUG: financial_year = {financial_year}")
+        # Validate required fields
+        if not country or not state:
+            return Response({'error': 'country and state are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Calculate base amount if not provided
         if not base_amount and total_hours and rate:
@@ -83,13 +91,16 @@ class InvoiceCalculationView(APIView):
                 cgst = sgst = round(base_amount * 0.09, 2)
                 taxtotal = cgst + sgst
                 total_with_gst = round(base_amount + taxtotal, 2)
+                total_tax_amount = cgst + sgst
             else:
                 igst = round(base_amount * 0.18, 2)
                 taxtotal = igst
                 total_with_gst = round(base_amount + igst, 2)
+                total_tax_amount = igst
         else:
             total_with_gst = base_amount
             cgst = sgst = igst = taxtotal = None  # Not applicable
+            total_tax_amount = None
 
         # Currency conversion (INR equivalent)
         inr_equivalent = None
@@ -118,6 +129,14 @@ class InvoiceCalculationView(APIView):
             else:
                 invoice_number = f"01-{financial_year}"
 
+        if total_tax_amount is not None:
+            try:
+                total_tax_in_words = num2words(int(round(total_tax_amount)), lang='en_IN').title() + ' Only'
+            except NotImplementedError:
+                total_tax_in_words = num2words(int(round(total_tax_amount)), lang='en').title() + ' Only'
+        else:
+            total_tax_in_words = ""
+
         return Response({
             "base_amount": base_amount,
             "cgst": cgst,
@@ -129,6 +148,8 @@ class InvoiceCalculationView(APIView):
             "amount_in_words": amount_in_words,
             "invoice_number": invoice_number,
             "financial_year": financial_year,
+            "total_tax_amount": total_tax_amount,
+            "total_tax_in_words": total_tax_in_words,
         }, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
