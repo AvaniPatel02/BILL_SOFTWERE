@@ -3,7 +3,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Clients.css';
-import { fetchInvoices, deleteInvoice } from "../../services/clientsApi";
+import { getInvoices } from '../../services/clientsApi';
 
 const Clients = () => {
   const [invoices, setInvoices] = useState([]);
@@ -12,7 +12,7 @@ const Clients = () => {
 
   // Fetch invoices from backend
   useEffect(() => {
-    const getInvoices = async () => {
+    const fetchInvoices = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("access_token");
@@ -21,7 +21,7 @@ const Clients = () => {
           navigate('/');
           return;
         }
-        const data = await fetchInvoices(token); // Use service function
+        const data = await getInvoices(); // Use service function
         setInvoices(data);
       } catch (error) {
         setInvoices([]);
@@ -29,11 +29,15 @@ const Clients = () => {
         setLoading(false);
       }
     };
-    getInvoices();
+    fetchInvoices();
   }, [navigate]);
 
   // Group by unique client (buyer_name, buyer_address, buyer_gst)
   const uniqueClients = React.useMemo(() => {
+    if (!invoices || !Array.isArray(invoices)) {
+      return [];
+    }
+    
     const map = new Map();
     invoices.forEach(inv => {
       const key = `${inv.buyer_name}|${inv.buyer_address}|${inv.buyer_gst}`;
@@ -66,16 +70,16 @@ const Clients = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('access_token');
-      const response = await deleteInvoice(token, invoiceId); // Use service function
-      if (response.status === 204) {
+      // const response = await deleteInvoice(token, invoiceId); // Use service function
+      // if (response.status === 204) {
         // Remove the deleted invoice from the state
         setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
-      } else if (response.status === 401) {
-        localStorage.removeItem('access_token');
-        navigate('/');
-      } else {
+      // } else if (response.status === 401) {
+      //   localStorage.removeItem('access_token');
+      //   navigate('/');
+      // } else {
         alert('Failed to delete invoice.');
-      }
+      // }
     } catch (error) {
       alert('Error deleting invoice.');
     } finally {

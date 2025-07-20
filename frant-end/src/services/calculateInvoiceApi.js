@@ -1,40 +1,38 @@
 // frant-end/src/services/calculateInvoiceApi.js
 
-import BASE_URL from "./apiConfig";
+import { API_BASE_URL } from './apiConfig';
 
-export const calculateInvoice = async (data) => {
-  const response = await fetch(`${BASE_URL}/calculate_invoice/`, {
+function getAuthHeaders() {
+  const token = localStorage.getItem('access_token');
+  return token
+    ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+    : { 'Content-Type': 'application/json' };
+}
+
+export async function calculateInvoice(data) {
+  const res = await fetch(`${API_BASE_URL}/calculate_invoice/`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
+    credentials: 'include',
     body: JSON.stringify(data)
   });
-  if (!response.ok) throw new Error('Calculation failed');
-  return response.json();
-};
+  return res.json();
+}
 
-export const saveInvoice = async (data, token) => {
-  const response = await fetch(`${BASE_URL}/invoices/`, {
+export async function getInvoices(year) {
+  const response = await fetch(`${API_BASE_URL}/invoices/?year=${year}`, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  return response.json();
+}
+
+export async function addInvoice(data) {
+  const response = await fetch(`${API_BASE_URL}/invoices/`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    },
+    headers: getAuthHeaders(),
+    credentials: 'include',
     body: JSON.stringify(data)
   });
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(JSON.stringify(errorData));
-  }
   return response.json();
-};
-
-export const fetchInvoicesByYear = async (year, token) => {
-  const response = await fetch(`http://localhost:8000/api/invoices/?year=${year}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    }
-  });
-  if (!response.ok) throw new Error('Failed to fetch invoices');
-  return response.json();
-}; 
+} 

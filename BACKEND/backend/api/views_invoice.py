@@ -3,22 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
 from num2words import num2words
 from .models import Invoice
-from rest_framework import serializers
+from .serializers import InvoiceSerializer  # <-- Import the correct serializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, date
-
-# Serializer for Invoice
-class InvoiceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Invoice
-        fields = '__all__'
-        extra_kwargs = {
-            'buyer_name': {'required': True},
-            'buyer_address': {'required': True},
-            'invoice_date': {'required': True},
-            'base_amount': {'required': True},
-        }
+import json
 
 # ViewSet for CRUD operations
 class InvoiceViewSet(viewsets.ModelViewSet):
@@ -48,28 +37,35 @@ class InvoiceCalculationView(APIView):
     """
     def post(self, request):
         data = request.data
+        if isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except Exception:
+                return Response({'error': 'Invalid JSON.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Extract fields
         country = data.get('country', 'India')
         state = data.get('state', 'Gujarat')
-        total_hours = float(data.get('total_hours', 0) or 0)
-        rate = float(data.get('rate', 0) or 0)
-        base_amount = float(data.get('base_amount', 0) or 0)
-        exchange_rate = float(data.get('exchange_rate', 1) or 1)
+        try:
+            total_hours = float(data.get('total_hours', 0) or 0)
+            rate = float(data.get('rate', 0) or 0)
+            base_amount = float(data.get('base_amount', 0) or 0)
+            exchange_rate = float(data.get('exchange_rate', 1) or 1)
+        except (TypeError, ValueError):
+            return Response({'error': 'Invalid number in total_hours, rate, base_amount, or exchange_rate.'}, status=status.HTTP_400_BAD_REQUEST)
         invoice_date_str = data.get('invoice_date')
         invoice_date = None
-        if invoice_date_str:
-            try:
-                invoice_date = datetime.strptime(invoice_date_str, "%Y-%m-%d").date()
-            except Exception:
-                invoice_date = datetime.now().date()
-        else:
-            invoice_date = datetime.now().date()
+        if not invoice_date_str:
+            return Response({'error': 'invoice_date is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            invoice_date = datetime.strptime(invoice_date_str, "%Y-%m-%d").date()
+        except Exception:
+            return Response({'error': 'Invalid invoice_date format. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
         financial_year = get_financial_year(invoice_date)
 
-        print(f"DEBUG: invoice_date_str = {invoice_date_str}")
-        print(f"DEBUG: invoice_date = {invoice_date}")
-        print(f"DEBUG: financial_year = {financial_year}")
+        # Validate required fields
+        if not country or not state:
+            return Response({'error': 'country and state are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Calculate base amount if not provided
         if not base_amount and total_hours and rate:

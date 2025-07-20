@@ -70,8 +70,6 @@ const Dashboard = () => {
             {[{ icon: "fas fa-user", label: "Buyername", route: "/buyer" },
               { icon: "fas fa-user", label: "Profile" },
               { icon: "fas fa-file-invoice", label: "Bills", route: "/bills" },
-              { icon: "fas fa-map-marker-alt", label: "Address" },
-              { icon: "fas fa-users", label: "Clients" },
               { icon: "fas fa-user-tie", label: "Employee", route: "/employee" },
               { icon: "fas fa-map-marker-alt", label: "Address" ,route: "/address"},
               { icon: "fas fa-users", label: "Clients", route: "/clients" },

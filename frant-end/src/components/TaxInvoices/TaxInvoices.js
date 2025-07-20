@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../Dashboard/Sidebar';
 import '../../styles/TaxInvoices.css';
 import html2pdf from 'html2pdf.js';
-import { fetchSettings } from '../../services/settingsApi';
-import { calculateInvoice, saveInvoice } from '../../services/calculateInvoiceApi';
-import { fetchNextInvoiceNumber as fetchNextInvoiceNumberApi, fetchInvoiceNumberForDate as fetchInvoiceNumberForDateApi } from '../../services/taxInvoiceApi';
+import { getSettings } from '../../services/settingsApi';
+import { calculateInvoice, addInvoice, getInvoices } from '../../services/calculateInvoiceApi';
+import { getNextInvoiceNumber } from '../../services/taxInvoiceApi';
 
 
 const sentenceCase = (str) => {
@@ -52,7 +52,7 @@ const Taxinvoices = () => {
   useEffect(() => {
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     if (token) {
-      fetchSettings(token).then(res => {
+      getSettings().then(res => {
         setSettings(res.data || res);
       });
     }
@@ -149,22 +149,27 @@ const Taxinvoices = () => {
       selectedCountry &&
       (selectedCountry.name !== 'India' || selectedState)
     ) {
-      calculateInvoice({
-        base_amount: baseAmount,
-        country: selectedCountry.name,
-        state: selectedState,
-        total_hours: totalHours,
-        rate,
-        hns_code: hnsSelect // send as hns_code for clarity
-      })
+      const payload = {
+        base_amount: Number(baseAmount) || 0,
+        country: selectedCountry.name || 'India',
+        state: selectedState || 'Gujarat',
+        total_hours: Number(totalHours) || 0,
+        rate: Number(rate) || 0,
+        hns_code: hnsSelect || '9983',
+        invoice_date: date // ensure this is always sent
+      };
+      console.log('Sending payload to calculateInvoice:', payload);
+      const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+      calculateInvoice(payload)
         .then(result => {
           setCalculationResult(result);
         })
-        .catch(() => {
+        .catch((err) => {
+          alert(err.message || 'Failed to calculate invoice.');
           setCalculationResult({});
         });
     }
-  }, [baseAmount, selectedCountry, selectedState, totalHours, rate, hnsSelect]);
+  }, [baseAmount, selectedCountry, selectedState, totalHours, rate, hnsSelect, date]);
   // Copy bill to ship
   const copyBillToShip = () => {
     setShipTo({ ...billTo });
@@ -211,7 +216,7 @@ const Taxinvoices = () => {
     setLoadingInvoiceNumber(true);
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     try {
-      const data = await fetchNextInvoiceNumberApi(token); // Use service function
+      const data = await getNextInvoiceNumber(); // Pass token as first argument
       setInvoiceNumber(data.invoice_number);
       setFinancialYear(data.financial_year);
     } catch (e) {
@@ -229,19 +234,19 @@ const Taxinvoices = () => {
     try {
       const payload = {
         invoice_date: newDate,
-        base_amount: baseAmount || 0,
-        country: selectedCountry.name,
-        state: selectedState,
-        total_hours: totalHours,
-        rate: rate,
-        hns_code: hnsSelect
+        base_amount: Number(baseAmount) || 0,
+        country: selectedCountry.name || 'India',
+        state: selectedState || 'Gujarat',
+        total_hours: Number(totalHours) || 0,
+        rate: Number(rate) || 0,
+        hns_code: hnsSelect || '9983'
       };
-      const data = await fetchInvoiceNumberForDateApi(token, payload); // Use service function
+      const data = await calculateInvoice(payload); // Pass token as first argument
       setInvoiceNumber(data.invoice_number);
       setFinancialYear(data.financial_year);
     } catch (e) {
-      setInvoiceNumber('');
-      setFinancialYear('');
+      alert('Failed to fetch invoice number for the selected date.');
+      // Do not clear invoice number or financial year
     } finally {
       setLoadingInvoiceNumber(false);
     }
@@ -838,7 +843,7 @@ const Taxinvoices = () => {
                     if (!formDisabled) {
                       // First time: save invoice, then lock form and allow further downloads
                       try {
-                        await saveInvoice(invoiceData, token);
+                        await addInvoice(invoiceData);
                         setFormDisabled(true);
                         handleDownloadPDF();
                       } catch (err) {
