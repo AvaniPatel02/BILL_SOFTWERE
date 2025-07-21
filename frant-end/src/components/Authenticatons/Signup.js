@@ -21,6 +21,9 @@ const Signup = () => {
   const [otpRequested, setOtpRequested] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isGettingOtp, setIsGettingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   // Timer for resend OTP
   useEffect(() => {
@@ -45,10 +48,12 @@ const Signup = () => {
       setError("Please enter your email first.");
       return;
     }
+    setIsGettingOtp(true);
     const res = await sendSignupOtp(email);
+    setIsGettingOtp(false);
     if (res.success) {
       setOtpRequested(true);
-      setTimer(60);
+      setTimer(30); // Changed from 60 to 30
       setShowSuccess(true);
     } else {
       setError(res.message || "Failed to send OTP.");
@@ -60,9 +65,11 @@ const Signup = () => {
     e.preventDefault();
     if (!canResend) return;
     setError("");
+    setIsGettingOtp(true);
     const res = await resendSignupOtp(email);
+    setIsGettingOtp(false);
     if (res.success) {
-      setTimer(60);
+      setTimer(30); // Changed from 60 to 30
       setCanResend(false);
       setShowSuccess(true);
     } else {
@@ -78,7 +85,9 @@ const Signup = () => {
       setError("Please enter the OTP.");
       return;
     }
+    setIsVerifyingOtp(true);
     const res = await verifySignupOtp(email, otp);
+    setIsVerifyingOtp(false);
     if (res.success) {
       setOtpVerified(true);
       setShowSuccess(true);
@@ -116,6 +125,7 @@ const Signup = () => {
       setError("Please verify your OTP before signing up.");
       return;
     }
+    setIsSigningUp(true);
     // Register with backend
     const res = await register({
       first_name: firstName,
@@ -124,6 +134,7 @@ const Signup = () => {
       password,
       password2: confirmPassword
     });
+    setIsSigningUp(false);
     if (res.success) {
       setShowSuccess(true);
       setTimeout(() => {
@@ -197,20 +208,20 @@ const Signup = () => {
                 <button
                   type="button"
                   className="auth-button"
-                  style={{ padding: "12px 15px", marginBottom: "20px", fontSize: "13px", marginLeft: "5px", minWidth: "50px", maxWidth: "90px", whiteSpace: "nowrap", height: "100%" }}
+                  style={{ padding: "12px 15px", marginBottom: "20px", fontSize: "13px", marginLeft: "5px", minWidth: "50px", maxWidth: "90px", whiteSpace: "nowrap", height: "100%", opacity: isGettingOtp ? 0.7 : 1, pointerEvents: isGettingOtp ? 'none' : 'auto' }}
                   onClick={handleGetOtp}
-                  disabled={otpRequested}
+                  disabled={otpRequested || isGettingOtp}
                 >
-                  Get OTP
+                  {isGettingOtp ? "Getting..." : "Get OTP"}
                 </button>
                 <button
                   type="button"
-                  className="auth-button"
-                  style={{ padding: "12px 15px", marginBottom: "20px", fontSize: "13px", marginLeft: "5px", minWidth: "50px", maxWidth: "90px", whiteSpace: "nowrap", height: "100%" }}
+                  className={`auth-button ${otpVerified ? 'verified' : ''}`}
+                  style={{ padding: "12px 15px", marginBottom: "20px", fontSize: "13px", marginLeft: "5px", minWidth: "50px", maxWidth: "90px", whiteSpace: "nowrap", height: "100%", background: otpVerified ? '#28a745' : '', color: otpVerified ? '#fff' : '', opacity: isVerifyingOtp ? 0.7 : 1, pointerEvents: isVerifyingOtp ? 'none' : 'auto' }}
                   onClick={handleVerifyOtp}
-                  disabled={!otpRequested || otpVerified}
+                  disabled={!otpRequested || otpVerified || isVerifyingOtp}
                 >
-                  Verify OTP
+                  {isVerifyingOtp ? "Verifying..." : otpVerified ? "Verified" : "Verify OTP"}
                 </button>
               </div>
               {otpRequested && (
@@ -264,8 +275,9 @@ const Signup = () => {
                 />
               </div>
 
-              <button type="submit" className="auth-button" disabled={!otpVerified}>
-                Signup
+              <button type="submit" className="auth-button" disabled={!otpVerified || isSigningUp}
+                style={{ opacity: isSigningUp ? 0.7 : 1, pointerEvents: isSigningUp ? 'none' : 'auto' }}>
+                {isSigningUp ? "Signing up..." : "Signup"}
               </button>
 
               <div className="auth-footer-text">

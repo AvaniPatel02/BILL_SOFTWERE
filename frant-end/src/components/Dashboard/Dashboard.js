@@ -12,7 +12,7 @@ const Dashboard = () => {
     <>
       <Header />
       <div style={{ display: "flex" }}>
-        <Sidebar />
+        {/* <Sidebar /> */}
         <div style={{ flex: 1 }}>
           <div className="fact-container">
             <div className="stats-container">
