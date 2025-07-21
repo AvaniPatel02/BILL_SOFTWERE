@@ -41,7 +41,6 @@ h2 {
 .table-bordered td,
 .table-bordered th {
   border: 1px solid rgb(80, 80, 80) !important;
-
   padding: 7px;
 }
 
@@ -510,4 +509,24 @@ button.copybutton:hover {
   height: 34px !important;
   font-size: 14px !important;
   box-sizing: border-box !important;
+}
+
+.pdf-main-box {
+  padding: 20px;
+  margin-bottom: 4px;
+  box-shadow: 1px 1px 19px 0px #d9d5d5;
+}
+
+.pdf-margine{
+  margin: 15px;
+}
+@media print {
+  /* WARNING: If your invoice is very long, this will make everything very small to fit on one page. */
+  .invoice-pdf {
+    transform: scale(0.5);
+    transform-origin: top left;
+    margin: 0;
+    width: 100%;
+    height: auto;
+  }
 }

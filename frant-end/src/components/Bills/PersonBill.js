@@ -75,7 +75,13 @@ const PersonBill = () => {
                           <td>{idx + 1}</td>
                           <td>{bill.buyer_name}</td>
                           <td>{bill.invoice_number}</td>
-                          <td>{bill.buyer_gst}</td>
+                          <td
+                            title={bill.buyer_gst}
+                          >
+                            {bill.buyer_gst && bill.buyer_gst.length > 15
+                              ? bill.buyer_gst.slice(0, 15) + '...'
+                              : bill.buyer_gst}
+                          </td>
                           <td>{bill.invoice_date}</td>
                           <td>{bill.total_amount || bill.total_with_gst}</td>
                           <td>

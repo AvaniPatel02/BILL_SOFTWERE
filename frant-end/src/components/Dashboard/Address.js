@@ -69,66 +69,62 @@ const Address = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar />
-      <div style={{ flex: 1 }}>
-        <Header />
-        <div className="year_container">
-          {/* Button Row with Centered Heading */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, marginLeft: 20, marginRight: 20 }}>
+    <div className="bills-layout">
+      <Header />
+      <div className="bills-content">
+        <Sidebar />
+        <div className="address-container address-book-container">
+          <div className="address-header-group">
+            <button className="address-back-btn" onClick={() => navigate(-1)}>Back</button>
+            <h1 className="address-title">Address Book</h1>
             <button
-              className="back-btn"
-              style={{ padding: '8px 18px', fontSize: '16px', borderRadius: '6px', border: '1px solid #bbb', background: '#f1f3f4', cursor: 'pointer', fontWeight: 500 }}
-              onClick={() => navigate(-1)}
-            >
-              <i className="fas fa-arrow-left" style={{ marginRight: 8 }}></i> Back
-            </button>
-            <h2 style={{ flex: 1, textAlign: 'center', margin: 0, fontWeight: 700, fontSize: '2rem', letterSpacing: 1 }}>Address Book</h2>
-            <button
-              className="new-bill-btn"
-              style={{ padding: '8px 18px', fontSize: '16px', borderRadius: '6px', border: '1px solid #bbb', background: '#cde6fa', cursor: 'pointer', fontWeight: 500 }}
+              className="address-new-btn"
               onClick={() => navigate('/taxinvoices')}
             >
-              <i className="fas fa-plus" style={{ marginRight: 8 }}></i> New Bill
+              + New Bill
             </button>
           </div>
-          <div className="table-bordered main-box" style={{ border: "2px solid rgb(97, 94, 94)", background: "#fff", borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.04)", padding: 24, marginLeft: 32, marginRight: 16 }}>
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>No.</th>
-                  <th>Buyer Name</th>
-                  <th>Address</th>
-                  <th>GSTIN/UIN</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
+          <div className="address-table-outer">
+            <div className="address-table-container">
+              <table className="address-table">
+                <thead>
                   <tr>
-                    <td colSpan="4" className="text-center">Loading addresses...</td>
+                    <th>No.</th>
+                    <th>Buyer Name</th>
+                    <th>Address</th>
+                    <th>GSTIN/UIN</th>
                   </tr>
-                ) : addresses.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="text-center">No addresses found</td>
-                  </tr>
-                ) : (
-                  uniqueAddresses.map((address, idx) => (
-                    <tr key={address.id || idx}>
-                      <td>{idx + 1}</td>
-                      <td>{address.buyer_name}</td>
-                      <td
-                        className="address-hover"
-                        title="Click to copy address"
-                        onClick={() => handleCopyAddress(address.buyer_address)}
-                      >
-                        {address.buyer_address}
-                      </td>
-                      <td>{address.buyer_gst}</td>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="4" className="text-center">Loading addresses...</td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : addresses.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="text-center">No addresses found</td>
+                    </tr>
+                  ) : (
+                    uniqueAddresses.map((address, idx) => (
+                      <tr key={address.id || idx}>
+                        <td>{idx + 1}</td>
+                        <td>{address.buyer_name}</td>
+                        <td
+                          className="address-hover"
+                          title={address.buyer_address}
+                          onClick={() => handleCopyAddress(address.buyer_address)}
+                        >
+                          {address.buyer_address && address.buyer_address.length > 50
+                            ? address.buyer_address.slice(0, 50) + '...'
+                            : address.buyer_address}
+                        </td>
+                        <td>{address.buyer_gst}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
