@@ -4,7 +4,7 @@ import Sidebar from "./Sidebar";
 import "../../styles/Buyer.css";
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { getBuyers, addBuyer } from '../../services/buyerApi';
+import { getBuyers, addBuyer, addBuyerName } from '../../services/buyerApi';
 import { useEffect } from 'react';
 
 const Buyer = () => {
@@ -43,12 +43,12 @@ const Buyer = () => {
     try {
       const payload = {
         name: form.name,
-        date: form.date,
-        amount: form.amount,
-        notes: form.notes,
-        payment_type: form.paymentType,
+        date: form.date || new Date().toISOString().split('T')[0],
+        amount: Number(form.amount) || 0,
+        notes: form.notes || '',
+        payment_type: form.paymentType || 'Cash'
       };
-      const newBuyer = await addBuyer(payload);
+      const newBuyer = await addBuyerName(payload);
       setBuyers(prev => [...prev, newBuyer]);
       setShowModal(false);
       setForm({ name: '', date: '', amount: '', notes: '', paymentType: 'Bank' });

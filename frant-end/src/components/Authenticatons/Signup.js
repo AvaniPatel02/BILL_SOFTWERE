@@ -49,7 +49,7 @@ const Signup = () => {
       return;
     }
     setIsGettingOtp(true);
-    const res = await sendSignupOtp(email);
+    const res = await sendOtp({ email });
     setIsGettingOtp(false);
     if (res.success) {
       setOtpRequested(true);
@@ -66,7 +66,7 @@ const Signup = () => {
     if (!canResend) return;
     setError("");
     setIsGettingOtp(true);
-    const res = await resendSignupOtp(email);
+    const res = await resendOtp({ email });
     setIsGettingOtp(false);
     if (res.success) {
       setTimer(30); // Changed from 60 to 30
@@ -86,7 +86,7 @@ const Signup = () => {
       return;
     }
     setIsVerifyingOtp(true);
-    const res = await verifySignupOtp(email, otp);
+    const res = await verifyOtp({ email, otp_code: otp });
     setIsVerifyingOtp(false);
     if (res.success) {
       setOtpVerified(true);

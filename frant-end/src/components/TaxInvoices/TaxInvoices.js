@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../Dashboard/Sidebar';
 import '../../styles/TaxInvoices.css';
 import { fetchSettings } from '../../services/settingsApi';
-import { calculateInvoice, saveInvoice } from '../../services/calculateInvoiceApi';
+import { addInvoice, calculateInvoice } from '../../services/calculateInvoiceApi';
 import { fetchNextInvoiceNumber as fetchNextInvoiceNumberApi, fetchInvoiceNumberForDate as fetchInvoiceNumberForDateApi } from '../../services/taxInvoiceApi';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import html2pdf from 'html2pdf.js';
+import { getSettings } from '../../services/settingsApi';
+import { getNextInvoiceNumber } from '../../services/taxInvoiceApi';
 
 
 const Taxinvoices = () => {
@@ -45,6 +47,7 @@ const Taxinvoices = () => {
   const [loadingInvoiceNumber, setLoadingInvoiceNumber] = useState(true);
   const [formDisabled, setFormDisabled] = useState(false);
   const [exchangeRate, setExchangeRate] = useState(null);
+  const invoiceRef = useRef();
   // Fetch settings from backend on mount
   useEffect(() => {
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
@@ -196,17 +199,7 @@ const Taxinvoices = () => {
   //   c.name.toLowerCase().includes(countrySearch.toLowerCase())
   // );
 
-  const handleDownloadPDF = () => {
-    const element = document.querySelector('.main-box');
-    const opt = {
-      margin: 0.2,
-      filename: `TaxInvoice_${invoiceNumber}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(element).save();
-  };
+
 
   // Fetch next invoice number from backend
   const fetchNextInvoiceNumber = async () => {
@@ -261,41 +254,36 @@ const Taxinvoices = () => {
       return;
     }
 
-    const filename = `Invoice_${invoiceNumber || 'NoNumber'}_${date || ''}.pdf`;
-
     const element = invoiceRef.current;
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true
-    });
+    const prevDisplay = element.style.display;
+    element.style.display = 'block';
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+    const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+    element.style.display = prevDisplay;
 
-    // jsPDF A4 size in mm
-    const pdf = new jsPDF({
-      unit: 'mm',
-      format: 'a4',
-      orientation: 'portrait'
-    });
+    const imgData = canvas.toDataURL('image/png');
+    if (!imgData.startsWith('data:image/png')) {
+      alert('Failed to generate a valid PNG image for PDF.');
+      return;
+    }
 
+    const filename = `Invoice_${invoiceNumber || 'NoNumber'}_${date || ''}.pdf`;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
     const pageWidth = 210;
     const pageHeight = 297;
-
     const imgProps = pdf.getImageProperties(imgData);
     const pdfWidth = pageWidth;
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
     let finalHeight = pdfHeight;
     let finalWidth = pdfWidth;
-    if (pdfHeight > pageHeight - 20) { // leave some margin
+    if (pdfHeight > pageHeight - 20) {
       finalHeight = pageHeight - 20;
       finalWidth = (imgProps.width * finalHeight) / imgProps.height;
     }
-
     const x = (pageWidth - finalWidth) / 2;
-    const y = 10; // top margin
-
-    pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
+    const y = 10;
+    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
     pdf.save(filename);
   };
 
@@ -360,7 +348,7 @@ const Taxinvoices = () => {
     if (!formDisabled) {
       // Only save invoice, do not generate PDF
       try {
-        await saveInvoice(invoiceData, token);
+        await addInvoice(invoiceData);
         setFormDisabled(true);
         alert('Invoice saved successfully!');
         // After saving, trigger PDF download
@@ -1240,7 +1228,7 @@ const Taxinvoices = () => {
                         return words;
                       }
                       return (
-                        <div className="table-bordered black-bordered amount-box" style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '56px', width: '950 px', }}>
+                        <div className="table-bordered black-bordered amount-box" style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '56px', width: '950px', }}>
                           <span style={{ width: '100%', textAlign: 'start', fontWeight: 500, fontSize: '1.15rem' }}>
                             {inrAmountInWords(inrEquivalent)}
                           </span>

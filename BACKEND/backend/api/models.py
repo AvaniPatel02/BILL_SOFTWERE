@@ -210,7 +210,7 @@ class CashEntry(models.Model):
 class Employee(models.Model):
     name = models.CharField(max_length=255)
     salary = models.DecimalField(max_digits=10, decimal_places=2)
-    joining_date = models.DateField()
+    joining_date = models.DateField(null=True, blank=True)
     email = models.EmailField()
     number = models.CharField(max_length=20)
     is_deleted = models.BooleanField(default=False)
