@@ -35,22 +35,56 @@ const SettingsPage = () => {
   }, [token, navigate]);
 
   useEffect(() => {
-    const getSettings = async () => {
+    const getSettingsData = async () => {
       setLoading(true);
       try {
         const data = await getSettings(); // Use service function
-        setFormData(prev => ({
-          ...data.data,
-          logoUrl: data.data.logo_url || '', // Use the backend's logo_url
-          logo: null // Reset file input
-        }));
+        if (data && data.data) {
+          setFormData(prev => ({
+            ...data.data,
+            logoUrl: data.data.logo_url || '',
+            logo: null
+          }));
+        } else {
+          setFormData({
+            company_name: '',
+            seller_pan: '',
+            seller_address: '',
+            seller_gstin: '',
+            seller_email: '',
+            bank_name: '',
+            account_number: '',
+            ifsc_code: '',
+            bank_account_holder: '',
+            branch: '',
+            swift_code: '',
+            HSN_codes: [],
+            logo: null,
+            logoUrl: '',
+          });
+        }
       } catch (err) {
-        setFormData(null);
+        setFormData({
+          company_name: '',
+          seller_pan: '',
+          seller_address: '',
+          seller_gstin: '',
+          seller_email: '',
+          bank_name: '',
+          account_number: '',
+          ifsc_code: '',
+          bank_account_holder: '',
+          branch: '',
+          swift_code: '',
+          HSN_codes: [],
+          logo: null,
+          logoUrl: '',
+        });
       } finally {
         setLoading(false);
       }
     };
-    getSettings();
+    getSettingsData();
   }, [token]);
 
   const handleChange = (e) => {

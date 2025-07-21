@@ -396,23 +396,18 @@ const Banking = () => {
               <label style={{marginBottom: 8}}>
                 <input type="checkbox" checked={buyerForm.manual} onChange={() => setBuyerForm(f => ({ ...f, manual: !f.manual, name: "" }))} /> Enter Buyer Name Manually
               </label>
+              <label>Buyer Name</label>
               {buyerForm.manual ? (
-                <>
-                  <label>Buyer Name</label>
-                  <Input placeholder="Buyer Name*" value={buyerForm.name} onChange={e => setBuyerForm(f => ({ ...f, name: e.target.value }))} required />
-                  <label>Amount</label>
-                  <Input type="number" placeholder="Amount*" value={buyerForm.amount} onChange={e => setBuyerForm(f => ({ ...f, amount: e.target.value }))} required />
-                  <label>Notes</label>
-                  <Input placeholder="Notes (Optional)" value={buyerForm.notice} onChange={e => setBuyerForm(f => ({ ...f, notice: e.target.value }))} />
-                </>
+                <Input placeholder="Buyer Name*" value={buyerForm.name} onChange={e => setBuyerForm(f => ({ ...f, name: e.target.value }))} required />
               ) : (
-                <>
-                  <label>Buyer Name</label>
-                  <Select value={buyerForm.name} onChange={e => setBuyerForm(f => ({ ...f, name: e.target.value }))} options={buyerNames} required>
-                    <option value="">-- Select Buyer --</option>
-                  </Select>
-                </>
+                <Select value={buyerForm.name} onChange={e => setBuyerForm(f => ({ ...f, name: e.target.value }))} options={buyerNames} required>
+                  <option value="">-- Select Buyer --</option>
+                </Select>
               )}
+              <label>Amount</label>
+              <Input type="number" placeholder="Amount*" value={buyerForm.amount} onChange={e => setBuyerForm(f => ({ ...f, amount: e.target.value }))} required />
+              <label>Notes</label>
+              <Input placeholder="Notes (Optional)" value={buyerForm.notice} onChange={e => setBuyerForm(f => ({ ...f, notice: e.target.value }))} />
               <label>Date</label>
               <Input type="date" value={buyerForm.date} onChange={e => setBuyerForm(f => ({ ...f, date: e.target.value }))} required />
               <label>Payment Type</label>

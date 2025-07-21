@@ -125,16 +125,11 @@ class CashEntrySerializer(serializers.ModelSerializer):
 # Employee serializer for salary management
 from .models import Employee
 class EmployeeSerializer(serializers.ModelSerializer):
-    joining_date = serializers.SerializerMethodField()
+    joining_date = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d'])
 
     class Meta:
         model = Employee
         fields = '__all__'
-
-    def get_joining_date(self, obj):
-        if obj.joining_date:
-            return obj.joining_date.strftime('%d-%m-%Y')
-        return ""
 
 class InvoiceSerializer(serializers.ModelSerializer):
     class Meta:

@@ -28,8 +28,12 @@ const Address = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("access_token");
-        const data = await getInvoices(); // Use service function
-        setAddresses(data);
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+        const data = await getInvoices();
+        setAddresses(Array.isArray(data) ? data : []);
       } catch (error) {
         setAddresses([]);
       } finally {
@@ -37,7 +41,7 @@ const Address = () => {
       }
     };
     getAddresses();
-  }, []);
+  }, [navigate]);
 
   // Remove duplicate addresses (same buyer_name, buyer_address, buyer_gst)
   const uniqueAddresses = React.useMemo(() => {
