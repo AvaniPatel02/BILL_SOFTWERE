@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../Dashboard/Sidebar';
 import '../../styles/TaxInvoices.css';
 import { fetchSettings } from '../../services/settingsApi';
@@ -45,7 +45,6 @@ const Taxinvoices = () => {
   const [loadingInvoiceNumber, setLoadingInvoiceNumber] = useState(true);
   const [formDisabled, setFormDisabled] = useState(false);
   const [exchangeRate, setExchangeRate] = useState(null);
-  const invoiceRef = useRef();
   // Fetch settings from backend on mount
   useEffect(() => {
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
@@ -158,9 +157,7 @@ const Taxinvoices = () => {
       };
       console.log('Sending payload to calculateInvoice:', payload);
       const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-
       calculateInvoice(payload)
-
         .then(result => {
           setCalculationResult(result);
         })
@@ -174,16 +171,49 @@ const Taxinvoices = () => {
   const copyBillToShip = () => {
     setShipTo({ ...billTo });
   };
-  // Removed unused handleCountrySelect and filteredCountries commented code
+  // Country dropdown logic
+  const handleCountrySelect = (country) => {
+    setSelectedCountry(country);
+    setBaseAmount('');
+    setCalculationResult({
+      cgst: '0.00',
+      sgst: '0.00',
+      igst: '0.00',
+      total_with_gst: '0.00',
+      amount_in_words: 'Zero',
+      taxable_value: '0.00',
+      tax_cgst: '0.00',
+      tax_sgst: '0.00',
+      all_tax_amount: '0.00',
+      total_taxable: '0.00',
+      total_tax_cgst: '0.00',
+      total_tax_sgst: '0.00',
+      total_tax_amount: '0.00',
+      total_tax_in_words: 'Zero'
+    });
+  };
+  // const filteredCountries = countryList.filter(c => // This state is removed
+  //   c.name.toLowerCase().includes(countrySearch.toLowerCase())
+  // );
+
+  const handleDownloadPDF = () => {
+    const element = document.querySelector('.main-box');
+    const opt = {
+      margin: 0.2,
+      filename: `TaxInvoice_${invoiceNumber}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+  };
 
   // Fetch next invoice number from backend
   const fetchNextInvoiceNumber = async () => {
     setLoadingInvoiceNumber(true);
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     try {
-
       const data = await getNextInvoiceNumber(); // Pass token as first argument
-
       setInvoiceNumber(data.invoice_number);
       setFinancialYear(data.financial_year);
     } catch (e) {
@@ -208,9 +238,7 @@ const Taxinvoices = () => {
         rate: Number(rate) || 0,
         hns_code: hnsSelect || '9983'
       };
-
       const data = await calculateInvoice(payload); // Pass token as first argument
-
       setInvoiceNumber(data.invoice_number);
       setFinancialYear(data.financial_year);
     } catch (e) {
@@ -376,7 +404,7 @@ const Taxinvoices = () => {
     <div id="invoice-pdf" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       {/* Remove the previous top bar */}
       <div style={{ display: 'flex', flex: 1 }}>
-        {/* <Sidebar /> */}
+        <Sidebar />
         <div className='container'>
           {/* Header bar inside container */}
           <div className='headrmain' >
@@ -406,9 +434,7 @@ const Taxinvoices = () => {
                       </tr>
                       <tr>
                         <td>
-                          <div style={{ whiteSpace: 'pre-line' }}>
-                            {settings?.seller_address}
-                          </div>
+                          {settings?.seller_address}<br />
                           GSTIN/UIN: {settings?.seller_gstin} <br />
                           Email: {settings?.seller_email}<br />
                           PAN: {settings?.seller_pan}
@@ -719,15 +745,15 @@ const Taxinvoices = () => {
                     // Helper to convert number to words (simple version)
                     function inrAmountInWords(num) {
                       if (!num || isNaN(num)) return '';
-                      const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-                      const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+                      const a = [ '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen' ];
+                      const b = [ '', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety' ];
                       function inWords(n) {
                         if (n < 20) return a[n];
-                        if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? ' ' + a[n % 10] : '');
-                        if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' and ' + inWords(n % 100) : '');
-                        if (n < 100000) return inWords(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 ? ' ' + inWords(n % 1000) : '');
-                        if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 ? ' ' + inWords(n % 100000) : '');
-                        return inWords(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + inWords(n % 10000000) : '');
+                        if (n < 100) return b[Math.floor(n/10)] + (n%10 ? ' ' + a[n%10] : '');
+                        if (n < 1000) return a[Math.floor(n/100)] + ' Hundred' + (n%100 ? ' and ' + inWords(n%100) : '');
+                        if (n < 100000) return inWords(Math.floor(n/1000)) + ' Thousand' + (n%1000 ? ' ' + inWords(n%1000) : '');
+                        if (n < 10000000) return inWords(Math.floor(n/100000)) + ' Lakh' + (n%100000 ? ' ' + inWords(n%100000) : '');
+                        return inWords(Math.floor(n/10000000)) + ' Crore' + (n%10000000 ? ' ' + inWords(n%10000000) : '');
                       }
                       const rupees = Math.round(num); // use rounded value
                       let words = '';
@@ -736,7 +762,7 @@ const Taxinvoices = () => {
                       return words;
                     }
                     return (
-                      <div className="table-bordered black-bordered amount-box" style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '56px' }}>
+                      <div className="table-bordered black-bordered amount-box" style={{ marginBottom: '8px',  display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '56px' }}>
                         <span style={{ width: '100%', textAlign: 'start', fontWeight: 500, fontSize: '1.15rem' }}>
                           {inrAmountInWords(inrEquivalent)}
                         </span>
@@ -779,25 +805,21 @@ const Taxinvoices = () => {
                     <tbody>
                       <tr>
                         <td style={{ border: '1px solid #000' }}><span className="hns_select_text">{hnsSelect}</span></td>
-                        <td style={{ border: '1px solid #000' }} id="taxable-value">
-                          {selectedCountry.symbol}{baseAmount}
-                        </td>
+                        <td style={{ border: '1px solid #000' }} id="taxable-value">{calculationResult.taxable_value}</td>
                         <td style={{ border: '1px solid #000' }}>9%</td>
-                        <td style={{ border: '1px solid #000' }} id="tax-cgst">{selectedCountry.symbol}{calculationResult.cgst}</td>
+                        <td style={{ border: '1px solid #000' }} id="tax-cgst">{calculationResult.tax_cgst}</td>
                         <td style={{ border: '1px solid #000' }}>9%</td>
-                        <td style={{ border: '1px solid #000' }} id="tax-sgst">{selectedCountry.symbol}{calculationResult.sgst}</td>
-                        <td style={{ border: '1px solid #000' }} id="all-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                        <td style={{ border: '1px solid #000' }} id="tax-sgst">{calculationResult.tax_sgst}</td>
+                        <td style={{ border: '1px solid #000' }} id="all-tax-amount">{calculationResult.all_tax_amount}</td>
                       </tr>
                       <tr className="total-row">
                         <td style={{ border: '1px solid #000' }}>Total</td>
-                        <td style={{ border: '1px solid #000' }} id="total-taxable">
-                          {selectedCountry.symbol}{baseAmount}
-                        </td>
+                        <td style={{ border: '1px solid #000' }} id="total-taxable">{calculationResult.total_taxable}</td>
                         <td style={{ border: '1px solid #000' }}></td>
-                        <td style={{ border: '1px solid #000' }} id="total-tax-cgst">{selectedCountry.symbol}{calculationResult.cgst}</td>
+                        <td style={{ border: '1px solid #000' }} id="total-tax-cgst">{calculationResult.total_tax_cgst}</td>
                         <td style={{ border: '1px solid #000' }}></td>
-                        <td style={{ border: '1px solid #000' }} id="total-tax-sgst">{selectedCountry.symbol}{calculationResult.sgst}</td>
-                        <td style={{ border: '1px solid #000' }} id="total-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                        <td style={{ border: '1px solid #000' }} id="total-tax-sgst">{calculationResult.total_tax_sgst}</td>
+                        <td style={{ border: '1px solid #000' }} id="total-tax-amount">{calculationResult.total_tax_amount}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -819,17 +841,17 @@ const Taxinvoices = () => {
                     <tbody>
                       <tr>
                         <td><span className="hns_select_text">{hnsSelect}</span></td>
-                        <td id="taxable-value">{selectedCountry.symbol}{baseAmount}</td>
+                        <td id="taxable-value">{calculationResult.taxable_value}</td>
                         <td>18%</td>
-                        <td id="igst">{selectedCountry.symbol}{calculationResult.igst}</td>
-                        <td id="all-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                        <td id="igst">{calculationResult.igst}</td>
+                        <td id="all-tax-amount">{calculationResult.all_tax_amount}</td>
                       </tr>
                       <tr className="total-row">
                         <td>Total</td>
-                        <td id="total-taxable">{selectedCountry.symbol}{selectedCountry.symbol}{baseAmount}</td>
+                        <td id="total-taxable">{calculationResult.total_taxable}</td>
                         <td></td>
-                        <td id="total-tax-igst">{selectedCountry.symbol}{calculationResult.igst}</td>
-                        <td id="total-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                        <td id="total-tax-igst">{calculationResult.igst}</td>
+                        <td id="total-tax-amount">{calculationResult.total_tax_amount}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -849,7 +871,7 @@ const Taxinvoices = () => {
                   </div>
                 </div>
               </div>
-
+             
               {/* footer */}
               <div className="row">
                 <div className="col-xs-12">
@@ -888,7 +910,6 @@ const Taxinvoices = () => {
                   className="download-btn"
                   id="download-btn"
                   disabled={loadingInvoiceNumber || !invoiceNumber}
-
                   onClick={async () => {
                     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
                     const parseNumber = v => v === '' || v == null ? 0 : Number(v);
@@ -958,9 +979,8 @@ const Taxinvoices = () => {
                       handleDownloadPDF();
                     }
                   }}
-
                 >
-                  {loadingInvoiceNumber ? 'Loading Invoice Number...' : 'Download'}
+                  {loadingInvoiceNumber ? 'Loading Invoice Number...' : 'Download PDF'}
                 </button>
               </div>
             </div>
