@@ -5,6 +5,8 @@ from .models import OTP
 from .models import Profile
 from .models import Settings
 from .models import BankAccount, CashEntry
+from .models import Buyer
+from .models import CompanyBill, BuyerBill, Salary, OtherTransaction
 
 User = get_user_model()
 
@@ -121,35 +123,73 @@ class CashEntrySerializer(serializers.ModelSerializer):
 # Employee serializer for salary management
 from .models import Employee
 class EmployeeSerializer(serializers.ModelSerializer):
-    joining_date = serializers.SerializerMethodField()
-
     class Meta:
         model = Employee
         fields = '__all__'
 
-    def get_joining_date(self, obj):
-        return obj.joining_date.strftime('%d-%m-%Y') if obj.joining_date else ""
-
 # Invoice serializer
 from .models import Invoice
 class InvoiceSerializer(serializers.ModelSerializer):
-    invoice_date = serializers.SerializerMethodField()
-    delivery_note_date = serializers.SerializerMethodField()
-    created_at = serializers.SerializerMethodField()
-    updated_at = serializers.SerializerMethodField()
-
     class Meta:
         model = Invoice
+        fields = [
+            'id', 'user', 'buyer_name', 'buyer_address', 'buyer_gst',
+            'consignee_name', 'consignee_address', 'consignee_gst',
+            'financial_year', 'invoice_number', 'invoice_date',
+            'delivery_note', 'payment_mode', 'delivery_note_date',
+            'destination', 'terms_to_delivery', 'country', 'currency',
+            'currency_symbol', 'state', 'particulars', 'total_hours',
+            'rate', 'base_amount', 'total_amount', 'cgst', 'sgst', 'igst',
+            'total_with_gst', 'amount_in_words', 'taxtotal', 'remark',
+            'exchange_rate', 'inr_equivalent', 'created_at', 'updated_at',
+            'country_flag'
+        ]
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        # Force dd-mm-yyyy for invoice_date
+        if instance.invoice_date:
+            rep['invoice_date'] = instance.invoice_date.strftime('%d-%m-%Y')
+        else:
+            rep['invoice_date'] = ''
+        # Force dd-mm-yyyy for delivery_note_date if present
+        if instance.delivery_note_date:
+            rep['delivery_note_date'] = instance.delivery_note_date.strftime('%d-%m-%Y')
+        else:
+            rep['delivery_note_date'] = ''
+        # Optionally format created_at and updated_at
+        if instance.created_at:
+            rep['created_at'] = instance.created_at.strftime('%d-%m-%Y')
+        if instance.updated_at:
+            rep['updated_at'] = instance.updated_at.strftime('%d-%m-%Y')
+        return rep
+
+class BuyerSerializer(serializers.ModelSerializer):
+    date = serializers.SerializerMethodField()
+    class Meta:
+        model = Buyer
+        fields = ['id', 'user', 'name', 'date', 'amount', 'notes', 'payment_type', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
+
+    def get_date(self, obj):
+        return obj.date.strftime('%d-%m-%Y') if obj.date else ''
+
+class CompanyBillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyBill
         fields = '__all__'
 
-    def get_invoice_date(self, obj):
-        return obj.invoice_date.strftime('%d-%m-%Y') if obj.invoice_date else ""
+class BuyerBillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BuyerBill
+        fields = '__all__'
 
-    def get_delivery_note_date(self, obj):
-        return obj.delivery_note_date.strftime('%d-%m-%Y') if obj.delivery_note_date else ""
+class SalarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Salary
+        fields = '__all__'
 
-    def get_created_at(self, obj):
-        return obj.created_at.strftime('%d-%m-%Y') if obj.created_at else ""
-
-    def get_updated_at(self, obj):
-        return obj.updated_at.strftime('%d-%m-%Y') if obj.updated_at else ""
+class OtherTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OtherTransaction
+        fields = '__all__'

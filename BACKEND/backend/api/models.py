@@ -230,3 +230,51 @@ class Employee(models.Model):
         return self.name
 
 
+class Buyer(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='buyers')
+    name = models.CharField(max_length=255)
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    notes = models.TextField(blank=True, null=True)
+    payment_type = models.CharField(max_length=20, choices=[('Bank', 'Bank'), ('Cash', 'Cash')], default='Bank')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.amount} on {self.date}"
+
+
+class CompanyBill(models.Model):
+    company = models.CharField(max_length=255)
+    invoice = models.CharField(max_length=255, blank=True, null=True)
+    date = models.DateField()
+    notice = models.TextField(blank=True, null=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_type = models.CharField(max_length=50)
+    bank = models.CharField(max_length=100, blank=True, null=True)
+
+class BuyerBill(models.Model):
+    name = models.CharField(max_length=255)
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    notice = models.TextField(blank=True, null=True)
+    payment_type = models.CharField(max_length=50)
+    bank = models.CharField(max_length=100, blank=True, null=True)
+    manual = models.BooleanField(default=False)
+
+class Salary(models.Model):
+    name = models.CharField(max_length=255)
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_type = models.CharField(max_length=50)
+    bank = models.CharField(max_length=100, blank=True, null=True)
+
+class OtherTransaction(models.Model):
+    type = models.CharField(max_length=100)
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    notice = models.TextField(blank=True, null=True)
+    payment_type = models.CharField(max_length=50)
+    bank = models.CharField(max_length=100, blank=True, null=True)
+    transaction_type = models.CharField(max_length=10, choices=[('credit', 'Credit'), ('debit', 'Debit')])
+
+

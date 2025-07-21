@@ -20,6 +20,7 @@ from django.urls import path
 from .models import Settings
 from .serializers import SettingsSerializer
 
+
 User = get_user_model()
 
 # AUTHENTICATION FUNCTIONS
@@ -326,3 +327,5 @@ def update_email_after_otp(request):
     if hasattr(user, 'profile'):
         user.profile.save()
     return Response({"success": True, "message": "Email updated successfully."})
+
+

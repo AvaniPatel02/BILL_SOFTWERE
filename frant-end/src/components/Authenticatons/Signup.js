@@ -4,7 +4,7 @@ import { Eye, EyeSlash } from "react-bootstrap-icons";
 import "../../styles/Signup.css";
 import Footer from './Footer';
 import Toast from '../Toast';
-import { sendSignupOtp, resendSignupOtp, verifySignupOtp, register } from "../../services/authApi";
+import { sendOtp, resendOtp, verifyOtp, register } from "../../services/authApi";
 
 const Signup = () => {
   const navigate = useNavigate();

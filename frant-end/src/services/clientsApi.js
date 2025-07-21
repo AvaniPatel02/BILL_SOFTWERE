@@ -1,23 +1,24 @@
-import BASE_URL from "./apiConfig";
+import { API_BASE_URL } from './apiConfig';
 
-export async function fetchInvoices(token) {
-  const response = await fetch(`${BASE_URL}/invoices/`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+function getAuthHeaders() {
+  const token = localStorage.getItem('access_token');
+  return token
+    ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+    : { 'Content-Type': 'application/json' };
+}
+
+export async function getInvoices() {
+  const response = await fetch(`${API_BASE_URL}/invoices/`, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
   });
-  if (!response.ok) throw new Error("Failed to fetch invoices");
   return response.json();
 }
 
-export async function deleteInvoice(token, invoiceId) {
-  const response = await fetch(`${BASE_URL}/invoices/${invoiceId}/`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+export async function getInvoice(invoiceId) {
+  const response = await fetch(`${API_BASE_URL}/invoices/${invoiceId}/`, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
   });
-  return response;
+  return response.json();
 } 

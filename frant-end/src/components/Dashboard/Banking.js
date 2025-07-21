@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import '../../styles/Banking.css';
+import {
+  submitCompanyBill,
+  submitBuyerBill,
+  submitSalary,
+  submitOtherTransaction,
+  getUniqueBuyerNames,
+  getInvoicesByBuyer
+} from '../../services/bankingApi';
+import { fetchBanks } from '../../services/bankCashApi';
+import { fetchBuyerNames, addBuyerName } from '../../services/buyerApi';
+import { getEmployees } from '../../services/employeeApi';
 
-const sampleCompanies = ["ABC Pvt Ltd", "XYZ Ltd", "Demo Company"];
-const sampleInvoices = ["INV-001", "INV-002", "INV-003"];
 const sampleBuyers = ["Buyer One", "Buyer Two", "Buyer Three"];
-const sampleBanks = ["SBI", "HDFC", "ICICI"];
 const sampleEmployees = ["John Doe", "Jane Smith", "Amit Kumar"];
 const sampleTypes = ["Fast Expand", "Profit", "Other"];
+const sampleCompanies = ["ABC Pvt Ltd", "XYZ Ltd", "Demo Company"];
+const sampleInvoices = ["INV-001", "INV-002", "INV-003"];
 
 // Helper for input fields
 const Input = ({ type = "text", ...props }) => (
@@ -66,9 +76,235 @@ const Banking = () => {
   const [buyerForm, setBuyerForm] = useState(initialBuyer);
   const [salaryForm, setSalaryForm] = useState(initialSalary);
   const [otherForm, setOtherForm] = useState(initialOther);
+  const [banks, setBanks] = useState([]);
+  const [buyerNames, setBuyerNames] = useState([]);
+  const [invoicesForBuyer, setInvoicesForBuyer] = useState([]);
+  const [employees, setEmployees] = useState([]);
+
+  useEffect(() => {
+    fetchBanks().then(data => {
+      console.log('Fetched banks:', data);
+      if (Array.isArray(data)) {
+        setBanks(data);
+      } else if (data && Array.isArray(data.results)) {
+        setBanks(data.results);
+      } else if (data && Array.isArray(data.data)) {
+        setBanks(data.data);
+      } else {
+        setBanks([]);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    getEmployees().then(data => {
+      if (Array.isArray(data)) {
+        setEmployees(data);
+      } else if (data && Array.isArray(data.results)) {
+        setEmployees(data.results);
+      } else {
+        setEmployees([]);
+      }
+    });
+  }, []);
+
+  // Fetch buyer names when company bill form is opened
+  useEffect(() => {
+    if (visibleButton === 1) {
+      console.log('Fetching buyer names...');
+      getUniqueBuyerNames()
+        .then(data => {
+          console.log('Fetched buyer names response:', data);
+          if (data && data.buyer_names) {
+            console.log('Setting buyer names:', data.buyer_names);
+            setBuyerNames(data.buyer_names);
+          } else {
+            console.log('No buyer names found in response');
+            setBuyerNames([]);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching buyer names:', error);
+          // Check if it's an authentication error
+          if (error.message && error.message.includes('401')) {
+            console.log('Authentication required, redirecting to login...');
+            // You can add navigation to login here if needed
+            // navigate('/');
+          }
+          setBuyerNames([]);
+        });
+    }
+  }, [visibleButton]);
+
+  // Fetch invoices when buyer is selected in company bill form
+  useEffect(() => {
+    if (companyForm.company && visibleButton === 1) {
+      console.log('Fetching invoices for buyer:', companyForm.company);
+      getInvoicesByBuyer(companyForm.company)
+        .then(data => {
+          console.log('Fetched invoices response:', data);
+          if (data && data.invoices) {
+            console.log('Setting invoices for buyer:', data.invoices);
+            setInvoicesForBuyer(data.invoices);
+          } else {
+            console.log('No invoices found in response');
+            setInvoicesForBuyer([]);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching invoices for buyer:', error);
+          setInvoicesForBuyer([]);
+        });
+    } else {
+      setInvoicesForBuyer([]);
+    }
+  }, [companyForm.company, visibleButton]);
+
+  // Fetch buyer names when the form is shown
+  useEffect(() => {
+    if (visibleButton === 2) {
+      fetchBuyerNames().then(data => setBuyerNames(data.buyer_names || []));
+    }
+  }, [visibleButton]);
+
+  // Helper to get bank balance by name
+  const getBankAmount = (bankName) => {
+    const bank = banks.find(b => b.bank_name === bankName);
+    return bank ? bank.amount : '';
+  };
 
   // Generic reset function
   const resetForm = (formSetter, initial) => formSetter(initial);
+
+  // Helper to map camelCase to snake_case for each form
+  const mapCompanyPayload = (form) => {
+    return {
+      ...form,
+      payment_type: form.paymentType,
+    };
+  };
+  const mapBuyerPayload = (form) => {
+    return {
+      ...form,
+      payment_type: form.paymentType,
+      manual: form.manual,
+    };
+  };
+  const mapSalaryPayload = (form) => {
+    return {
+      ...form,
+      payment_type: form.paymentType,
+    };
+  };
+  const mapOtherPayload = (form) => {
+    return {
+      ...form,
+      payment_type: form.paymentType,
+      transaction_type: form.transactionType,
+    };
+  };
+
+  // Submit handlers for each form
+  const handleCompanySubmit = (e) => {
+    e.preventDefault();
+    const payload = mapCompanyPayload(companyForm);
+    delete payload.paymentType;
+    console.log('Form data:', companyForm);
+    console.log('Payload:', payload);
+    submitCompanyBill(payload)
+      .then(response => {
+        console.log('Backend response:', response);
+        if (response && response.id) {
+          alert('Company Bill submitted!');
+          resetForm(setCompanyForm, initialCompany);
+        } else {
+          alert('Error: ' + JSON.stringify(response));
+        }
+      })
+      .catch(error => {
+        alert('Error submitting Company Bill');
+        console.error(error);
+      });
+  };
+
+  const handleBuyerSubmit = async (e) => {
+    e.preventDefault();
+    if (buyerForm.manual && buyerForm.name) {
+      // Save the new buyer name to the DB with all fields
+      await addBuyerName({
+        name: buyerForm.name,
+        amount: buyerForm.amount,
+        notes: buyerForm.notice,
+        date: buyerForm.date,
+        payment_type: buyerForm.paymentType
+      });
+      fetchBuyerNames().then(data => setBuyerNames(data.buyer_names || []));
+    }
+    const payload = mapBuyerPayload(buyerForm);
+    delete payload.paymentType;
+    delete payload.transactionType;
+    console.log('Form data:', buyerForm);
+    console.log('Payload:', payload);
+    submitBuyerBill(payload)
+      .then(response => {
+        console.log('Backend response:', response);
+        if (response && response.id) {
+          alert('Buyer Bill submitted!');
+          resetForm(setBuyerForm, initialBuyer);
+        } else {
+          alert('Error: ' + JSON.stringify(response));
+        }
+      })
+      .catch(error => {
+        alert('Error submitting Buyer Bill');
+        console.error(error);
+      });
+  };
+
+  const handleSalarySubmit = (e) => {
+    e.preventDefault();
+    const payload = mapSalaryPayload(salaryForm);
+    delete payload.paymentType;
+    console.log('Form data:', salaryForm);
+    console.log('Payload:', payload);
+    submitSalary(payload)
+      .then(response => {
+        console.log('Backend response:', response);
+        if (response && response.id) {
+          alert('Salary submitted!');
+          resetForm(setSalaryForm, initialSalary);
+        } else {
+          alert('Error: ' + JSON.stringify(response));
+        }
+      })
+      .catch(error => {
+        alert('Error submitting Salary');
+        console.error(error);
+      });
+  };
+
+  const handleOtherSubmit = (e) => {
+    e.preventDefault();
+    const payload = mapOtherPayload(otherForm);
+    delete payload.paymentType;
+    delete payload.transactionType;
+    console.log('Form data:', otherForm);
+    console.log('Payload:', payload);
+    submitOtherTransaction(payload)
+      .then(response => {
+        console.log('Backend response:', response);
+        if (response && response.id) {
+          alert('Other Transaction submitted!');
+          resetForm(setOtherForm, initialOther);
+        } else {
+          alert('Error: ' + JSON.stringify(response));
+        }
+      })
+      .catch(error => {
+        alert('Error submitting Other Transaction');
+        console.error(error);
+      });
+  };
 
   return (
     <div className="banking-container">
@@ -87,15 +323,35 @@ const Banking = () => {
           </div>
           {/* Company Bill */}
           {visibleButton === 1 && (
-            <form className="banking-form" onSubmit={e => e.preventDefault()}>
+            <form className="banking-form" onSubmit={handleCompanySubmit}>
               <h3>Company Bill</h3>
               <label>Company Name</label>
-              <Select value={companyForm.company} onChange={e => setCompanyForm(f => ({ ...f, company: e.target.value }))} options={sampleCompanies} required>
+              <Select value={companyForm.company} onChange={e => setCompanyForm(f => ({ ...f, company: e.target.value, invoice: "" }))} required>
                 <option value="">-- Select Company --</option>
+                {buyerNames.length > 0 ? (
+                  buyerNames.map((buyerName, index) => (
+                    <option key={index} value={buyerName}>{buyerName}</option>
+                  ))
+                ) : (
+                  sampleCompanies.map((company, index) => (
+                    <option key={index} value={company}>{company}</option>
+                  ))
+                )}
               </Select>
               <label>Invoice Number</label>
-              <Select value={companyForm.invoice} onChange={e => setCompanyForm(f => ({ ...f, invoice: e.target.value }))} options={sampleInvoices}>
+              <Select value={companyForm.invoice} onChange={e => setCompanyForm(f => ({ ...f, invoice: e.target.value }))}>
                 <option value="">-- Select Invoice (Optional) --</option>
+                {invoicesForBuyer.length > 0 ? (
+                  invoicesForBuyer.map((invoice, index) => (
+                    <option key={index} value={invoice.invoice_number}>
+                      {invoice.invoice_number} - ₹{invoice.total_with_gst} ({invoice.invoice_date})
+                    </option>
+                  ))
+                ) : (
+                  sampleInvoices.map((invoice, index) => (
+                    <option key={index} value={invoice}>{invoice}</option>
+                  ))
+                )}
               </Select>
               <label>Date</label>
               <Input type="date" value={companyForm.date} onChange={e => setCompanyForm(f => ({ ...f, date: e.target.value }))} required />
@@ -112,9 +368,19 @@ const Banking = () => {
               {companyForm.paymentType === "Banking" && (
                 <>
                   <label>Bank</label>
-                  <Select value={companyForm.bank} onChange={e => setCompanyForm(f => ({ ...f, bank: e.target.value }))} options={sampleBanks} required>
+                  <Select
+                    value={companyForm.bank}
+                    onChange={e => setCompanyForm(f => ({ ...f, bank: e.target.value }))}
+                    options={Array.isArray(banks) ? banks.map(b => b.bank_name) : []}
+                    required
+                  >
                     <option value="">-- Select Bank --</option>
                   </Select>
+                  {companyForm.bank && (
+                    <span style={{ marginLeft: 10 }}>
+                      Balance: {getBankAmount(companyForm.bank)}
+                    </span>
+                  )}
                 </>
               )}
               <div className="banking-form-btn-row">
@@ -125,7 +391,7 @@ const Banking = () => {
           )}
           {/* Buyer Bill */}
           {visibleButton === 2 && (
-            <form className="banking-form" onSubmit={e => e.preventDefault()}>
+            <form className="banking-form" onSubmit={handleBuyerSubmit}>
               <h3>Buyer Bill</h3>
               <label style={{marginBottom: 8}}>
                 <input type="checkbox" checked={buyerForm.manual} onChange={() => setBuyerForm(f => ({ ...f, manual: !f.manual, name: "" }))} /> Enter Buyer Name Manually
@@ -134,21 +400,21 @@ const Banking = () => {
                 <>
                   <label>Buyer Name</label>
                   <Input placeholder="Buyer Name*" value={buyerForm.name} onChange={e => setBuyerForm(f => ({ ...f, name: e.target.value }))} required />
+                  <label>Amount</label>
+                  <Input type="number" placeholder="Amount*" value={buyerForm.amount} onChange={e => setBuyerForm(f => ({ ...f, amount: e.target.value }))} required />
+                  <label>Notes</label>
+                  <Input placeholder="Notes (Optional)" value={buyerForm.notice} onChange={e => setBuyerForm(f => ({ ...f, notice: e.target.value }))} />
                 </>
               ) : (
                 <>
                   <label>Buyer Name</label>
-                  <Select value={buyerForm.name} onChange={e => setBuyerForm(f => ({ ...f, name: e.target.value }))} options={sampleBuyers} required>
+                  <Select value={buyerForm.name} onChange={e => setBuyerForm(f => ({ ...f, name: e.target.value }))} options={buyerNames} required>
                     <option value="">-- Select Buyer --</option>
                   </Select>
                 </>
               )}
               <label>Date</label>
               <Input type="date" value={buyerForm.date} onChange={e => setBuyerForm(f => ({ ...f, date: e.target.value }))} required />
-              <label>Amount</label>
-              <Input type="number" placeholder="Amount*" value={buyerForm.amount} onChange={e => setBuyerForm(f => ({ ...f, amount: e.target.value }))} required />
-              <label>Notice</label>
-              <Input placeholder="Notice (Optional)" value={buyerForm.notice} onChange={e => setBuyerForm(f => ({ ...f, notice: e.target.value }))} />
               <label>Payment Type</label>
               <Select value={buyerForm.paymentType} onChange={e => setBuyerForm(f => ({ ...f, paymentType: e.target.value }))} required>
                 <option value="">-- Select Payment Type --</option>
@@ -158,9 +424,19 @@ const Banking = () => {
               {buyerForm.paymentType === "Banking" && (
                 <>
                   <label>Bank</label>
-                  <Select value={buyerForm.bank} onChange={e => setBuyerForm(f => ({ ...f, bank: e.target.value }))} options={sampleBanks} required>
+                  <Select
+                    value={buyerForm.bank}
+                    onChange={e => setBuyerForm(f => ({ ...f, bank: e.target.value }))}
+                    options={Array.isArray(banks) ? banks.map(b => b.bank_name) : []}
+                    required
+                  >
                     <option value="">-- Select Bank --</option>
                   </Select>
+                  {buyerForm.bank && (
+                    <span style={{ marginLeft: 10 }}>
+                      Balance: {getBankAmount(buyerForm.bank)}
+                    </span>
+                  )}
                 </>
               )}
               <div className="banking-form-btn-row">
@@ -171,11 +447,14 @@ const Banking = () => {
           )}
           {/* Salary */}
           {visibleButton === 3 && (
-            <form className="banking-form" onSubmit={e => e.preventDefault()}>
+            <form className="banking-form" onSubmit={handleSalarySubmit}>
               <h3>Salary</h3>
               <label>Employee Name</label>
-              <Select value={salaryForm.name} onChange={e => setSalaryForm(f => ({ ...f, name: e.target.value }))} options={sampleEmployees} required>
+              <Select value={salaryForm.name} onChange={e => setSalaryForm(f => ({ ...f, name: e.target.value }))} required>
                 <option value="">-- Select Employee --</option>
+                {employees.map(emp => (
+                  <option key={emp.id} value={emp.name}>{emp.name}</option>
+                ))}
               </Select>
               <label>Date</label>
               <Input type="date" value={salaryForm.date} onChange={e => setSalaryForm(f => ({ ...f, date: e.target.value }))} required />
@@ -190,9 +469,19 @@ const Banking = () => {
               {salaryForm.paymentType === "Banking" && (
                 <>
                   <label>Bank</label>
-                  <Select value={salaryForm.bank} onChange={e => setSalaryForm(f => ({ ...f, bank: e.target.value }))} options={sampleBanks} required>
+                  <Select
+                    value={salaryForm.bank}
+                    onChange={e => setSalaryForm(f => ({ ...f, bank: e.target.value }))}
+                    options={Array.isArray(banks) ? banks.map(b => b.bank_name) : []}
+                    required
+                  >
                     <option value="">-- Select Bank --</option>
                   </Select>
+                  {salaryForm.bank && (
+                    <span style={{ marginLeft: 10 }}>
+                      Balance: {getBankAmount(salaryForm.bank)}
+                    </span>
+                  )}
                 </>
               )}
               <div className="banking-form-btn-row">
@@ -203,7 +492,7 @@ const Banking = () => {
           )}
           {/* Other */}
           {visibleButton === 4 && (
-            <form className="banking-form" onSubmit={e => e.preventDefault()}>
+            <form className="banking-form" onSubmit={handleOtherSubmit}>
               <h3>Other</h3>
               <label>Account Type</label>
               <Select value={otherForm.type} onChange={e => setOtherForm(f => ({ ...f, type: e.target.value }))} options={sampleTypes} required>
@@ -234,9 +523,19 @@ const Banking = () => {
               {otherForm.paymentType === "Banking" && (
                 <>
                   <label>Bank</label>
-                  <Select value={otherForm.bank} onChange={e => setOtherForm(f => ({ ...f, bank: e.target.value }))} options={sampleBanks} required>
+                  <Select
+                    value={otherForm.bank}
+                    onChange={e => setOtherForm(f => ({ ...f, bank: e.target.value }))}
+                    options={Array.isArray(banks) ? banks.map(b => b.bank_name) : []}
+                    required
+                  >
                     <option value="">-- Select Bank --</option>
                   </Select>
+                  {otherForm.bank && (
+                    <span style={{ marginLeft: 10 }}>
+                      Balance: {getBankAmount(otherForm.bank)}
+                    </span>
+                  )}
                 </>
               )}
               <div className="banking-form-btn-row">

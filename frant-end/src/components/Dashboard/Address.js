@@ -3,7 +3,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Address.css';
-import { fetchAddresses } from "../../services/addressApi";
+import { getInvoices } from '../../services/addressApi';
 
 const Address = () => {
   const [addresses, setAddresses] = useState([]);
@@ -28,7 +28,7 @@ const Address = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("access_token");
-        const data = await fetchAddresses(token); // Use service function
+        const data = await getInvoices(); // Use service function
         setAddresses(data);
       } catch (error) {
         setAddresses([]);

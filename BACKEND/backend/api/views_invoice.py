@@ -3,11 +3,12 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
 from num2words import num2words
 from .models import Invoice
-from rest_framework import serializers
+from .serializers import InvoiceSerializer  # <-- Import the correct serializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, date
 import json
+
 
 # Serializer for Invoice
 class InvoiceSerializer(serializers.ModelSerializer):
@@ -20,6 +21,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'invoice_date': {'required': True},
             'base_amount': {'required': True},
         }
+
 
 # ViewSet for CRUD operations
 class InvoiceViewSet(viewsets.ModelViewSet):
