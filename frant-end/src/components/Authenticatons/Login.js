@@ -43,23 +43,30 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError(""); // clear previous error
-    const response = await fetch('http://localhost:8000/api/login/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await response.json();
-    console.log(data); // See what you get
+    setLoading(true); // Start loading
+    try {
+      const response = await fetch('http://localhost:8000/api/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      console.log(data); // See what you get
 
-    if (response.ok && data.access) {
-      localStorage.setItem("access_token", data.access); // Store access token with correct key
-      if (data.refresh) {
-        localStorage.setItem("refresh_token", data.refresh); // Store refresh token if present
+      if (response.ok && data.access) {
+        localStorage.setItem("access_token", data.access); // Store access token with correct key
+        if (data.refresh) {
+          localStorage.setItem("refresh_token", data.refresh); // Store refresh token if present
+        }
+        // Redirect to dashboard or show success
+        navigate("/dashboard");
+      } else {
+        setLoginError("Invalid email or password");
       }
-      // Redirect to dashboard or show success
-      navigate("/dashboard");
-    } else {
-      setLoginError("Invalid email or password");
+    } catch (error) {
+      setLoginError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
@@ -240,7 +247,9 @@ const Login = () => {
                 </span>
               </div>
 
-              <button type="submit" className="auth-button">Login</button>
+              <button type="submit" className="auth-button" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
+              </button>
 
               <p className="auth-footer-text">
                 Don't have an account? <Link to="/signup">Signup</Link>
