@@ -9,6 +9,20 @@ from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, date
 import json
 
+
+# Serializer for Invoice
+class InvoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invoice
+        fields = '__all__'
+        extra_kwargs = {
+            'buyer_name': {'required': True},
+            'buyer_address': {'required': True},
+            'invoice_date': {'required': True},
+            'base_amount': {'required': True},
+        }
+
+
 # ViewSet for CRUD operations
 class InvoiceViewSet(viewsets.ModelViewSet):
     serializer_class = InvoiceSerializer
@@ -79,13 +93,16 @@ class InvoiceCalculationView(APIView):
                 cgst = sgst = round(base_amount * 0.09, 2)
                 taxtotal = cgst + sgst
                 total_with_gst = round(base_amount + taxtotal, 2)
+                total_tax_amount = cgst + sgst
             else:
                 igst = round(base_amount * 0.18, 2)
                 taxtotal = igst
                 total_with_gst = round(base_amount + igst, 2)
+                total_tax_amount = igst
         else:
             total_with_gst = base_amount
             cgst = sgst = igst = taxtotal = None  # Not applicable
+            total_tax_amount = None
 
         # Currency conversion (INR equivalent)
         inr_equivalent = None
@@ -114,6 +131,14 @@ class InvoiceCalculationView(APIView):
             else:
                 invoice_number = f"01-{financial_year}"
 
+        if total_tax_amount is not None:
+            try:
+                total_tax_in_words = num2words(int(round(total_tax_amount)), lang='en_IN').title() + ' Only'
+            except NotImplementedError:
+                total_tax_in_words = num2words(int(round(total_tax_amount)), lang='en').title() + ' Only'
+        else:
+            total_tax_in_words = ""
+
         return Response({
             "base_amount": base_amount,
             "cgst": cgst,
@@ -125,6 +150,8 @@ class InvoiceCalculationView(APIView):
             "amount_in_words": amount_in_words,
             "invoice_number": invoice_number,
             "financial_year": financial_year,
+            "total_tax_amount": total_tax_amount,
+            "total_tax_in_words": total_tax_in_words,
         }, status=status.HTTP_200_OK)
 
 @api_view(['GET'])

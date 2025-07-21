@@ -1,5 +1,6 @@
 // frant-end/src/services/calculateInvoiceApi.js
 
+
 import { API_BASE_URL } from './apiConfig';
 
 function getAuthHeaders() {
@@ -16,6 +17,7 @@ export async function calculateInvoice(data) {
     credentials: 'include',
     body: JSON.stringify(data)
   });
+
   return res.json();
 }
 
@@ -35,4 +37,6 @@ export async function addInvoice(data) {
     body: JSON.stringify(data)
   });
   return response.json();
+
 } 
+

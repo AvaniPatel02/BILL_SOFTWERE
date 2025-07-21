@@ -1,5 +1,6 @@
 import { API_BASE_URL } from './apiConfig';
 
+
 function getAuthHeaders() {
   const token = localStorage.getItem('access_token');
   return token
@@ -21,6 +22,7 @@ export async function calculateInvoice(data) {
     headers: getAuthHeaders(),
     credentials: 'include',
     body: JSON.stringify(data)
+
   });
   return res.json();
-} 
+}
