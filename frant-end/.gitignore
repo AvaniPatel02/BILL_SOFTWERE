@@ -27,6 +27,7 @@ db.sqlite3
 
 __pycache__/
 *.pyc
+BACKEND/env/
 
 db.sqlite3
 *.sqlite3
