@@ -4,22 +4,57 @@ import Sidebar from "./Sidebar";
 import "../../styles/Buyer.css";
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { getBuyers, addBuyer } from '../../services/buyerApi';
+import { useEffect } from 'react';
 
 const Buyer = () => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', date: '', amount: '', notes: '', paymentType: 'Bank' });
-  const [bills, setBills] = useState([]);
+  const [buyers, setBuyers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Get token from localStorage (adjust if you use a different auth system)
+  const token = localStorage.getItem('access_token');
+
+  useEffect(() => {
+    async function fetchBuyers() {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await getBuyers(token);
+        setBuyers(data);
+      } catch (err) {
+        setError('Failed to fetch buyers');
+      }
+      setLoading(false);
+    }
+    if (token) fetchBuyers();
+  }, [token]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = () => {
-    setBills(prev => [...prev, form]);
-    setShowModal(false);
-    setForm({ name: '', date: '', amount: '', notes: '', paymentType: 'Bank' });
+  const handleSave = async () => {
+    setError('');
+    try {
+      const payload = {
+        name: form.name,
+        date: form.date,
+        amount: form.amount,
+        notes: form.notes,
+        payment_type: form.paymentType,
+      };
+      const newBuyer = await addBuyer(payload);
+      setBuyers(prev => [...prev, newBuyer]);
+      setShowModal(false);
+      setForm({ name: '', date: '', amount: '', notes: '', paymentType: 'Bank' });
+    } catch (err) {
+      setError('Failed to save buyer');
+    }
   };
 
   const handleCancel = () => {
@@ -36,11 +71,11 @@ const Buyer = () => {
             <button className="buyer-back-btn" onClick={() => navigate(-1)}>Back</button>
             <h2>Buyer Page</h2>
           </div>
-          <button className="buyer-newbill-btn" onClick={() => setShowModal(true)}>New Bill</button>
+          <button className="buyer-newbill-btn" onClick={() => setShowModal(true)}>New Buyer</button>
           {showModal && (
             <div className="buyer-modal-overlay">
               <div className="buyer-modal">
-                <h3>New Bill</h3>
+                <h3>New Buyer</h3>
                 <label>Name
                   <input type="text" name="name" value={form.name} onChange={handleChange} />
                 </label>
@@ -63,11 +98,16 @@ const Buyer = () => {
                   <button className="buyer-modal-save" onClick={handleSave}>Save</button>
                   <button className="buyer-modal-cancel" onClick={handleCancel}>Cancel</button>
                 </div>
+                {error && <div style={{color:'red'}}>{error}</div>}
               </div>
             </div>
           )}
           {/* Add Buyer details or functionality here */}
-          {bills.length > 0 && (
+          {loading ? (
+            <div>Loading...</div>
+          ) : error ? (
+            <div style={{color:'red'}}>{error}</div>
+          ) : buyers.length > 0 && (
             <div className="buyer-table-outer">
               <table className="buyer-table">
                 <thead>
@@ -80,13 +120,13 @@ const Buyer = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {bills.map((bill, idx) => (
-                    <tr key={idx}>
-                      <td>{bill.name}</td>
-                      <td>{bill.date}</td>
-                      <td>{bill.amount}</td>
-                      <td>{bill.notes}</td>
-                      <td>{bill.paymentType}</td>
+                  {buyers.map((buyer, idx) => (
+                    <tr key={buyer.id || idx}>
+                      <td>{buyer.name}</td>
+                      <td>{buyer.date}</td>
+                      <td>{buyer.amount}</td>
+                      <td>{buyer.notes}</td>
+                      <td>{buyer.payment_type}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,24 +1,26 @@
-import BASE_URL from "./apiConfig";
-import { authFetch } from "./authApi";
+import { API_BASE_URL } from './apiConfig';
 
-export async function fetchSettings() {
-  const res = await authFetch(`${BASE_URL}/auth/settings/`);
+function getAuthHeaders() {
+  const token = localStorage.getItem('access_token');
+  return token
+    ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+    : { 'Content-Type': 'application/json' };
+}
+
+export async function getSettings() {
+  const res = await fetch(`${API_BASE_URL}/auth/settings/`, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
   return res.json();
 }
 
-export const updateSettings = async (formData, token) => {
-  try {
-    const res = await fetch(`${BASE_URL}/auth/settings/`, {
-      method: 'PUT', // or 'POST' if your backend expects POST
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // Do NOT set 'Content-Type' header when sending FormData!
-      },
-      body: formData,
-    });
-    const data = await res.json();
-    return { success: res.ok, data };
-  } catch (err) {
-    return { success: false, error: err };
-  }
-};
+export async function updateSettings(data) {
+  const res = await fetch(`${API_BASE_URL}/auth/settings/`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}

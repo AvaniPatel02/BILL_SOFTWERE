@@ -45,10 +45,10 @@ const Sidebar = () => {
             <span>Employee</span>
           </Link>
         </li>
-        <li className={`nav-item${location.pathname === "/bknadd" ? " active" : ""}`}>
-          <Link to="/bknadd" className="nav-link-full">
+        <li className={`nav-item${location.pathname === "/bank-add" ? " active" : ""}`}>
+          <Link to="/bank-add" className="nav-link-full">
             <i className="fas fa-plus-circle"></i>
-            <span>BKN Add</span>
+            <span>Bank Add</span>
           </Link>
         </li>
         <li className={`nav-item${location.pathname === "/accounting" ? " active" : ""}`}>

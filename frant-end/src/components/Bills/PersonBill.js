@@ -3,7 +3,7 @@ import Header from '../Dashboard/Header';
 import Sidebar from '../Dashboard/Sidebar';
 import '../../styles/PersonBill.css';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchInvoicesByYear } from '../../services/calculateInvoiceApi';
+import { getInvoices } from '../../services/calculateInvoiceApi';
 
 const PersonBill = () => {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ const PersonBill = () => {
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     setLoading(true);
     setError(null);
-    fetchInvoicesByYear(year, token)
+    getInvoices(year)
       .then(data => {
         // Convert year to match API format (2025-2026 => 2025/2026)
         const apiYear = year.replace('-', '/');
@@ -75,7 +75,13 @@ const PersonBill = () => {
                           <td>{idx + 1}</td>
                           <td>{bill.buyer_name}</td>
                           <td>{bill.invoice_number}</td>
-                          <td>{bill.buyer_gst}</td>
+                          <td
+                            title={bill.buyer_gst}
+                          >
+                            {bill.buyer_gst && bill.buyer_gst.length > 15
+                              ? bill.buyer_gst.slice(0, 15) + '...'
+                              : bill.buyer_gst}
+                          </td>
                           <td>{bill.invoice_date}</td>
                           <td>{bill.total_amount || bill.total_with_gst}</td>
                           <td>

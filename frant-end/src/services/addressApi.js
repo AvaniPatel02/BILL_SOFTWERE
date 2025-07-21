@@ -1,12 +1,16 @@
-import BASE_URL from "./apiConfig";
+import { API_BASE_URL } from './apiConfig';
 
-export async function fetchAddresses(token) {
-  const response = await fetch(`${BASE_URL}/invoices/`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+function getAuthHeaders() {
+  const token = localStorage.getItem('access_token');
+  return token
+    ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+    : { 'Content-Type': 'application/json' };
+}
+
+export async function getInvoices() {
+  const response = await fetch(`${API_BASE_URL}/invoices/`, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
   });
-  if (!response.ok) throw new Error("Failed to fetch invoices");
   return response.json();
 } 

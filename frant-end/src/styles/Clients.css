@@ -1,120 +1,237 @@
-.action-btn {
+/* Clients.css - Address Book style for Clients table */
+
+.client-year_container {
+  background: #fff;
+  padding: 0rem 2rem 2rem 2rem ;
+  border-radius: 10px;
+  box-shadow: 0 2px 0px rgba(0, 0, 0, 0.07);
+  margin-top: 2rem;
+  margin: 2rem auto 0 auto;
+  max-width: 1204px;
+  width: 100%;  
+}
+
+.client-header-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 18px 26px;
+  margin-bottom: 18px;
+  box-shadow: 1px 1px 19px 0px #d9d5d5;
+  border-radius: 10px;
+}
+
+.client-back-btn {
+  background: #eee;
   border: none;
-  padding: 6px 12px;
-  margin: 0 4px;
-  border-radius: 6px;
-  font-size: 16px;
+  padding: 0.5rem 1.2rem;
+  border-radius: 5px;
+  cursor: pointer;
   font-weight: 500;
+  margin-right: 1rem;
+  transition: background 0.2s;
+}
+
+.client-back-btn:hover {
+  background: #ddd;
+}
+
+.client-title {
+  flex: 1 1;
+  text-align: end;
+  color: #333;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.client-new-btn {
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  font-weight: 500;
+  transition: background 0.2s;
 }
 
-/* View Button */
-.action-btn.view {
-  background-color: #bcc6d1;
-  color: black;
+.client-new-btn:hover {
+  background: #367538;
 }
 
-.action-btn.view:hover {
-  background-color: #9ba1a7;
-  transform: scale(1.05);
-}
-
-/* new button */
-.action-btn.new {
-  background-color: #c9e6d1;
-  color: black;
-}
-
-.action-btn.new:hover {
-  background-color: #8dbba0;
-  transform: scale(1.05);
-}
-
-/* Download Button */
-.action-btn.download {
-  background-color: #cde6fa;
-    color: black;
-
-}
-
-.action-btn.download:hover {
-  background-color: #a1bbcf;
-  transform: scale(1.05);
-}
-
-/* Edit Button */
-.action-btn.edit {
-  background-color: #ceddf8;
-  color: black;
-
-}
-
-.action-btn.edit:hover {
-  background-color: #bdd2f8;
-  transform: scale(1.05);
-}
-
-/* Delete Button */
-.action-btn.delete {
-  background-color: #ffe2df;
-  color: black;
-
-}
-
-.action-btn.delete:hover {
-  background-color: #e4b8b6;
-  transform: scale(1.05);
-}
-
-/* //clear button */
-.action-btn.clear {
-  background-color: #020202;
-  color: #e0e3e6;
-
-}
-
-.action-btn.clear:hover {
-  background-color: #434446;
-  transform: scale(1.05);
-}
-
-.address-hover {
+/* Light pastel action buttons */
+.client-action-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 0 4px;
+  font-size: 18px;
   cursor: pointer;
-  /* text-decoration: underline dotted; */
+  display: flex;
+  align-items: center;
+  transition: background 0.2s, box-shadow 0.2s, border 0.2s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  position: relative;
+  background: #f5f5f5;
+}
+.client-action-btn.client-view {
+  background: #e3f0fb;
+}
+.client-action-btn.client-view i {
+  color: #1976d2;
+}
+.client-action-btn.client-view:hover {
+  background: #b6daf7;
+}
+.client-action-btn.client-edit {
+  background: #fff9e3;
+}
+.client-action-btn.client-edit i {
+  color: #fbc02d;
+}
+.client-action-btn.client-edit:hover {
+  background: #fff3b0;
+}
+.client-action-btn.client-download {
+  background: #e3fbe7;
+}
+.client-action-btn.client-download i {
+  color: #43a047;
+}
+.client-action-btn.client-download:hover {
+  background: #b6f7c7;
+}
+.client-action-btn.client-delete {
+  background: #fde3e3;
+}
+.client-action-btn.client-delete i {
+  color: #e53935;
+}
+.client-action-btn.client-delete:hover {
+  background: #fbbcbc;
+}
+.client-action-btn.client-new {
+  background: #e3f6fb;
+}
+.client-action-btn.client-new i {
+  color: #00838f;
+}
+.client-action-btn.client-new:hover {
+  background: #b6eaf7;
 }
 
-.alert {
-  margin: 10px 20px;
-  transition: opacity 0.5s ease;
+/* Hide text but keep for screen readers */
+.client-action-btn .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
-/* it is for see the title like what is this when hover */
-.tooltip-container {
+/* Tooltip improvements */
+.client-tooltip-container {
   position: relative;
   display: inline-block;
 }
 
-.tooltip-text {
+.client-tooltip-text {
   visibility: hidden;
-  width: auto;
-  font-size: x-small;
-  background-color: #2b2929ec;
-  color: #dad1d1;
+  min-width: 70px;
+  font-size: 0.95em;
+  background-color: #222b;
+  color: #fff;
   text-align: center;
   border-radius: 6px;
-  padding: 6px 8px;
+  padding: 6px 10px;
   position: absolute;
-  z-index: 1;
-  top: 26px;
-  left: 55px;
+  z-index: 2;
+  bottom: 120%;
+  left: 50%;
   transform: translateX(-50%);
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.3s, bottom 0.3s;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.13);
 }
 
-.tooltip-container:hover .tooltip-text {
+.client-tooltip-container:hover .client-tooltip-text {
   visibility: visible;
   opacity: 1;
-} 
+  bottom: 140%;
+}
+
+/* Responsive, centered table container */
+.client-table-outer {
+  margin-top: 1.5rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.client-hadar-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 18px 26px;
+  margin-bottom: 18px;
+  box-shadow: 1px 1px 19px 0px #d9d5d5;
+  border-radius: 10px;
+}
+
+.client-table-container {
+  /* background: #fff; */
+  border-radius: 12px;
+  /* box-shadow: 0 2px 8px rgba(0,0,0,0.10); */
+  /* padding: 1.5rem 1rem; */
+  max-width: 1200px;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.client-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+  background: #fff;
+}
+
+.client-table th,
+.client-table td {
+  border: 1px solid #e0e0e0;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 1rem;
+}
+
+.client-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+  color: #222;
+}
+
+.client-text-center {
+  text-align: center;
+}
+
+@media (max-width: 1000px) {
+  .client-year_container {
+    padding: 12px 4px;
+  }
+
+  .client-table-container {
+    padding: 0.5rem 0.2rem;
+  }
+
+  .client-table th,
+  .client-table td {
+    padding: 8px 6px;
+    font-size: 0.95rem;
+  }
+}

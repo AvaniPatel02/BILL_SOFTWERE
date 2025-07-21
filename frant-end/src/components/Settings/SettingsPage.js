@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../Dashboard/Sidebar';
 import '../../styles/Settings.css';
 import Toast from '../Toast';
-import { fetchSettings, updateSettings } from '../../services/settingsApi';
+import { getSettings, updateSettings } from '../../services/settingsApi';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -38,7 +38,7 @@ const SettingsPage = () => {
     const getSettings = async () => {
       setLoading(true);
       try {
-        const data = await fetchSettings(token); // Use service function
+        const data = await getSettings(); // Use service function
         setFormData(prev => ({
           ...data.data,
           logoUrl: data.data.logo_url || '', // Use the backend's logo_url
