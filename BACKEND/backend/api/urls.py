@@ -11,6 +11,19 @@ from .views_bank_cash import (
     bank_account_permanent_delete, cash_entry_permanent_delete
 )
 from .views_employee import EmployeeListCreateView, EmployeeRetrieveUpdateDestroyView, deleted_employees, restore_employee
+from .views_buyer import buyer_list_create, get_all_buyer_names, add_buyer_name
+from .views_banking import (
+    CompanyBillListCreateView,
+    CompanyBillRetrieveUpdateDestroyView,
+    BuyerBillListCreateView,
+    BuyerBillRetrieveUpdateDestroyView,
+    SalaryListCreateView,
+    SalaryRetrieveUpdateDestroyView,
+    OtherTransactionListCreateView,
+    OtherTransactionRetrieveUpdateDestroyView,
+    get_unique_buyer_names,
+    get_invoices_by_buyer,
+)
 
 router = DefaultRouter()
 router.register(r'invoices', InvoiceViewSet, basename='invoice')
@@ -62,8 +75,35 @@ urlpatterns = [
     path('employees/<int:pk>/', EmployeeRetrieveUpdateDestroyView.as_view(), name='employee-detail'),
     path('banking/employee/deleted/', deleted_employees, name='employee-deleted'),
     path('banking/employee/<int:pk>/restore/', restore_employee, name='employee-restore'),
+
+    # BUYER API
+    path('buyer/', buyer_list_create, name='buyer-list-create'),
+    path('banking/buyer-names/', get_all_buyer_names, name='get-all-buyer-names'),
+    path('banking/add-buyer-name/', add_buyer_name, name='add-buyer-name'),
 ]
 
 urlpatterns += router.urls
+
+urlpatterns += [
+    # CompanyBill CRUD
+    path('banking/company-bill/', CompanyBillListCreateView.as_view(), name='company-bill-list-create'),
+    path('banking/company-bill/<int:pk>/', CompanyBillRetrieveUpdateDestroyView.as_view(), name='company-bill-detail'),
+
+    # BuyerBill CRUD
+    path('banking/buyer-bill/', BuyerBillListCreateView.as_view(), name='buyer-bill-list-create'),
+    path('banking/buyer-bill/<int:pk>/', BuyerBillRetrieveUpdateDestroyView.as_view(), name='buyer-bill-detail'),
+
+    # Salary CRUD
+    path('banking/salary/', SalaryListCreateView.as_view(), name='salary-list-create'),
+    path('banking/salary/<int:pk>/', SalaryRetrieveUpdateDestroyView.as_view(), name='salary-detail'),
+
+    # OtherTransaction CRUD
+    path('banking/other/', OtherTransactionListCreateView.as_view(), name='other-transaction-list-create'),
+    path('banking/other/<int:pk>/', OtherTransactionRetrieveUpdateDestroyView.as_view(), name='other-transaction-detail'),
+
+    # Company Bill Form Data APIs
+    path('banking/company-bill/buyer-names/', get_unique_buyer_names, name='get-unique-buyer-names'),
+    path('banking/company-bill/invoices/<str:buyer_name>/', get_invoices_by_buyer, name='get-invoices-by-buyer'),
+]
 
 

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../Dashboard/Sidebar';
 import '../../styles/TaxInvoices.css';
-import { fetchSettings } from '../../services/settingsApi';
-import { calculateInvoice, saveInvoice } from '../../services/calculateInvoiceApi';
-import { fetchNextInvoiceNumber as fetchNextInvoiceNumberApi, fetchInvoiceNumberForDate as fetchInvoiceNumberForDateApi } from '../../services/taxInvoiceApi';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+
+import html2pdf from 'html2pdf.js';
+import { getSettings } from '../../services/settingsApi';
+import { calculateInvoice, addInvoice, getInvoices } from '../../services/calculateInvoiceApi';
+import { getNextInvoiceNumber } from '../../services/taxInvoiceApi';
+
 
 
 const Taxinvoices = () => {
@@ -49,7 +50,7 @@ const Taxinvoices = () => {
   useEffect(() => {
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     if (token) {
-      fetchSettings(token).then(res => {
+      getSettings().then(res => {
         setSettings(res.data || res);
       });
     }
@@ -157,7 +158,9 @@ const Taxinvoices = () => {
       };
       console.log('Sending payload to calculateInvoice:', payload);
       const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-      calculateInvoice(payload, token)
+
+      calculateInvoice(payload)
+
         .then(result => {
           setCalculationResult(result);
         })
@@ -178,7 +181,9 @@ const Taxinvoices = () => {
     setLoadingInvoiceNumber(true);
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     try {
-      const data = await fetchNextInvoiceNumberApi(token); // Pass token as first argument
+
+      const data = await getNextInvoiceNumber(); // Pass token as first argument
+
       setInvoiceNumber(data.invoice_number);
       setFinancialYear(data.financial_year);
     } catch (e) {
@@ -203,7 +208,9 @@ const Taxinvoices = () => {
         rate: Number(rate) || 0,
         hns_code: hnsSelect || '9983'
       };
-      const data = await fetchInvoiceNumberForDateApi(token, payload); // Pass token as first argument
+
+      const data = await calculateInvoice(payload); // Pass token as first argument
+
       setInvoiceNumber(data.invoice_number);
       setFinancialYear(data.financial_year);
     } catch (e) {
@@ -821,7 +828,77 @@ const Taxinvoices = () => {
                 <button
                   className="download-btn"
                   disabled={loadingInvoiceNumber || !invoiceNumber}
-                  onClick={handleSaveInvoice}
+
+                  onClick={async () => {
+                    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+                    const parseNumber = v => v === '' || v == null ? 0 : Number(v);
+                    const parseDate = v => v ? new Date(v).toISOString().split('T')[0] : null;
+                    if (!invoiceNumber) {
+                      alert('Invoice number is not loaded yet. Please wait.');
+                      return;
+                    }
+                    // Only require state if country is India
+                    if (selectedCountry.name === 'India' && !selectedState) {
+                      alert('Please select a state for India.');
+                      return;
+                    }
+                    const isForeign = selectedCountry.name !== 'India';
+                    const exchange_rate = isForeign && exchangeRate ? Number(exchangeRate) : 1;
+                    const totalWithGst = calculationResult.total_with_gst == null ? 0 : Number(calculationResult.total_with_gst);
+                    const inr_equivalent = isForeign && exchangeRate && totalWithGst
+                      ? Number((totalWithGst * exchange_rate).toFixed(2))
+                      : 0;
+
+                    const invoiceData = {
+                      buyer_name: billTo.title,
+                      buyer_address: billTo.address,
+                      buyer_gst: billTo.gst || '',
+                      consignee_name: shipTo.title || '',
+                      consignee_address: shipTo.address || '',
+                      consignee_gst: shipTo.gst || '',
+                      financial_year: financialYear || '2025-2026',
+                      invoice_number: invoiceNumber,
+                      invoice_date: parseDate(date),
+                      delivery_note: deliveryNote || '',
+                      payment_mode: modeOfPayment || '',
+                      delivery_note_date: parseDate(deliveryNoteDate),
+                      destination: destination || '',
+                      terms_to_delivery: termsOfDelivery || '',
+                      country: selectedCountry.name,
+                      currency: selectedCountry.code,
+                      currency_symbol: selectedCountry.symbol,
+                      state: selectedCountry.name === 'India' ? selectedState : 'N/A',
+                      particulars: gstConsultancy || '',
+                      total_hours: parseNumber(totalHours),
+                      rate: parseNumber(rate),
+                      base_amount: parseNumber(baseAmount),
+                      total_amount: parseNumber(calculationResult.total_with_gst),
+                      cgst: calculationResult.cgst == null ? 0 : Number(calculationResult.cgst),
+                      sgst: calculationResult.sgst == null ? 0 : Number(calculationResult.sgst),
+                      igst: calculationResult.igst == null ? 0 : Number(calculationResult.igst),
+                      total_with_gst: calculationResult.total_with_gst == null ? 0 : Number(calculationResult.total_with_gst),
+                      amount_in_words: calculationResult.amount_in_words || '',
+                      taxtotal: calculationResult.taxtotal == null ? 0 : Number(calculationResult.taxtotal),
+                      remark: remark || '',
+                      exchange_rate: exchange_rate,
+                      inr_equivalent: inr_equivalent,
+                      country_flag: '',
+                    };
+                    if (!formDisabled) {
+                      // First time: save invoice, then lock form and allow further downloads
+                      try {
+                        await addInvoice(invoiceData);
+                        setFormDisabled(true);
+                        handleDownloadPDF();
+                      } catch (err) {
+                        alert('Failed to save invoice: ' + (err.message || err));
+                      }
+                    } else {
+                      // Already saved: just download PDF again
+                      handleDownloadPDF();
+                    }
+                  }}
+
                 >
                   {loadingInvoiceNumber ? 'Loading Invoice Number...' : 'Download'}
                 </button>

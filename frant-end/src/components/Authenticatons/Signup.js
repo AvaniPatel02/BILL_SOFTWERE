@@ -4,7 +4,7 @@ import { Eye, EyeSlash } from "react-bootstrap-icons";
 import "../../styles/Signup.css";
 import Footer from './Footer';
 import Toast from '../Toast';
-import { sendSignupOtp, resendSignupOtp, verifySignupOtp, register } from "../../services/authApi";
+import { sendOtp, resendOtp, verifyOtp, register } from "../../services/authApi";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ const Signup = () => {
       setError("Please enter your email first.");
       return;
     }
-    const res = await sendSignupOtp(email);
+    const res = await sendOtp({ email });
     if (res.success) {
       setOtpRequested(true);
       setTimer(60);
@@ -60,7 +60,7 @@ const Signup = () => {
     e.preventDefault();
     if (!canResend) return;
     setError("");
-    const res = await resendSignupOtp(email);
+    const res = await resendOtp({ email });
     if (res.success) {
       setTimer(60);
       setCanResend(false);
@@ -78,7 +78,7 @@ const Signup = () => {
       setError("Please enter the OTP.");
       return;
     }
-    const res = await verifySignupOtp(email, otp);
+    const res = await verifyOtp({ email, otp });
     if (res.success) {
       setOtpVerified(true);
       setShowSuccess(true);
