@@ -48,4 +48,40 @@ export async function restoreEmployee(id) {
     credentials: 'include',
   });
   return res.json();
+}
+
+export async function fetchEmployeeActions(employeeId) {
+  const res = await fetch(`${API_BASE_URL}/employees/${employeeId}/actions/`, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  return res.json();
+}
+
+export async function softDeleteEmployee(id) {
+  const res = await fetch(`${API_BASE_URL}/employees/${id}/`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  return res;
+}
+
+export async function updateEmployee(id, data) {
+  const res = await fetch(`${API_BASE_URL}/employees/${id}/`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+export async function permanentDeleteEmployee(id) {
+  const res = await fetch(`${API_BASE_URL}/banking/employee/${id}/permanent/`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  return res;
 } 

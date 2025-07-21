@@ -3,8 +3,18 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q
-from .models import CompanyBill, BuyerBill, Salary, OtherTransaction, Invoice
+from .models import CompanyBill, BuyerBill, Salary, OtherTransaction, Invoice, Employee, EmployeeActionHistory
 from .serializers import CompanyBillSerializer, BuyerBillSerializer, SalarySerializer, OtherTransactionSerializer
+from django.utils import timezone
+
+# Utility to log employee actions
+
+def log_employee_action(employee, action, details=""):
+    EmployeeActionHistory.objects.create(
+        employee=employee,
+        action=action,
+        details=details
+    )
 
 # CompanyBill CRUD
 class CompanyBillListCreateView(generics.ListCreateAPIView):
@@ -33,6 +43,17 @@ class SalaryListCreateView(generics.ListCreateAPIView):
     queryset = Salary.objects.all()
     serializer_class = SalarySerializer
     permission_classes = [permissions.AllowAny]
+
+    def perform_create(self, serializer):
+        salary = serializer.save()
+        # Try to find the employee by name (assuming name is unique)
+        employee = Employee.objects.filter(name=salary.name, is_deleted=False).first()
+        if employee:
+            log_employee_action(
+                employee,
+                f"{salary.amount} salary is paid",
+                f"Salary of {salary.amount} paid on {salary.date} via {salary.payment_type}"
+            )
 
 class SalaryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Salary.objects.all()

@@ -10,7 +10,7 @@ from .views_bank_cash import (
     cash_entries_list_create, cash_entry_detail, cash_entries_deleted, cash_entry_restore,
     bank_account_permanent_delete, cash_entry_permanent_delete
 )
-from .views_employee import EmployeeListCreateView, EmployeeRetrieveUpdateDestroyView, deleted_employees, restore_employee
+from .views_employee import EmployeeListCreateView, EmployeeRetrieveUpdateDestroyView, deleted_employees, restore_employee, employee_action_history, permanent_delete_employee
 from .views_buyer import buyer_list_create, get_all_buyer_names, add_buyer_name
 from .views_banking import (
     CompanyBillListCreateView,
@@ -73,8 +73,10 @@ urlpatterns = [
     # EMPLOYEE (SALARY) API
     path('banking/employee/', EmployeeListCreateView.as_view(), name='employee-list-create'),
     path('employees/<int:pk>/', EmployeeRetrieveUpdateDestroyView.as_view(), name='employee-detail'),
+    path('employees/<int:pk>/actions/', employee_action_history, name='employee-action-history'),
     path('banking/employee/deleted/', deleted_employees, name='employee-deleted'),
     path('banking/employee/<int:pk>/restore/', restore_employee, name='employee-restore'),
+    path('banking/employee/<int:pk>/permanent/', permanent_delete_employee, name='employee-permanent-delete'),
 
     # BUYER API
     path('buyer/', buyer_list_create, name='buyer-list-create'),
