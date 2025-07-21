@@ -1,3 +1,4 @@
+from .models import Invoice
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -7,6 +8,7 @@ from .models import Settings
 from .models import BankAccount, CashEntry
 from .models import Buyer
 from .models import CompanyBill, BuyerBill, Salary, OtherTransaction
+from .models import EmployeeActionHistory
 
 User = get_user_model()
 
@@ -123,12 +125,17 @@ class CashEntrySerializer(serializers.ModelSerializer):
 # Employee serializer for salary management
 from .models import Employee
 class EmployeeSerializer(serializers.ModelSerializer):
+    joining_date = serializers.SerializerMethodField()
+
     class Meta:
         model = Employee
         fields = '__all__'
 
-# Invoice serializer
-from .models import Invoice
+    def get_joining_date(self, obj):
+        if obj.joining_date:
+            return obj.joining_date.strftime('%d-%m-%Y')
+        return ""
+
 class InvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
@@ -193,3 +200,14 @@ class OtherTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = OtherTransaction
         fields = '__all__'
+
+class EmployeeActionHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeActionHistory
+        fields = ['id', 'action', 'date', 'details']
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        if instance.date:
+            rep['date'] = instance.date.strftime('%d-%m-%Y %H:%M')
+        return rep

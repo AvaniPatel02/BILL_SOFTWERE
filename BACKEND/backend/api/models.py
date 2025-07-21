@@ -217,14 +217,18 @@ class Employee(models.Model):
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     def soft_delete(self):
+        print(f"[DEBUG] Soft-deleting employee: {self.id} - {self.name}")
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.save()
+        print(f"[DEBUG] Employee {self.id} is_deleted: {self.is_deleted}, deleted_at: {self.deleted_at}")
 
     def restore(self):
+        print(f"[DEBUG] Restoring employee: {self.id} - {self.name}")
         self.is_deleted = False
         self.deleted_at = None
         self.save()
+        print(f"[DEBUG] Employee {self.id} is_deleted: {self.is_deleted}, deleted_at: {self.deleted_at}")
 
     def __str__(self):
         return self.name
@@ -276,5 +280,15 @@ class OtherTransaction(models.Model):
     payment_type = models.CharField(max_length=50)
     bank = models.CharField(max_length=100, blank=True, null=True)
     transaction_type = models.CharField(max_length=10, choices=[('credit', 'Credit'), ('debit', 'Debit')])
+
+
+class EmployeeActionHistory(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='action_histories')
+    action = models.CharField(max_length=255)
+    date = models.DateTimeField(auto_now_add=True)
+    details = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.employee.name} - {self.action} at {self.date}"
 
 

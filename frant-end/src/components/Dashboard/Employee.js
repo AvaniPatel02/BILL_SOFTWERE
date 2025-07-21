@@ -5,7 +5,7 @@ import "../../styles/Employee.css";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import dayjs from 'dayjs';
-import { getEmployees, addEmployee, getDeletedEmployees, restoreEmployee } from '../../services/employeeApi';
+import { getEmployees, addEmployee, getDeletedEmployees, restoreEmployee, fetchEmployeeActions, softDeleteEmployee, updateEmployee, permanentDeleteEmployee } from '../../services/employeeApi';
 
 const Employee = () => {
     const navigate = useNavigate();
@@ -31,6 +31,7 @@ const Employee = () => {
     const [incrementIndex, setIncrementIndex] = useState(null);
     const [newSalary, setNewSalary] = useState('');
     const [incrementError, setIncrementError] = useState('');
+    const [actionHistory, setActionHistory] = useState([]);
 
     // Fetch employees from backend on mount
     React.useEffect(() => {
@@ -127,16 +128,19 @@ const Employee = () => {
     };
 
     // Edit update
-    const handleUpdateEmployee = (e) => {
+    const handleUpdateEmployee = async (e) => {
         e.preventDefault();
-        const updatedEmployees = [...employees];
-        const emp = { ...editForm };
-        if (!emp.actionHistory) emp.actionHistory = [];
-        emp.actionHistory = [...(emp.actionHistory || []), { action: 'Edited', date: dayjs().format('YYYY-MM-DD HH:mm') }];
-        updatedEmployees[editIndex] = emp;
-        setEmployees(updatedEmployees);
-        setEditModalOpen(false);
-        setEditIndex(null);
+        try {
+            const empId = employees[editIndex].id;
+            const updated = await updateEmployee(empId, editForm);
+            // Refresh employees list
+            const data = await getEmployees();
+            setEmployees(data);
+            setEditModalOpen(false);
+            setEditIndex(null);
+        } catch (err) {
+            // Optionally handle error
+        }
     };
 
     const handleEditCancel = () => {
@@ -154,11 +158,11 @@ const Employee = () => {
         const token = localStorage.getItem("access_token");
         if (!token) return;
         try {
-            // Stub for softDeleteEmployee if it's not directly available from the API service
-            // In a real scenario, you would call a DELETE endpoint with auth headers
-            // For now, we'll just remove it from the active list
-            const updatedEmployees = employees.filter((_, i) => i !== deleteIndex);
-            setEmployees(updatedEmployees);
+            const empId = employees[deleteIndex].id;
+            await softDeleteEmployee(empId);
+            // Refresh employees list
+            const data = await getEmployees();
+            setEmployees(data);
             setShowConfirmDelete(false);
             setDeleteIndex(null);
         } catch (err) {
@@ -198,7 +202,8 @@ const Employee = () => {
         setNewSalary(e.target.value);
     };
 
-    const handleIncrementSubmit = (e) => {
+    // Increment submit
+    const handleIncrementSubmit = async (e) => {
         e.preventDefault();
         const oldSalary = Number(employees[incrementIndex].salary);
         const updatedSalary = Number(newSalary);
@@ -206,17 +211,19 @@ const Employee = () => {
             setIncrementError('New salary must be greater than current salary.');
             return;
         }
-        const updatedEmployees = [...employees];
-        const emp = { ...updatedEmployees[incrementIndex] };
-        emp.salary = updatedSalary;
-        if (!emp.actionHistory) emp.actionHistory = [];
-        emp.actionHistory = [...(emp.actionHistory || []), { action: `Incremented salary from ${oldSalary} to ${updatedSalary}`, date: dayjs().format('YYYY-MM-DD HH:mm') }];
-        updatedEmployees[incrementIndex] = emp;
-        setEmployees(updatedEmployees);
-        setShowIncrementModal(false);
-        setIncrementIndex(null);
-        setNewSalary('');
-        setIncrementError('');
+        try {
+            const empId = employees[incrementIndex].id;
+            await updateEmployee(empId, { salary: updatedSalary });
+            // Refresh employees list
+            const data = await getEmployees();
+            setEmployees(data);
+            setShowIncrementModal(false);
+            setIncrementIndex(null);
+            setNewSalary('');
+            setIncrementError('');
+        } catch (err) {
+            // Optionally handle error
+        }
     };
 
     const handleIncrementCancel = () => {
@@ -226,14 +233,33 @@ const Employee = () => {
         setIncrementError('');
     };
 
-    const handleViewClick = (idx) => {
+    // View employee and fetch action history
+    const handleViewClick = async (idx) => {
         setViewEmployeeIndex(idx);
         setShowViewModal(true);
+        const emp = employees[idx];
+        try {
+            const history = await fetchEmployeeActions(emp.id);
+            setActionHistory(history);
+        } catch (err) {
+            setActionHistory([]);
+        }
     };
 
     const handleCloseViewModal = () => {
         setShowViewModal(false);
         setViewEmployeeIndex(null);
+    };
+
+    // Permanent delete handler
+    const handlePermanentDelete = async (idx) => {
+        const empId = deletedEmployees[idx].id;
+        try {
+            await permanentDeleteEmployee(empId);
+            loadDeletedEmployees();
+        } catch (err) {
+            // Optionally handle error
+        }
     };
 
     return (
@@ -387,6 +413,7 @@ const Employee = () => {
                                         {/* <td>{emp.number}</td> */}
                                         <td>
                                             <button className="employee-action-btn employee-edit-btn" onClick={() => handleRestoreEmployee(idx)}>Restore</button>
+                                            <button className="employee-action-btn employee-delete-btn" onClick={() => handlePermanentDelete(idx)}>Delete</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -455,14 +482,17 @@ const Employee = () => {
                                     </tbody>
                                 </table>
                                 <h3 className="employee-action-history-title">Action History</h3>
-                                {emp.actionHistory && emp.actionHistory.length > 0 ? (
+                                {actionHistory && actionHistory.length > 0 ? (
                                     <table className="employee-action-history-table" style={{ marginTop: 0 }}>
                                         <thead>
                                             <tr><th>Action</th><th>Date</th></tr>
                                         </thead>
                                         <tbody>
-                                            {emp.actionHistory.map((a, i) => (
-                                                <tr key={i}><td>{a.action}</td><td>{a.date}</td></tr>
+                                            {actionHistory.map((a, i) => (
+                                                <tr key={i}>
+                                                    <td>{a.action}</td>
+                                                    <td>{a.date}</td>
+                                                </tr>
                                             ))}
                                         </tbody>
                                     </table>
