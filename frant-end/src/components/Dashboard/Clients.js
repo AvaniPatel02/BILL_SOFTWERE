@@ -60,7 +60,7 @@ const Clients = () => {
   }, [invoices]);
 
   // Action handlers
-  const handleView = (invoiceId) => navigate(`/invoice-detail/${invoiceId}`);
+  const handleView = (invoiceId) => navigate(`/view-bill/${invoiceId}`);
   const handleEdit = (invoiceId) => navigate(`/edit-invoice/${invoiceId}`);
   const handleDownload = (invoiceId) => {
     alert('Download invoice ' + invoiceId);

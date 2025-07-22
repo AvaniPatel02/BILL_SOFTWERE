@@ -25,6 +25,7 @@ import Employee from './components/Dashboard/Employee';
 import Buyer from './components/Dashboard/Buyer';
 import Accounting from './components/Dashboard/Accounting';
 import AccountStatement from './components/Dashboard/AccountStatement';
+import ViewBill from './components/Bills/ViewBill';
 // import Accounting from './components/Dashboard/Accounting';
 
 function MainLayout() {
@@ -49,6 +50,7 @@ function MainLayout() {
           <Route path="/bills" element={<Bills />} />
           <Route path="/bills/:year" element={<YearBills />} />
           <Route path="/bills/:year/:buyerName" element={<PersonBill />} />
+          <Route path="/view-bill/:invoiceId" element={<ProtectedRoute><ViewBill /></ProtectedRoute>} />
           <Route path="/buyer" element={<ProtectedRoute><Buyer /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/taxinvoices" element={<ProtectedRoute><TaxInvoices /></ProtectedRoute>} />

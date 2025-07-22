@@ -11,8 +11,8 @@ const Bills = () => {
     const startYear = 2023;
     const today = new Date();
     let currentYear = today.getFullYear();
-    // If after or on April 1, add a new year
-    if (today.getMonth() > 3 || (today.getMonth() === 3 && today.getDate() >= 1)) {
+    // If after April 1, add a new year
+    if (today.getMonth() > 2 || (today.getMonth() === 2 && today.getDate() >= 1)) {
       currentYear += 1;
     }
     const years = [];
@@ -25,7 +25,7 @@ const Bills = () => {
   const yearRanges = getYearRanges();
   // Current year range string
   const today = new Date();
-  const currentYearRange = (today.getMonth() > 3 || (today.getMonth() === 3 && today.getDate() >= 1))
+  const currentYearRange = today.getMonth() > 2 || (today.getMonth() === 2 && today.getDate() >= 1)
     ? `${today.getFullYear()}-${today.getFullYear() + 1}`
     : `${today.getFullYear() - 1}-${today.getFullYear()}`;
 
@@ -39,12 +39,10 @@ const Bills = () => {
       <div className="bills-content">
         <Sidebar />
         <div className="container">
-          {/* Back button and title bar, similar to TaxInvoices */}
-          <div className="bills-header-bar">
-            <button className="bills-back-btn" onClick={() => navigate(-1)}>Back</button>
-            <h1 className="bills-title">Financial Year </h1>
+          <div className="bills-tabs">
+            <button className="active">Tab 1</button>
+            {/* Aap yahan aur tabs add kar sakte hain */}
           </div>
-          
           <div className="bills-tab-content">
             <div className="bills-table-container">
               <table>
