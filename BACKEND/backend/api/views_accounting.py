@@ -1,21 +1,22 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import Invoice, Buyer, CompanyBill
-from .serializers import InvoiceSerializer, BuyerSerializer, CompanyBillSerializer
+from .models import Invoice, Buyer, CompanyBill, OtherTransaction
+from .serializers import InvoiceSerializer, BuyerSerializer, CompanyBillSerializer, OtherTransactionSerializer
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def account_list(request):
     """
     Return a list of unique accounts grouped by buyer_name, buyer_address, buyer_gst,
-    including credits (Buyer + CompanyBill) and net amount.
+    including credits (Buyer + CompanyBill + OtherTransaction) and net amount.
     """
     invoices = Invoice.objects.filter(user=request.user)
     buyers = Buyer.objects.filter(user=request.user)
     company_bills = CompanyBill.objects.all()  # No user field, so include all
+    other_transactions = OtherTransaction.objects.filter(user=request.user)
 
-    # Collect all unique buyer keys from invoices, buyers, and company bills
+    # Collect all unique buyer keys from invoices, buyers, company bills, and other transactions
     buyer_keys = set()
     for inv in invoices:
         buyer_keys.add((inv.buyer_name, inv.buyer_address, inv.buyer_gst))
@@ -23,6 +24,8 @@ def account_list(request):
         buyer_keys.add((b.name, "", ""))  # Buyer model may not have address/gst
     for cb in company_bills:
         buyer_keys.add((cb.company, "", ""))  # CompanyBill may not have address/gst
+    for ot in other_transactions:
+        buyer_keys.add((ot.type, "", ""))  # Use type as name
 
     accounts = {}
     for name, address, gst in buyer_keys:
@@ -33,6 +36,7 @@ def account_list(request):
             "invoices": [],
             "buyer_credits": [],
             "company_bill_credits": [],
+            "other_transactions": [],
         }
 
     for inv in invoices:
@@ -40,7 +44,6 @@ def account_list(request):
         if key in accounts:
             accounts[key]["invoices"].append(inv)
     for b in buyers:
-        # Try to match by name
         for key in accounts:
             if b.name == key[0]:
                 accounts[key]["buyer_credits"].append(b)
@@ -48,19 +51,28 @@ def account_list(request):
         for key in accounts:
             if cb.company == key[0]:
                 accounts[key]["company_bill_credits"].append(cb)
+    for ot in other_transactions:
+        key = (ot.type, "", "")
+        if key in accounts:
+            accounts[key]["other_transactions"].append(ot)
 
     result = []
     for acc in accounts.values():
         total_debit = sum(float(inv.total_with_gst) for inv in acc["invoices"] if inv.total_with_gst)
         total_buyer_credit = sum(float(b.amount) for b in acc["buyer_credits"] if b.amount)
         total_companybill_credit = sum(float(cb.amount) for cb in acc["company_bill_credits"] if cb.amount)
-        total_credit = total_buyer_credit + total_companybill_credit
+        # OtherTransaction: sum by transaction_type
+        total_other_credit = sum(float(ot.amount) for ot in acc["other_transactions"] if ot.transaction_type == "credit")
+        total_other_debit = sum(float(ot.amount) for ot in acc["other_transactions"] if ot.transaction_type == "debit")
+        total_credit = total_buyer_credit + total_companybill_credit + total_other_credit
+        total_debit = total_debit + total_other_debit
         net_amount = total_debit - total_credit
         # Find the latest date among all transactions
         all_dates = (
             [inv.invoice_date for inv in acc["invoices"] if inv.invoice_date] +
             [b.date for b in acc["buyer_credits"] if b.date] +
-            [cb.date for cb in acc["company_bill_credits"] if cb.date]
+            [cb.date for cb in acc["company_bill_credits"] if cb.date] +
+            [ot.date for ot in acc["other_transactions"] if ot.date]
         )
         latest_date = max(all_dates) if all_dates else None
         result.append({
@@ -75,6 +87,7 @@ def account_list(request):
             "invoices": InvoiceSerializer(acc["invoices"], many=True).data,
             "buyer_credits": BuyerSerializer(acc["buyer_credits"], many=True).data,
             "company_bill_credits": CompanyBillSerializer(acc["company_bill_credits"], many=True).data,
+            "other_transactions": OtherTransactionSerializer(acc["other_transactions"], many=True).data,
         })
     return Response(result)
 
@@ -92,6 +105,7 @@ def account_statement(request):
     invoices = Invoice.objects.filter(user=request.user, buyer_name=buyer_name, buyer_address=buyer_address, buyer_gst=buyer_gst).order_by("invoice_date")
     buyers = Buyer.objects.filter(user=request.user, name=buyer_name).order_by("date")
     company_bills = CompanyBill.objects.filter(company=buyer_name).order_by("date")
+    other_transactions = OtherTransaction.objects.filter(user=request.user, type=buyer_name).order_by("date")
 
     # Merge, sort, and calculate running balance
     entries = []
@@ -118,6 +132,14 @@ def account_statement(request):
             "credit": float(cb.amount) if cb.amount else 0,
             "debit": 0,
             "type": "Credit"
+        })
+    for ot in other_transactions:
+        entries.append({
+            "date": ot.date.strftime('%d-%m-%Y') if ot.date else '',
+            "description": ot.notice or "Other",
+            "credit": float(ot.amount) if ot.transaction_type == "credit" else 0,
+            "debit": float(ot.amount) if ot.transaction_type == "debit" else 0,
+            "type": "Other"
         })
     # Sort by date
     def parse_date(d):

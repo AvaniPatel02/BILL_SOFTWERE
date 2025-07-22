@@ -3,6 +3,16 @@ import { useNavigate } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 
+function formatDate(dateStr) {
+  if (!dateStr) return "-";
+  // If already in dd-mm-yyyy, just return
+  if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) return dateStr;
+  // If in yyyy-mm-dd, convert to dd-mm-yyyy
+  const [y, m, d] = dateStr.split("-");
+  if (y && m && d) return `${d}-${m}-${y}`;
+  return dateStr;
+}
+
 const Accounting = () => {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +94,7 @@ const Accounting = () => {
                               <td>Invoice</td>
                               <td>{acc.buyer_name}</td>
                               <td>{inv.total_with_gst !== undefined && inv.total_with_gst !== null ? Number(inv.total_with_gst).toFixed(2) : "-"}</td>
-                              <td>{inv.invoice_date ? inv.invoice_date : "-"}</td>
+                              <td>{inv.invoice_date ? formatDate(inv.invoice_date) : "-"}</td>
                               <td>{inv.remark || "-"}</td>
                             </tr>
                           );
@@ -110,8 +120,34 @@ const Accounting = () => {
                               <td>Buyer Debit</td>
                               <td>{acc.buyer_name}</td>
                               <td>{bc.amount !== undefined && bc.amount !== null ? Number(bc.amount).toFixed(2) : "-"}</td>
-                              <td>{bc.date || "-"}</td>
+                              <td>{bc.date ? formatDate(bc.date) : "-"}</td>
                               <td>{bc.notes || "-"}</td>
+                            </tr>
+                          );
+                        });
+                      }
+                      // Other transactions
+                      if (acc.other_transactions && acc.other_transactions.length > 0) {
+                        acc.other_transactions.forEach(ot => {
+                          allRows.push(
+                            <tr key={`other-${acc.buyer_name}-${ot.id}`}
+                              style={{ cursor: "pointer" }}
+                              onClick={() =>
+                                navigate("/account-statement", {
+                                  state: {
+                                    buyer_name: acc.buyer_name,
+                                    buyer_address: acc.buyer_address,
+                                    buyer_gst: acc.buyer_gst,
+                                  }
+                                })
+                              }
+                            >
+                              <td>{rowNum++}</td>
+                              <td>Other ({ot.transaction_type === "credit" ? "Credit" : "Debit"})</td>
+                              <td>{acc.buyer_name}</td>
+                              <td>{ot.amount !== undefined && ot.amount !== null ? Number(ot.amount).toFixed(2) : "-"}</td>
+                              <td>{ot.date ? formatDate(ot.date) : "-"}</td>
+                              <td>{ot.notice || "-"}</td>
                             </tr>
                           );
                         });
