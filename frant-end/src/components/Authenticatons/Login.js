@@ -45,23 +45,19 @@ const Login = () => {
     setLoginError(""); // clear previous error
     setLoading(true); // Start loading
     try {
-      const response = await fetch('http://localhost:8000/api/login/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
+      // Use the login() function from authApi.js
+      const data = await login({ email, password });
       console.log(data); // See what you get
 
-      if (response.ok && data.access) {
-        localStorage.setItem("access_token", data.access); // Store access token with correct key
-        if (data.refresh) {
-          localStorage.setItem("refresh_token", data.refresh); // Store refresh token if present
+      if (data.success && data.data && data.data.tokens && data.data.tokens.access) {
+        localStorage.setItem("access_token", data.data.tokens.access); // Store access token
+        if (data.data.tokens.refresh) {
+          localStorage.setItem("refresh_token", data.data.tokens.refresh); // Store refresh token if present
         }
         // Redirect to dashboard or show success
         navigate("/dashboard");
       } else {
-        setLoginError("Invalid email or password");
+        setLoginError(data.message || "Invalid email or password");
       }
     } catch (error) {
       setLoginError("Something went wrong. Please try again.");
@@ -225,6 +221,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  autoComplete="current-password"
                 />
                 <span
                   className="toggle-password"

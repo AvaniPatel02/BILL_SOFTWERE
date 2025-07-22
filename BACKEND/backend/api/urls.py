@@ -118,5 +118,3 @@ urlpatterns += [
     path('accounts/', account_list, name='account-list'),
     path('accounts/statement/', account_statement, name='account-statement'),
 ]
-
-

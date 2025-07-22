@@ -331,5 +331,3 @@ def update_email_after_otp(request):
     if hasattr(user, 'profile'):
         user.profile.save()
     return Response({"success": True, "message": "Email updated successfully."})
-
-
