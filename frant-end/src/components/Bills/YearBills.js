@@ -5,6 +5,13 @@ import styles from '../../styles/YearBills.module.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getInvoices } from '../../services/calculateInvoiceApi';
 
+// Helper to format date from yyyy-mm-dd to dd-mm-yyyy
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  return `${day}-${month}-${year}`;
+}
+
 const YearBills = () => {
   const navigate = useNavigate();
   const { year } = useParams();
@@ -69,7 +76,7 @@ const YearBills = () => {
                         <td>{idx + 1}</td>
                         <td>{bill.buyer_name}</td>
                         <td>{bill.buyer_gst}</td>
-                        <td>{bill.invoice_date}</td>
+                        <td>{formatDate(bill.invoice_date)}</td>
                         <td>
                           <button className={styles['yearbills-view-btn']} onClick={() => navigate(`/bills/${year}/${encodeURIComponent(bill.buyer_name)}`)}>View</button>
                         </td>

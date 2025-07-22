@@ -3,9 +3,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q
-from .models import CompanyBill, BuyerBill, Salary, OtherTransaction, Invoice, Employee, EmployeeActionHistory
-from .serializers import CompanyBillSerializer, BuyerBillSerializer, SalarySerializer, OtherTransactionSerializer
+from .models import CompanyBill, BuyerBill, Salary, OtherTransaction, Invoice, Employee, EmployeeActionHistory, OtherType
+from .serializers import CompanyBillSerializer, BuyerBillSerializer, SalarySerializer, OtherTransactionSerializer, OtherTypeSerializer
 from django.utils import timezone
+from rest_framework import status
 
 # Utility to log employee actions
 
@@ -112,3 +113,16 @@ def get_invoices_by_buyer(request, buyer_name):
         return Response({
             'error': str(e)
         }, status=500) 
+
+@api_view(['GET', 'POST'])
+def other_types(request):
+    if request.method == 'GET':
+        types = OtherType.objects.all()
+        serializer = OtherTypeSerializer(types, many=True)
+        return Response({'types': [t['type'] for t in serializer.data]})
+    elif request.method == 'POST':
+        serializer = OtherTypeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 

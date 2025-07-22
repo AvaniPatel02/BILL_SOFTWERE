@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import '../../styles/Header.css';
-import logo from '../../logo.svg';
 import { Link, useNavigate } from 'react-router-dom';
+import { getProfile } from '../../services/authApi';
+import BASE_URL from '../../services/apiConfig';
 
 const Header = () => {
   const navigate = useNavigate();
+  const [logo2, setLogo2] = useState("");
+
+  useEffect(() => {
+    getProfile().then(res => {
+      const data = res.data || {};
+      setLogo2(data.image2 ? `${BASE_URL.replace(/\/api$/, '')}${data.image2}` : "");
+    });
+  }, []);
+
   // Add a class to body when sidebar is hovered (using events)
   useEffect(() => {
     const sidebar = document.querySelector('.sidebar-fixed');
@@ -49,7 +59,7 @@ const Header = () => {
   return (
     <header className="custom-header">
       <div className="header-center">
-        <img src={logo} alt="Logo" className="header-logo" />
+        {logo2 && <img src={logo2} alt="Header Logo" className="header-logo" />}
       </div>
       <div className="header-profile">
         <button onClick={() => setDropdownOpen((open) => !open)}><i className="fa-solid fa-user-gear"></i></button>

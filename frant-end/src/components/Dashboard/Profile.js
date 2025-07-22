@@ -134,8 +134,7 @@ const Profile = () => {
     setCurrentEmailOtpLoading(true);
     setCurrentEmailOtpError("");
     try {
-      const token = localStorage.getItem("access_token");
-      const res = await verifyCurrentEmailOtp(token, currentEmailOtp);
+      const res = await verifyCurrentEmailOtp({ otp_code: currentEmailOtp });
       if (res.success) {
         setCurrentEmailOtpVerified(true);
         setShowCurrentEmailModal(false);
@@ -163,8 +162,7 @@ const Profile = () => {
     setNewEmailOtpLoading(true);
     setNewEmailOtpError("");
     try {
-      const token = localStorage.getItem("access_token");
-      const res = await sendNewEmailOtp(token, newEmail, currentEmailOtpVerified);
+      const res = await sendNewEmailOtp({ new_email: newEmail, current_email_otp_verified: true });
       if (res.success) {
         setNewEmailOtpSent(true);
         toast.success("OTP sent to new email");
@@ -185,8 +183,7 @@ const Profile = () => {
     setNewEmailOtpLoading(true);
     setNewEmailOtpError("");
     try {
-      const token = localStorage.getItem("access_token");
-      const res = await verifyNewEmailOtp(token, newEmail, newEmailOtp);
+      const res = await verifyNewEmailOtp({ new_email: newEmail, otp_code: newEmailOtp });
       if (res.success) {
         setNewEmailOtpVerified(true);
         setShowNewEmailModal(false);

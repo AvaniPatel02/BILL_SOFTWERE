@@ -5,6 +5,13 @@ import '../../styles/PersonBill.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getInvoices } from '../../services/calculateInvoiceApi';
 
+// Helper to format date from yyyy-mm-dd to dd-mm-yyyy
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  return `${day}-${month}-${year}`;
+}
+
 const PersonBill = () => {
   const navigate = useNavigate();
   const { year, buyerName } = useParams();
@@ -82,7 +89,7 @@ const PersonBill = () => {
                               ? bill.buyer_gst.slice(0, 15) + '...'
                               : bill.buyer_gst}
                           </td>
-                          <td>{bill.invoice_date}</td>
+                          <td>{formatDate(bill.invoice_date)}</td>
                           <td>{bill.total_amount || bill.total_with_gst}</td>
                           <td>
                             <button className="personbill-action-btn">View</button>

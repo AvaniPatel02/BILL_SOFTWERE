@@ -9,6 +9,7 @@ from .models import BankAccount, CashEntry
 from .models import Buyer
 from .models import CompanyBill, BuyerBill, Salary, OtherTransaction
 from .models import EmployeeActionHistory
+from .models import OtherType
 
 User = get_user_model()
 
@@ -206,3 +207,8 @@ class EmployeeActionHistorySerializer(serializers.ModelSerializer):
         if instance.date:
             rep['date'] = instance.date.strftime('%d-%m-%Y %H:%M')
         return rep
+
+class OtherTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OtherType
+        fields = ['type']

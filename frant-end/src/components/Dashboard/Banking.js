@@ -8,7 +8,9 @@ import {
   submitSalary,
   submitOtherTransaction,
   getUniqueBuyerNames,
-  getInvoicesByBuyer
+  getInvoicesByBuyer,
+  fetchOtherTypes,
+  addOtherType
 } from '../../services/bankingApi';
 import { fetchBanks } from '../../services/bankCashApi';
 import { fetchBuyerNames, addBuyerName } from '../../services/buyerApi';
@@ -67,7 +69,8 @@ const initialOther = {
   notice: "",
   paymentType: "",
   bank: "",
-  transactionType: "debit"
+  transactionType: "debit",
+  manualType: false // new field for manual type entry
 };
 
 const Banking = () => {
@@ -80,6 +83,7 @@ const Banking = () => {
   const [buyerNames, setBuyerNames] = useState([]);
   const [invoicesForBuyer, setInvoicesForBuyer] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [otherTypes, setOtherTypes] = useState(sampleTypes);
 
   useEffect(() => {
     fetchBanks().then(data => {
@@ -107,6 +111,20 @@ const Banking = () => {
       }
     });
   }, []);
+
+  // Auto-fill salary when employee is selected
+  useEffect(() => {
+    if (salaryForm.name) {
+      const emp = employees.find(e => e.name === salaryForm.name);
+      if (emp && emp.salary) {
+        setSalaryForm(f => ({ ...f, amount: emp.salary }));
+      }
+    }
+    // Do not clear amount if name is cleared, to allow manual override if needed
+    // else if (!salaryForm.name) {
+    //   setSalaryForm(f => ({ ...f, amount: '' }));
+    // }
+  }, [salaryForm.name, employees]);
 
   // Fetch buyer names when company bill form is opened
   useEffect(() => {
@@ -166,6 +184,15 @@ const Banking = () => {
       fetchBuyerNames().then(data => setBuyerNames(data.buyer_names || []));
     }
   }, [visibleButton]);
+
+  // Fetch other types on mount
+  useEffect(() => {
+    fetchOtherTypes().then(data => {
+      if (Array.isArray(data)) setOtherTypes(data);
+      else if (data && Array.isArray(data.types)) setOtherTypes(data.types);
+      else setOtherTypes(sampleTypes);
+    });
+  }, []);
 
   // Helper to get bank balance by name
   const getBankAmount = (bankName) => {
@@ -283,8 +310,15 @@ const Banking = () => {
       });
   };
 
-  const handleOtherSubmit = (e) => {
+  const handleOtherSubmit = async (e) => {
     e.preventDefault();
+    let typeToUse = otherForm.type;
+    if (otherForm.manualType && typeToUse && !otherTypes.includes(typeToUse)) {
+      await addOtherType(typeToUse);
+      // Refresh the types list
+      const updatedTypes = await fetchOtherTypes();
+      setOtherTypes(Array.isArray(updatedTypes) ? updatedTypes : updatedTypes.types || sampleTypes);
+    }
     const payload = mapOtherPayload(otherForm);
     delete payload.paymentType;
     delete payload.transactionType;
@@ -489,10 +523,17 @@ const Banking = () => {
           {visibleButton === 4 && (
             <form className="banking-form" onSubmit={handleOtherSubmit}>
               <h3>Other</h3>
+              <label style={{marginBottom: 8}}>
+                <input type="checkbox" checked={otherForm.manualType} onChange={() => setOtherForm(f => ({ ...f, manualType: !f.manualType, type: "" }))} /> Enter Type Manually
+              </label>
               <label>Account Type</label>
-              <Select value={otherForm.type} onChange={e => setOtherForm(f => ({ ...f, type: e.target.value }))} options={sampleTypes} required>
-                <option value="">Select Account</option>
-              </Select>
+              {otherForm.manualType ? (
+                <Input placeholder="Type*" value={otherForm.type} onChange={e => setOtherForm(f => ({ ...f, type: e.target.value }))} required />
+              ) : (
+                <Select value={otherForm.type} onChange={e => setOtherForm(f => ({ ...f, type: e.target.value }))} options={otherTypes} required>
+                  <option value="">Select Account</option>
+                </Select>
+              )}
               <label>Date</label>
               <Input type="date" value={otherForm.date} onChange={e => setOtherForm(f => ({ ...f, date: e.target.value }))} required />
               <label>Amount</label>

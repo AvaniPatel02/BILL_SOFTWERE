@@ -7,6 +7,14 @@ import { useState } from "react";
 import dayjs from 'dayjs';
 import { getEmployees, addEmployee, getDeletedEmployees, restoreEmployee, fetchEmployeeActions, softDeleteEmployee, updateEmployee, permanentDeleteEmployee } from '../../services/employeeApi';
 
+// Helper to format date from any string to dd-mm-yyyy HH:mm using dayjs
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = dayjs(dateStr);
+  if (!d.isValid()) return dateStr; // fallback if parsing fails
+  return d.format('DD-MM-YYYY HH:mm');
+}
+
 const Employee = () => {
     const navigate = useNavigate();
     const [showModal, setShowModal] = useState(false);
@@ -300,7 +308,7 @@ const Employee = () => {
                                             <tr key={idx}>
                                                 <td>{emp.name}</td>
                                                 <td>{emp.email}</td>
-                                                <td>{emp.joining_date}</td>
+                                                <td>{formatDate(emp.joining_date)}</td>
                                                 <td>{emp.salary}</td>
                                                 <td>{emp.number}</td>
                                                 <td>
@@ -408,7 +416,7 @@ const Employee = () => {
                                     <tr key={idx}>
                                         <td>{emp.name}</td>
                                         <td>{emp.email}</td>
-                                        <td>{emp.joining_date}</td>
+                                        <td>{formatDate(emp.joining_date)}</td>
                                         <td>{emp.salary}</td>
                                         {/* <td>{emp.number}</td> */}
                                         <td>
@@ -475,7 +483,7 @@ const Employee = () => {
                                     <tbody>
                                         <tr><th>Name</th><td>{emp.name}</td></tr>
                                         <tr><th>Email</th><td>{emp.email}</td></tr>
-                                        <tr><th>Joining Date</th><td>{emp.joining_date}</td></tr>
+                                        <tr><th>Joining Date</th><td>{formatDate(emp.joining_date)}</td></tr>
                                         <tr><th>Salary</th><td>{emp.salary}</td></tr>
                                         <tr><th>number</th><td>{emp.number}</td></tr>
                                         <tr><th>Company Duration</th><td>{getDuration(emp.joining_date)}</td></tr>
@@ -491,7 +499,7 @@ const Employee = () => {
                                             {actionHistory.map((a, i) => (
                                                 <tr key={i}>
                                                     <td>{a.action}</td>
-                                                    <td>{a.date}</td>
+                                                    <td>{formatDate(a.date)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
