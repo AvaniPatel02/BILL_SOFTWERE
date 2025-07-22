@@ -407,11 +407,24 @@ button.copybutton:hover {
 .lut.outside-india {
   border: 2px solid #302f2f;
   border-radius: 10px;
-  padding: 0;
+  padding: 0px;
   display: flex;
   align-items: center;
   width: fit-content;
   min-width: 215px;
+  min-height: 56px;
+  text-align: center;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.lut.outside-indias {
+  border: 2px solid #302f2f;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  /* min-width: 215px; */
   min-height: 56px;
   text-align: center;
   background: #fff;
@@ -428,16 +441,27 @@ button.copybutton:hover {
   align-items: center;
   justify-content: center;
 }
+.lut.outside-indias h4 {
+  margin: 0;
+  padding: 17px 0px;
+  width: 100%;
+  font-weight: 500;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 
 /* Remove or override previous .lut and .outside-india styles if needed */
-.lut {
+/* .lut {
   border: none;
   border-radius: 0;
   padding: 0;
   margin: 0;
   background: unset;
   box-shadow: none;
-}
+} */
 
 .custom-hr {
   border: 0;

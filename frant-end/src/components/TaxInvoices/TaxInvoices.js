@@ -272,18 +272,22 @@ const Taxinvoices = () => {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
     const pageWidth = 210;
     const pageHeight = 297;
+    const margin = 15; // 15mm margin on all sides
     const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pageWidth;
+    // Calculate available width/height after margin
+    const pdfWidth = pageWidth - 2 * margin;
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
     let finalHeight = pdfHeight;
     let finalWidth = pdfWidth;
-    if (pdfHeight > pageHeight - 20) {
-      finalHeight = pageHeight - 20;
+    // If height exceeds available space, scale down
+    if (pdfHeight > pageHeight - 2 * margin) {
+      finalHeight = pageHeight - 2 * margin;
       finalWidth = (imgProps.width * finalHeight) / imgProps.height;
     }
-    const x = (pageWidth - finalWidth) / 2;
-    const y = 10;
-    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
+    // Center horizontally, always start at margin from top
+    const x = margin + (pdfWidth - finalWidth) / 2;
+    const y = margin;
+    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight, undefined, 'FAST');
     pdf.save(filename);
   };
 
@@ -647,9 +651,10 @@ const Taxinvoices = () => {
                 </div>
 
               </div>
+            
 
               {/* total table */}
-              <div className="row">
+              <div className="row" style={!showInsideIndia ? { marginTop: '20px' } : {}}>
                 <div className="col-xs-12">
                   <table className="table table-bordered black-bordered">
                     <thead>
@@ -663,7 +668,7 @@ const Taxinvoices = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr style={{ height: '111px' }}>
+                      <tr style={!showInsideIndia ? { height: '170px' } : { height: '111px' }}>
                         <td style={{ textAlign: "center", width: "70px" }}>1</td>
                         <td>
                           <textarea
@@ -708,16 +713,16 @@ const Taxinvoices = () => {
                       {showInsideIndia && selectedState !== 'Gujarat' && <>
                         <tr className="outside-india">
                           <td></td>
-                          <td><span style={{ float: 'right' }}>IGST @ 18%</span></td>
+                          <td  style={{height:'61.5px'}}><span style={{ float: 'right',paddingTop:'11px', }}>IGST @ 18%</span></td>
                           <td></td>
                           <td></td>
-                          <td>18%</td>
-                          <td id="igst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.igst}</td>
+                          <td style={{paddingTop:'17px'}}>18%</td>
+                          <td style={{paddingTop:'17px'}} id="igst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.igst}</td>
                         </tr>
                       </>}
                       <tr>
-                        <td colSpan="5" className="text-right"><strong>Total</strong></td>
-                        <td><strong id="total-with-gst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.total_with_gst}</strong></td>
+                        <td style={{height:'61.5px',paddingTop:'20px'}} colSpan="5" className="text-right"><strong>Total</strong></td>
+                        <td style={{paddingTop:'20px'}}><strong id="total-with-gst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.total_with_gst}</strong></td>
                       </tr>
                     </tbody>
                   </table>
@@ -733,15 +738,15 @@ const Taxinvoices = () => {
                     // Helper to convert number to words (simple version)
                     function inrAmountInWords(num) {
                       if (!num || isNaN(num)) return '';
-                      const a = [ '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen' ];
-                      const b = [ '', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety' ];
+                      const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+                      const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
                       function inWords(n) {
                         if (n < 20) return a[n];
-                        if (n < 100) return b[Math.floor(n/10)] + (n%10 ? ' ' + a[n%10] : '');
-                        if (n < 1000) return a[Math.floor(n/100)] + ' Hundred' + (n%100 ? ' and ' + inWords(n%100) : '');
-                        if (n < 100000) return inWords(Math.floor(n/1000)) + ' Thousand' + (n%1000 ? ' ' + inWords(n%1000) : '');
-                        if (n < 10000000) return inWords(Math.floor(n/100000)) + ' Lakh' + (n%100000 ? ' ' + inWords(n%100000) : '');
-                        return inWords(Math.floor(n/10000000)) + ' Crore' + (n%10000000 ? ' ' + inWords(n%10000000) : '');
+                        if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? ' ' + a[n % 10] : '');
+                        if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' and ' + inWords(n % 100) : '');
+                        if (n < 100000) return inWords(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 ? ' ' + inWords(n % 1000) : '');
+                        if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 ? ' ' + inWords(n % 100000) : '');
+                        return inWords(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + inWords(n % 10000000) : '');
                       }
                       const rupees = Math.round(num); // use rounded value
                       let words = '';
@@ -750,19 +755,20 @@ const Taxinvoices = () => {
                       return words;
                     }
                     return (
-                      <div className="table-bordered black-bordered amount-box" style={{ marginBottom: '8px',  display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '56px' }}>
-                        <span style={{ width: '100%', textAlign: 'start', fontWeight: 500, fontSize: '1.15rem' }}>
-                          {inrAmountInWords(inrEquivalent)}
-                        </span>
-                        <span style={{ width: '100%', textAlign: 'end', fontWeight: 600, fontSize: '1.25rem' }}>
-                          INR Equivalent: ₹ {inrEquivalent.toLocaleString('en-IN')}
-                        </span>
+                      <div className="table-bordered black-bordered amount-box">
+                        <div>
+                          <strong>Totale Amount (in words):</strong><br />
+                          <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p>
+                          <div className="top-right-corner">
+                            <span>E. & O.E</span>
+                          </div>
+                        </div>
                       </div>
                     );
                   })()}
-                  <div className="table-bordered black-bordered amount-box">
+                  <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px' } : {}}>
                     <div>
-                      <strong>Amount Chargeable (in words):</strong><br />
+                      <strong>Totale Amount (in words):</strong><br />
                       <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p>
                       <div className="top-right-corner">
                         <span>E. & O.E</span>
@@ -791,25 +797,29 @@ const Taxinvoices = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td style={{ border: '1px solid #000' }}><span className="hns_select_text">{hnsSelect}</span></td>
-                        <td style={{ border: '1px solid #000' }} id="taxable-value">{calculationResult.taxable_value}</td>
-                        <td style={{ border: '1px solid #000' }}>9%</td>
-                        <td style={{ border: '1px solid #000' }} id="tax-cgst">{calculationResult.tax_cgst}</td>
-                        <td style={{ border: '1px solid #000' }}>9%</td>
-                        <td style={{ border: '1px solid #000' }} id="tax-sgst">{calculationResult.tax_sgst}</td>
-                        <td style={{ border: '1px solid #000' }} id="all-tax-amount">{calculationResult.all_tax_amount}</td>
-                      </tr>
-                      <tr className="total-row">
-                        <td style={{ border: '1px solid #000' }}>Total</td>
-                        <td style={{ border: '1px solid #000' }} id="total-taxable">{calculationResult.total_taxable}</td>
-                        <td style={{ border: '1px solid #000' }}></td>
-                        <td style={{ border: '1px solid #000' }} id="total-tax-cgst">{calculationResult.total_tax_cgst}</td>
-                        <td style={{ border: '1px solid #000' }}></td>
-                        <td style={{ border: '1px solid #000' }} id="total-tax-sgst">{calculationResult.total_tax_sgst}</td>
-                        <td style={{ border: '1px solid #000' }} id="total-tax-amount">{calculationResult.total_tax_amount}</td>
-                      </tr>
-                    </tbody>
+                        <tr>
+                          <td style={{ border: '1px solid #000' }}><span className="hns_select_text">{hnsSelect}</span></td>
+                          <td style={{ border: '1px solid #000' }} id="taxable-value">
+                            {selectedCountry.symbol}{baseAmount}
+                          </td>
+                          <td style={{ border: '1px solid #000' }}>9%</td>
+                          <td style={{ border: '1px solid #000' }} id="tax-cgst">{selectedCountry.symbol}{calculationResult.cgst}</td>
+                          <td style={{ border: '1px solid #000' }}>9%</td>
+                          <td style={{ border: '1px solid #000' }} id="tax-sgst">{selectedCountry.symbol}{calculationResult.sgst}</td>
+                          <td style={{ border: '1px solid #000' }} id="all-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                        </tr>
+                        <tr className="total-row">
+                          <td style={{ border: '1px solid #000' }}>Total</td>
+                          <td style={{ border: '1px solid #000' }} id="total-taxable">
+                            {selectedCountry.symbol}{baseAmount}
+                          </td>
+                          <td style={{ border: '1px solid #000' }}></td>
+                          <td style={{ border: '1px solid #000' }} id="total-tax-cgst">{selectedCountry.symbol}{calculationResult.cgst}</td>
+                          <td style={{ border: '1px solid #000' }}></td>
+                          <td style={{ border: '1px solid #000' }} id="total-tax-sgst">{selectedCountry.symbol}{calculationResult.sgst}</td>
+                          <td style={{ border: '1px solid #000' }} id="total-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                        </tr>
+                      </tbody>
                   </table>
                 </div>}
                 {showInsideIndia && selectedState !== 'Gujarat' && <div className="col-xs-12 outside-india">
@@ -827,21 +837,21 @@ const Taxinvoices = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td><span className="hns_select_text">{hnsSelect}</span></td>
-                        <td id="taxable-value">{calculationResult.taxable_value}</td>
-                        <td>18%</td>
-                        <td id="igst">{calculationResult.igst}</td>
-                        <td id="all-tax-amount">{calculationResult.all_tax_amount}</td>
-                      </tr>
-                      <tr className="total-row">
-                        <td>Total</td>
-                        <td id="total-taxable">{calculationResult.total_taxable}</td>
-                        <td></td>
-                        <td id="total-tax-igst">{calculationResult.igst}</td>
-                        <td id="total-tax-amount">{calculationResult.total_tax_amount}</td>
-                      </tr>
-                    </tbody>
+                        <tr>
+                          <td><span className="hns_select_text">{hnsSelect}</span></td>
+                          <td id="taxable-value">{selectedCountry.symbol}{baseAmount}</td>
+                          <td>18%</td>
+                          <td id="igst">{selectedCountry.symbol}{calculationResult.igst}</td>
+                          <td id="all-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                        </tr>
+                        <tr className="total-row">
+                          <td>Total</td>
+                          <td id="total-taxable">{selectedCountry.symbol}{baseAmount}</td>
+                          <td></td>
+                          <td id="total-tax-igst">{selectedCountry.symbol}{calculationResult.igst}</td>
+                          <td id="total-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                        </tr>
+                      </tbody>
                   </table>
                 </div>}
                 <div>
@@ -859,7 +869,7 @@ const Taxinvoices = () => {
                   </div>
                 </div>
               </div>
-             
+
               {/* footer */}
               <div className="row">
                 <div className="col-xs-12">
@@ -977,10 +987,11 @@ const Taxinvoices = () => {
             {/* main pdf */}
 
 
+            {/* PDF preview hidden in frontend */}
             <div
               className="pdf invoice-pdf pdf-margine"
               ref={invoiceRef}
-              style={{ display: 'none' }}
+              style={{ width: '1116px', margin: '0 auto', background: '#fff', display: 'none' }}
             >
               <h1 style={{ textAlign: 'center', fontWeight: '700' }}>Tax Invoice</h1>
 
@@ -1012,7 +1023,9 @@ const Taxinvoices = () => {
                         </tr>
                         <tr>
                           <td style={{ minHeight: '100px', height: 'auto', verticalAlign: 'top' }}>
-                            <div style={{ minHeight: '100px', whiteSpace: 'pre-line' }}><strong>Address:</strong> <span>{billTo.address}</span></div>
+                            <div style={{ minHeight: '100px', whiteSpace: 'pre-line' }}>
+                              <strong>Address:</strong> <span>{billTo.address}</span>
+                            </div>
                           </td>
                         </tr>
                         <tr>
@@ -1097,50 +1110,45 @@ const Taxinvoices = () => {
                               {selectedCountry.name} - {selectedCountry.symbol}
                             </div>
                             <br />
-                            <div className="lut outside-india" style={{ display: showInsideIndia ? 'none' : 'block' }}>
+                            {/* <div className="lut outside-india" style={{ display: showInsideIndia ? 'none' : 'block' }}>
                               <h4>Declare under LUT </h4>
-                            </div>
+                            </div> */}
                             {!showInsideIndia && (
-                              <>
-                                {exchangeRate === null
-                                  ? (
-                                    <div style={{ marginTop: '8px', color: 'red' }}>
-                                      Exchange rate not available for {selectedCountry.code}
-                                    </div>
-                                  )
-                                  : (
-                                    <div style={{ marginTop: '8px', fontWeight: 'bold', color: '#333' }}>
-                                      1 {selectedCountry.code} = {exchangeRate} INR
-                                    </div>
-                                  )
-                                }
-                              </>
+                              <div style={{
+                                // display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                // marginTop: 8,
+                                // marginBottom: 8,
+                                width: '100%'
+                              }}>
+                                <div>
+                                  <h4 className="lut outside-indias">Declare under LUT</h4>
+                                </div>
+                                <div style={{ fontWeight: 'bold', color: '#333' }}>
+                                  {exchangeRate === null
+                                    ? (
+                                      <span style={{ color: 'red' }}>
+                                        Exchange rate not available for {selectedCountry.code}
+                                      </span>
+                                    )
+                                    : (
+                                      <>1 {selectedCountry.code} = {exchangeRate} INR</>
+                                    )
+                                  }
+                                </div>
+                              </div>
                             )}
                           </div>
-                          {/* <div style={{ flex: 1 }}>
-                          {showStateSelect && (
-                            <div style={{
-                              padding: '10px 15px',
-                              border: '1px solid #302f2f',
-                              borderRadius: '6px',
-                              background: '#fff',
-                              fontSize: '16px',
-                              color: '#333',
-                              fontWeight: 600
-                            }}>
-                              {selectedState || 'Select State'}
-                            </div>
-                          )}
-                        </div> */}
                         </div>
                       </div>
                     </div>
                   </div>
-
                 </div>
+            
 
                 {/* total table */}
-                <div className="row">
+                <div className="row" style={!showInsideIndia ? { marginTop: '20px' } : {}}>
                   <div className="col-xs-12">
                     <table className="table table-bordered black-bordered">
                       <thead>
@@ -1154,7 +1162,7 @@ const Taxinvoices = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr style={{ height: '111px' }}>
+                        <tr style={!showInsideIndia ? { height: '150px' } : { height: '111px' }}>
                           <td style={{ textAlign: "center", width: "70px" }}>1</td>
                           <td style={{ whiteSpace: 'pre-line' }}>
                             {gstConsultancy}
@@ -1186,22 +1194,31 @@ const Taxinvoices = () => {
                         {showInsideIndia && selectedState !== 'Gujarat' && <>
                           <tr className="outside-india">
                             <td></td>
-                            <td><span style={{ float: 'right' }}>IGST @ 18%</span></td>
+                            <td  style={{height:'61.5px'}}><span style={{ float: 'right',paddingTop:'11px', }}>IGST @ 18%</span></td>
                             <td></td>
                             <td></td>
-                            <td>18%</td>
-                            <td id="igst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.igst}</td>
+                            <td style={{paddingTop:'17px'}}>18%</td>
+                            <td style={{paddingTop:'17px'}} id="igst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.igst}</td>
                           </tr>
                         </>}
                         <tr>
-                          <td colSpan="5" className="text-right"><strong>Total</strong></td>
-                          <td><strong id="total-with-gst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.total_with_gst}</strong></td>
+                          <td style={{height:'61.5px',paddingTop:'20px'}} colSpan="5" className="text-right"><strong>Total</strong></td>
+                          <td style={{paddingTop:'20px'}}><strong id="total-with-gst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.total_with_gst}</strong></td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
                 </div>
                 {/* amont in words */}
+                {/* Show exchange rate flex row only for foreign countries */}
+                {/* {!showInsideIndia && (
+                  <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', height: '56px', }}>
+                    
+                    <div style={{ fontWeight: 'bold', color: '#333' }}>
+                      
+                    </div>
+                  </div>
+                )} */}
                 <div className="row">
                   <div className="col-xs-12">
                     {/* Show INR equivalent for non-India countries if exchange rate and total_with_gst are available */}
@@ -1228,19 +1245,27 @@ const Taxinvoices = () => {
                         return words;
                       }
                       return (
-                        <div className="table-bordered black-bordered amount-box" style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '56px', width: '950px', }}>
-                          <span style={{ width: '100%', textAlign: 'start', fontWeight: 500, fontSize: '1.15rem' }}>
-                            {inrAmountInWords(inrEquivalent)}
-                          </span>
-                          <span style={{ width: '100%', textAlign: 'end', fontWeight: 600, fontSize: '1.25rem' }}>
-                            INR Equivalent: ₹ {inrEquivalent.toLocaleString('en-IN')}
-                          </span>
-                        </div>
+                        <>
+                          {/* Flex row for Declare under LUT and exchange rate, only for foreign countries */}
+                        
+                          {/* INR equivalent in numbers (right) */}
+                          <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
+                            <span style={{ width: '100%', fontWeight: 600, fontSize: '1.25rem' }}>
+                             Converted INR Equivalent: ₹ {inrEquivalent.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          {/* INR equivalent in words (left) */}
+                          <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
+                            <span style={{ width: '100%', fontWeight: 500, fontSize: '1.15rem' }}>
+                            Converted INR (in words): {inrAmountInWords(inrEquivalent)}
+                            </span>
+                          </div>
+                        </>
                       );
                     })()}
-                    <div className="table-bordered black-bordered amount-box">
+                    <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px' } : {}}>
                       <div>
-                        <strong>Amount Chargeable (in words):</strong><br />
+                        <strong>Totale Amount (in words):</strong><br />
                         <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p>
                         <div className="top-right-corner">
                           <span>E. & O.E</span>
@@ -1318,7 +1343,7 @@ const Taxinvoices = () => {
                         </tr>
                         <tr className="total-row">
                           <td>Total</td>
-                          <td id="total-taxable">{selectedCountry.symbol}{selectedCountry.symbol}{baseAmount}</td>
+                          <td id="total-taxable">{selectedCountry.symbol}{baseAmount}</td>
                           <td></td>
                           <td id="total-tax-igst">{selectedCountry.symbol}{calculationResult.igst}</td>
                           <td id="total-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
@@ -1381,5 +1406,4 @@ const Taxinvoices = () => {
     </div>
   );
 };
-
 export default Taxinvoices;
