@@ -124,32 +124,32 @@ export async function sendCurrentEmailOtp(data) {
   return res.json();
 }
 
-export async function verifyCurrentEmailOtp(data) {
+export async function verifyCurrentEmailOtp({ otp_code }) {
   const res = await fetch(`${API_BASE_URL}/auth/profile/verify-current-email-otp/`, {
     method: 'POST',
     headers: getAuthHeaders(),
     credentials: 'include',
-    body: JSON.stringify(data)
+    body: JSON.stringify({ otp_code })
   });
   return res.json();
 }
 
-export async function sendNewEmailOtp(data) {
+export async function sendNewEmailOtp({ new_email, current_email_otp_verified }) {
   const res = await fetch(`${API_BASE_URL}/auth/profile/send-new-email-otp/`, {
     method: 'POST',
     headers: getAuthHeaders(),
     credentials: 'include',
-    body: JSON.stringify(data)
+    body: JSON.stringify({ new_email, current_email_otp_verified })
   });
   return res.json();
 }
 
-export async function verifyNewEmailOtp(data) {
+export async function verifyNewEmailOtp({ new_email, otp_code }) {
   const res = await fetch(`${API_BASE_URL}/auth/profile/verify-new-email-otp/`, {
     method: 'POST',
     headers: getAuthHeaders(),
     credentials: 'include',
-    body: JSON.stringify(data)
+    body: JSON.stringify({ new_email, otp_code })
   });
   return res.json();
 }

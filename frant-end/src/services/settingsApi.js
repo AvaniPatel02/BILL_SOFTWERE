@@ -24,3 +24,17 @@ export async function updateSettings(data) {
   });
   return res.json();
 }
+
+// Upload logo to profile (logoNum: 1 or 2)
+export async function uploadLogo(file, logoNum) {
+  const token = localStorage.getItem('access_token');
+  const formData = new FormData();
+  formData.append(logoNum === 1 ? 'image1' : 'image2', file);
+  const res = await fetch(`${API_BASE_URL}/auth/profile/`, {
+    method: 'PUT',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    credentials: 'include',
+    body: formData
+  });
+  return res.json();
+}

@@ -23,7 +23,9 @@ from .views_banking import (
     OtherTransactionRetrieveUpdateDestroyView,
     get_unique_buyer_names,
     get_invoices_by_buyer,
+    other_types
 )
+from .views_accounting import account_list, account_statement
 
 router = DefaultRouter()
 router.register(r'invoices', InvoiceViewSet, basename='invoice')
@@ -106,6 +108,15 @@ urlpatterns += [
     # Company Bill Form Data APIs
     path('banking/company-bill/buyer-names/', get_unique_buyer_names, name='get-unique-buyer-names'),
     path('banking/company-bill/invoices/<str:buyer_name>/', get_invoices_by_buyer, name='get-invoices-by-buyer'),
+]
+
+urlpatterns += [
+    path('api/other-types/', other_types, name='other-types'),
+]
+
+urlpatterns += [
+    path('accounts/', account_list, name='account-list'),
+    path('accounts/statement/', account_statement, name='account-statement'),
 ]
 
 

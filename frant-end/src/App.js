@@ -23,6 +23,8 @@ import Clients from './components/Dashboard/Clients';
 import BankAdd from './components/Dashboard/BankAdd';
 import Employee from './components/Dashboard/Employee';
 import Buyer from './components/Dashboard/Buyer';
+import Accounting from './components/Dashboard/Accounting';
+import AccountStatement from './components/Dashboard/AccountStatement';
 import ViewBill from './components/Bills/ViewBill';
 // import Accounting from './components/Dashboard/Accounting';
 
@@ -59,6 +61,8 @@ function MainLayout() {
           <Route path="/address" element={<ProtectedRoute><Address /></ProtectedRoute>} />
           <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
           <Route path="/bank-add" element={<ProtectedRoute><BankAdd /></ProtectedRoute>} />
+          <Route path="/accounting" element={<ProtectedRoute><Accounting /></ProtectedRoute>} />
+          <Route path="/account-statement" element={<ProtectedRoute><AccountStatement /></ProtectedRoute>} />
           {/* <Route path="/accounting" element={<Accounting />} /> */}
         </Routes>
       </div>

@@ -45,6 +45,8 @@ const BankAdd = () => {
   const [cashFormData, setCashFormData] = useState({ amount: "", date: "", description: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = useState(null); // {type: 'bank'|'cash', id}
 
   // Fetch all data on mount
   useEffect(() => {
@@ -257,22 +259,41 @@ const BankAdd = () => {
     }
   };
 
-  // Permanent delete handlers (local only, optional)
+  // Permanent delete handlers (with confirmation modal)
   const handlePermanentDeleteBank = (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this bank account?")) return;
-    setLoading(true);
-    permanentDeleteBank(id)
-      .then(() => fetchDeletedBanks().then(setDeletedBanks))
-      .catch(() => setError("Failed to permanently delete bank"))
-      .finally(() => setLoading(false));
+    setPermanentDeleteTarget({ type: 'bank', id });
+    setShowPermanentDeleteModal(true);
   };
   const handlePermanentDeleteCash = (id) => {
-    if (!window.confirm("Are you sure you want to permanently delete this cash entry?")) return;
+    setPermanentDeleteTarget({ type: 'cash', id });
+    setShowPermanentDeleteModal(true);
+  };
+  const confirmPermanentDelete = () => {
+    if (!permanentDeleteTarget) return;
     setLoading(true);
-    permanentDeleteCashEntry(id)
-      .then(() => fetchDeletedCashEntries().then(setDeletedCashEntries))
-      .catch(() => setError("Failed to permanently delete cash entry"))
-      .finally(() => setLoading(false));
+    if (permanentDeleteTarget.type === 'bank') {
+      permanentDeleteBank(permanentDeleteTarget.id)
+        .then(() => fetchDeletedBanks().then(setDeletedBanks))
+        .catch(() => setError("Failed to permanently delete bank"))
+        .finally(() => {
+          setShowPermanentDeleteModal(false);
+          setPermanentDeleteTarget(null);
+          setLoading(false);
+        });
+    } else if (permanentDeleteTarget.type === 'cash') {
+      permanentDeleteCashEntry(permanentDeleteTarget.id)
+        .then(() => fetchDeletedCashEntries().then(setDeletedCashEntries))
+        .catch(() => setError("Failed to permanently delete cash entry"))
+        .finally(() => {
+          setShowPermanentDeleteModal(false);
+          setPermanentDeleteTarget(null);
+          setLoading(false);
+        });
+    }
+  };
+  const cancelPermanentDelete = () => {
+    setShowPermanentDeleteModal(false);
+    setPermanentDeleteTarget(null);
   };
 
   return (
@@ -613,6 +634,20 @@ const BankAdd = () => {
               </div>
               <div className="d-flex justify-content-end mt-4">
                 <button className="btn btn-secondary" onClick={closeRecycleModal}>Close</button>
+              </div>
+            </Modal>
+            {/* Permanent Delete Confirmation Modal */}
+            <Modal
+              isOpen={showPermanentDeleteModal}
+              onRequestClose={cancelPermanentDelete}
+              contentLabel="Permanent Delete Confirmation"
+              className="modal-content-custom"
+              overlayClassName="modal-overlay-custom"
+            >
+              <h5>Are you sure you want to permanently delete this entry?</h5>
+              <div className="d-flex justify-content-end mt-4">
+                <button className="btn btn-secondary me-2" onClick={cancelPermanentDelete} disabled={loading}>Cancel</button>
+                <button className="btn btn-danger" onClick={confirmPermanentDelete} disabled={loading}>OK</button>
               </div>
             </Modal>
           </div>

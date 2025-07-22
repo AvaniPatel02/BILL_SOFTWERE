@@ -29,17 +29,29 @@ def get_all_buyer_names(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_buyer_name(request):
+    from datetime import datetime
     name = request.data.get('name')
     if not name:
         return Response({'error': 'Name is required'}, status=status.HTTP_400_BAD_REQUEST)
     # Check if already exists
     if Buyer.objects.filter(user=request.user, name=name).exists():
         return Response({'message': 'Buyer already exists'}, status=status.HTTP_200_OK)
-    # Create with minimal fields (fill others as needed)
+    # Parse date string to date object
+    date_str = request.data.get('date')
+    if date_str:
+        try:
+            try:
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                date_obj = datetime.strptime(date_str, '%d-%m-%Y').date()
+        except Exception:
+            return Response({'error': 'Invalid date format. Use YYYY-MM-DD or DD-MM-YYYY.'}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        date_obj = timezone.now().date()
     buyer = Buyer.objects.create(
         user=request.user,
         name=name,
-        date=request.data.get('date') or timezone.now().date(),
+        date=date_obj,
         amount=request.data.get('amount') or 0,
         notes=request.data.get('notes', ''),
         payment_type=request.data.get('payment_type', 'Cash')

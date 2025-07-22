@@ -179,4 +179,18 @@ export function deleteOtherTransaction(id) {
     headers: getAuthHeaders(),
     credentials: 'include',
   });
+}
+
+// Add a new 'other' type
+export async function addOtherType(type) {
+  return fetch(`${API_BASE_URL}/api/other-types/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type }),
+  }).then(res => res.json());
+}
+
+// Fetch all 'other' types
+export async function fetchOtherTypes() {
+  return fetch(`${API_BASE_URL}/api/other-types/`).then(res => res.json());
 } 

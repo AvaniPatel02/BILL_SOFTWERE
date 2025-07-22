@@ -292,3 +292,10 @@ class EmployeeActionHistory(models.Model):
         return f"{self.employee.name} - {self.action} at {self.date}"
 
 
+class OtherType(models.Model):
+    type = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.type
+
+

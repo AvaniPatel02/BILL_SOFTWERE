@@ -73,7 +73,7 @@ const Dashboard = () => {
               { icon: "fas fa-user-tie", label: "Employee", route: "/employee" },
               { icon: "fas fa-map-marker-alt", label: "Address" ,route: "/address"},
               { icon: "fas fa-users", label: "Clients", route: "/clients" },
-              { icon: "fas fa-calculator", label: "Accounting" },
+              { icon: "fas fa-calculator", label: "Accounting" ,route: "/accounting"},
               { icon: "fas fa-balance-scale", label: "Balance Sheet" },
               { icon: "fas fa-university", label: "Banking", route: "/banking" },
               { icon: "fas fa-cog", label: "Settings" ,route: "/settings"},

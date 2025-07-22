@@ -1,18 +1,28 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-
 import '../../styles/Sidebar.css';
+import { getProfile } from '../../services/authApi';
+import BASE_URL from '../../services/apiConfig';
 
 const Sidebar = () => {
   const location = useLocation();
+  const [logo1, setLogo1] = useState("");
+  useEffect(() => {
+    getProfile().then(res => {
+      const data = res.data || {};
+      setLogo1(data.image1 ? `${BASE_URL.replace(/\/api$/, '')}${data.image1}` : "");
+    });
+  }, []);
   return (
     <div className="sidebar-fixed">
       <div className="sidebar-header-bg sidebar-logo-container">
-        <img
-          src="/logo192.png"
-          alt="Logo"
-          className="sidebar-logo"
-        />
+        {logo1 && (
+          <img
+            src={logo1}
+            alt="Sidebar Logo"
+            className="sidebar-logo"
+          />
+        )}
       </div>
       <ul className="sidebar-nav">
         <li className={`nav-item${location.pathname === "/dashboard" ? " active" : ""}`}>
