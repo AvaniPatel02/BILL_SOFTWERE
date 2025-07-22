@@ -396,7 +396,7 @@ const Taxinvoices = () => {
     <div id="invoice-pdf" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       {/* Remove the previous top bar */}
       <div style={{ display: 'flex', flex: 1 }}>
-        <Sidebar />
+        {/* <Sidebar /> */}
         <div className='container'>
           {/* Header bar inside container */}
           <div className='headrmain' >
@@ -755,18 +755,25 @@ const Taxinvoices = () => {
                       return words;
                     }
                     return (
-                      <div className="table-bordered black-bordered amount-box">
-                        <div>
-                          <strong>Totale Amount (in words):</strong><br />
-                          <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p>
-                          <div className="top-right-corner">
-                            <span>E. & O.E</span>
-                          </div>
+                      <>
+                        {/* Flex row for Declare under LUT and exchange rate, only for foreign countries */}
+                      
+                        {/* INR equivalent in numbers (right) */}
+                        <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
+                          <span style={{ width: '100%',  fontSize: '15px' }}>
+                        <strong>Converted INR Equivalent:</strong>    ₹ {inrEquivalent.toLocaleString('en-IN')}
+                          </span>
                         </div>
-                      </div>
+                        {/* INR equivalent in words (left) */}
+                        <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
+                          <span style={{ width: '100%',  fontSize: '15px' }}>
+                         <strong> Converted INR (in words):</strong> {inrAmountInWords(inrEquivalent)}
+                          </span>
+                        </div>
+                      </>
                     );
                   })()}
-                  <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px' } : {}}>
+                  <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px',fontSize:"20px", paddingTop:'20px' } : {}}>
                     <div>
                       <strong>Totale Amount (in words):</strong><br />
                       <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p>
@@ -991,7 +998,9 @@ const Taxinvoices = () => {
             <div
               className="pdf invoice-pdf pdf-margine"
               ref={invoiceRef}
-              style={{ width: '1116px', margin: '0 auto', background: '#fff', display: 'none' }}
+              style={{ width: '1116px', margin: '0 auto', background: '#fff', 
+                // display: 'none' 
+              }}
             >
               <h1 style={{ textAlign: 'center', fontWeight: '700' }}>Tax Invoice</h1>
 
@@ -1250,20 +1259,20 @@ const Taxinvoices = () => {
                         
                           {/* INR equivalent in numbers (right) */}
                           <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
-                            <span style={{ width: '100%', fontWeight: 600, fontSize: '1.25rem' }}>
-                             Converted INR Equivalent: ₹ {inrEquivalent.toLocaleString('en-IN')}
+                            <span style={{ width: '100%',  fontSize: '15px' }}>
+                            <strong>Converted INR Equivalent:</strong>  ₹ {inrEquivalent.toLocaleString('en-IN')}
                             </span>
                           </div>
                           {/* INR equivalent in words (left) */}
                           <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
-                            <span style={{ width: '100%', fontWeight: 500, fontSize: '1.15rem' }}>
-                            Converted INR (in words): {inrAmountInWords(inrEquivalent)}
+                            <span style={{ width: '100%', fontSize: '15px' }}>
+                           <strong>Converted INR (in words):</strong>  {inrAmountInWords(inrEquivalent)}
                             </span>
                           </div>
                         </>
                       );
                     })()}
-                    <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px' } : {}}>
+                    <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px',fontSize:"20px", paddingTop:'20px' } : {}}>
                       <div>
                         <strong>Totale Amount (in words):</strong><br />
                         <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p>

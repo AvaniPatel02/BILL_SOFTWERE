@@ -258,6 +258,7 @@ const Signup = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Enter password"
+                  autoComplete="new-password"
                 />
                 <span onClick={() => setShowPassword(!showPassword)} className="toggle-password">
                   {showPassword ? <EyeSlash /> : <Eye />}
@@ -272,6 +273,7 @@ const Signup = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   placeholder="Confirm password"
+                  autoComplete="new-password"
                 />
               </div>
 
