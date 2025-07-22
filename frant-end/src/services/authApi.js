@@ -29,7 +29,7 @@ export async function authFetch(url, options = {}) {
 export async function sendOtp(data) {
   const res = await fetch(`${API_BASE_URL}/auth/send-otp/`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(data)
   });
@@ -39,7 +39,7 @@ export async function sendOtp(data) {
 export async function verifyOtp(data) {
   const res = await fetch(`${API_BASE_URL}/auth/verify-otp/`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(data)
   });
@@ -49,7 +49,7 @@ export async function verifyOtp(data) {
 export async function register(data) {
   const res = await fetch(`${API_BASE_URL}/auth/register/`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(data)
   });
@@ -57,9 +57,10 @@ export async function register(data) {
 }
 
 export async function login(data) {
+  // Only send email and password, no auth header needed
   const res = await fetch(`${API_BASE_URL}/auth/login/`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(data)
   });
@@ -69,7 +70,7 @@ export async function login(data) {
 export async function forgotPasswordSendOtp(data) {
   const res = await fetch(`${API_BASE_URL}/auth/forgot-password/send-otp/`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(data)
   });
@@ -79,7 +80,7 @@ export async function forgotPasswordSendOtp(data) {
 export async function forgotPasswordVerifyOtp(data) {
   const res = await fetch(`${API_BASE_URL}/auth/forgot-password/verify-otp/`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(data)
   });
@@ -89,7 +90,7 @@ export async function forgotPasswordVerifyOtp(data) {
 export async function resetPassword(data) {
   const res = await fetch(`${API_BASE_URL}/auth/forgot-password/reset/`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(data)
   });

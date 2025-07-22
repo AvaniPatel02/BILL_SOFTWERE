@@ -25,6 +25,9 @@ const SettingsPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [newHsn, setNewHsn] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
+  const [showToast, setShowToast] = useState(false);
   // Always get token from localStorage
   const token = localStorage.getItem('access_token');
 
@@ -154,16 +157,28 @@ const SettingsPage = () => {
     });
     setLoading(false);
     if (res.ok) {
-      alert("Settings updated successfully!");
+      setToastMessage('Settings updated successfully!');
+      setToastType('success');
+      setShowToast(true);
     } else {
       const errorData = await res.json().catch(() => ({}));
       console.log('Backend error:', errorData);
-      alert("Failed to update settings. " + (errorData && JSON.stringify(errorData)));
+      setToastMessage('Failed to update settings. ' + (errorData && JSON.stringify(errorData)));
+      setToastType('error');
+      setShowToast(true);
     }
   };
 
   return (
    <div style={{ paddingLeft: "60px" }}>
+      <Toast message="Test Toast" type="success" onClose={() => {}} />
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
+        />
+      )}
       <h1 className="hedding">Your Company details</h1>
 
       <div className="formbody">
