@@ -273,6 +273,7 @@ class Salary(models.Model):
     bank = models.CharField(max_length=100, blank=True, null=True)
 
 class OtherTransaction(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     type = models.CharField(max_length=100)
     date = models.DateField()
     amount = models.DecimalField(max_digits=12, decimal_places=2)

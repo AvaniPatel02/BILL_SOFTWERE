@@ -196,6 +196,7 @@ class OtherTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = OtherTransaction
         fields = '__all__'
+        read_only_fields = ['user']
 
 class EmployeeActionHistorySerializer(serializers.ModelSerializer):
     class Meta:

@@ -65,7 +65,10 @@ class SalaryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 class OtherTransactionListCreateView(generics.ListCreateAPIView):
     queryset = OtherTransaction.objects.all()
     serializer_class = OtherTransactionSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class OtherTransactionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = OtherTransaction.objects.all()
