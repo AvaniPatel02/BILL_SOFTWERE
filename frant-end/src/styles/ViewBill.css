@@ -1,0 +1,100 @@
+/* ViewBill.css - Styles for the ViewBill invoice details page */
+
+.viewbill-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f9f9f9;
+}
+
+.viewbill-container {
+  flex: 1;
+  padding: 2rem 2rem 2rem 2rem;
+  max-width: 1200px;
+  margin: 2rem auto 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+}
+
+.viewbill-back-btn {
+  background: #eee;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  transition: background 0.2s;
+}
+
+.viewbill-back-btn:hover {
+  background: #ddd;
+}
+
+.viewbill-title {
+  color: #333;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.viewbill-main-box {
+  background: #fafbfc;
+  border-radius: 10px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.viewbill-section {
+  margin-bottom: 2rem;
+}
+
+.viewbill-section h2 {
+  font-size: 1.2rem;
+  color: #1976d2;
+  margin-bottom: 0.7rem;
+  font-weight: 600;
+}
+
+.viewbill-section p {
+  margin: 0.3rem 0;
+  font-size: 1rem;
+  color: #222;
+}
+
+.viewbill-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.viewbill-items-table th,
+.viewbill-items-table td {
+  border: 1px solid #e0e0e0;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.viewbill-items-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+@media (max-width: 900px) {
+  .viewbill-container {
+    padding: 1rem 0.5rem;
+  }
+  .viewbill-main-box {
+    padding: 1rem;
+  }
+  .viewbill-title {
+    font-size: 1.3rem;
+  }
+} 
