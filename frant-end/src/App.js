@@ -26,6 +26,7 @@ import Buyer from './components/Dashboard/Buyer';
 import Accounting from './components/Dashboard/Accounting';
 import AccountStatement from './components/Dashboard/AccountStatement';
 import ViewBill from './components/Bills/ViewBill';
+import EditTaxInvoice from './components/TaxInvoices/EditTaxInvoice';
 
 
 function MainLayout() {
@@ -62,6 +63,7 @@ function MainLayout() {
           <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
           <Route path="/bank-add" element={<ProtectedRoute><BankAdd /></ProtectedRoute>} />
           <Route path="/accounting" element={<ProtectedRoute><Accounting /></ProtectedRoute>} />
+          <Route path="/edit-invoice/:id" element={<EditTaxInvoice />} />
           <Route path="/account-statement" element={<ProtectedRoute><AccountStatement /></ProtectedRoute>} />
         </Routes>
       </div>

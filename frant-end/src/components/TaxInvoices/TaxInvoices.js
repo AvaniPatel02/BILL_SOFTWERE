@@ -48,6 +48,7 @@ const Taxinvoices = () => {
   const [formDisabled, setFormDisabled] = useState(false);
   const [exchangeRate, setExchangeRate] = useState(null);
   const invoiceRef = useRef();
+  const [pdfLoading, setPdfLoading] = useState(false);
   // Fetch settings from backend on mount
   useEffect(() => {
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
@@ -253,42 +254,43 @@ const Taxinvoices = () => {
       alert('Invoice content not found for PDF generation.');
       return;
     }
-
-    const element = invoiceRef.current;
-    const prevDisplay = element.style.display;
-    element.style.display = 'block';
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-    element.style.display = prevDisplay;
-
-    const imgData = canvas.toDataURL('image/png');
-    if (!imgData.startsWith('data:image/png')) {
-      alert('Failed to generate a valid PNG image for PDF.');
-      return;
+    setPdfLoading(true);
+    try {
+      const element = invoiceRef.current;
+      const prevDisplay = element.style.display;
+      element.style.display = 'block';
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      element.style.display = prevDisplay;
+      const imgData = canvas.toDataURL('image/png');
+      if (!imgData.startsWith('data:image/png')) {
+        alert('Failed to generate a valid PNG image for PDF.');
+        return;
+      }
+      const filename = `Invoice_${invoiceNumber || 'NoNumber'}_${date || ''}.pdf`;
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 15; // 15mm margin on all sides
+      const imgProps = pdf.getImageProperties(imgData);
+      // Calculate available width/height after margin
+      const pdfWidth = pageWidth - 2 * margin;
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      let finalHeight = pdfHeight;
+      let finalWidth = pdfWidth;
+      // If height exceeds available space, scale down
+      if (pdfHeight > pageHeight - 2 * margin) {
+        finalHeight = pageHeight - 2 * margin;
+        finalWidth = (imgProps.width * finalHeight) / imgProps.height;
+      }
+      // Center horizontally, always start at margin from top
+      const x = margin + (pdfWidth - finalWidth) / 2;
+      const y = margin;
+      pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight, undefined, 'FAST');
+      pdf.save(filename);
+    } finally {
+      setPdfLoading(false);
     }
-
-    const filename = `Invoice_${invoiceNumber || 'NoNumber'}_${date || ''}.pdf`;
-    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const margin = 15; // 15mm margin on all sides
-    const imgProps = pdf.getImageProperties(imgData);
-    // Calculate available width/height after margin
-    const pdfWidth = pageWidth - 2 * margin;
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    let finalHeight = pdfHeight;
-    let finalWidth = pdfWidth;
-    // If height exceeds available space, scale down
-    if (pdfHeight > pageHeight - 2 * margin) {
-      finalHeight = pageHeight - 2 * margin;
-      finalWidth = (imgProps.width * finalHeight) / imgProps.height;
-    }
-    // Center horizontally, always start at margin from top
-    const x = margin + (pdfWidth - finalWidth) / 2;
-    const y = margin;
-    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight, undefined, 'FAST');
-    pdf.save(filename);
   };
 
 
@@ -348,6 +350,8 @@ const Taxinvoices = () => {
       exchange_rate: exchange_rate,
       inr_equivalent: inr_equivalent,
       country_flag: '',
+      hns_code: hnsSelect,
+      total_tax_in_words: calculationResult.total_tax_in_words || '',
     };
     if (!formDisabled) {
       // Only save invoice, do not generate PDF
@@ -391,6 +395,14 @@ const Taxinvoices = () => {
       setBaseAmount(hours * r);
     }
   }, [totalHours, rate]);
+
+  // Helper to format date as dd/mm/yyyy
+  function formatDateDMY(dateStr) {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-');
+    if (!y || !m || !d) return dateStr;
+    return `${d}/${m}/${y}`;
+  }
 
   return (
     <div id="invoice-pdf" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -914,18 +926,21 @@ const Taxinvoices = () => {
                 <button
                   className="download-btn"
                   id="download-btn"
-                  disabled={loadingInvoiceNumber || !invoiceNumber}
+                  disabled={loadingInvoiceNumber || !invoiceNumber || pdfLoading}
                   onClick={async () => {
+                    setPdfLoading(true);
                     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
                     const parseNumber = v => v === '' || v == null ? 0 : Number(v);
                     const parseDate = v => v ? new Date(v).toISOString().split('T')[0] : null;
                     if (!invoiceNumber) {
                       alert('Invoice number is not loaded yet. Please wait.');
+                      setPdfLoading(false);
                       return;
                     }
                     // Only require state if country is India
                     if (selectedCountry.name === 'India' && !selectedState) {
                       alert('Please select a state for India.');
+                      setPdfLoading(false);
                       return;
                     }
                     const isForeign = selectedCountry.name !== 'India';
@@ -969,23 +984,35 @@ const Taxinvoices = () => {
                       exchange_rate: exchange_rate,
                       inr_equivalent: inr_equivalent,
                       country_flag: '',
+                      hns_code: hnsSelect,
+                      total_tax_in_words: calculationResult.total_tax_in_words || '',
                     };
                     if (!formDisabled) {
                       // First time: save invoice, then lock form and allow further downloads
                       try {
                         await addInvoice(invoiceData);
                         setFormDisabled(true);
-                        handleDownloadPDF();
+                        await handleDownloadPDF();
                       } catch (err) {
                         alert('Failed to save invoice: ' + (err.message || err));
+                      } finally {
+                        setPdfLoading(false);
                       }
                     } else {
                       // Already saved: just download PDF again
-                      handleDownloadPDF();
+                      await handleDownloadPDF();
+                      setPdfLoading(false);
                     }
                   }}
                 >
-                  {loadingInvoiceNumber ? 'Loading Invoice Number...' : 'Download PDF'}
+                  {pdfLoading ? (
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      <span className="spinner" style={{ width: '18px', height: '18px', border: '3px solid #fff', borderTop: '3px solid #407b9e', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }}></span>
+                      Generating PDF...
+                    </span>
+                  ) : (
+                    loadingInvoiceNumber ? 'Loading Invoice Number...' : 'Download PDF'
+                  )}
                 </button>
               </div>
             </div>
@@ -1033,7 +1060,7 @@ const Taxinvoices = () => {
                         <tr>
                           <td style={{ minHeight: '100px', height: 'auto', verticalAlign: 'top' }}>
                             <div style={{ minHeight: '100px', whiteSpace: 'pre-line' }}>
-                              <strong>Address:</strong> <span>{billTo.address}</span>
+                               <span>{billTo.address}</span>
                             </div>
                           </td>
                         </tr>
@@ -1050,7 +1077,7 @@ const Taxinvoices = () => {
                         <tr>
                           <td style={{ minHeight: '100px', height: 'auto', verticalAlign: 'top' }}>
                             <div style={{ minHeight: '100px', whiteSpace: 'pre-line' }}>
-                              <strong>Address:</strong> <span>{shipTo.address}</span>
+                               <span>{shipTo.address}</span>
                             </div>
                           </td>
 
@@ -1071,7 +1098,7 @@ const Taxinvoices = () => {
                         </tr>
                         <tr>
                           <td>Date</td>
-                          <td>{date}</td>
+                          <td>{formatDateDMY(date)}</td>
                         </tr>
                         <tr>
                           <td>Delivery Note</td>
@@ -1083,7 +1110,7 @@ const Taxinvoices = () => {
                         </tr>
                         <tr>
                           <td>Delivery Note Date</td>
-                          <td style={{ width: '250px' }}>{deliveryNoteDate}</td>
+                          <td style={{ width: '250px' }}>{formatDateDMY(deliveryNoteDate)}</td>
                         </tr>
                         <tr>
                           <td>Destination</td>
