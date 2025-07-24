@@ -13,7 +13,7 @@ const Dashboard = () => {
       <Header />
       <div style={{ display: "flex" }}>
         {/* <Sidebar /> */}
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, marginBottom:'5%' }}>
           <div className="fact-container">
             <div className="stats-container">
               {/* Clients */}

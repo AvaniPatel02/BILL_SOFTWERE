@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getInvoice } from '../../services/clientsApi';
 import { getSettings } from '../../services/settingsApi';
-import '../../styles/TaxInvoices.css';
+import '../../styles/ViewBill.css';
 import Header from '../Dashboard/Header';
 import Sidebar from '../Dashboard/Sidebar';
 
@@ -69,6 +69,14 @@ const ViewBill = () => {
     return words;
   }
 
+  // Helper to format date as dd/mm/yyyy (like TaxInvoices.js)
+  function formatDateDMY(dateStr) {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-');
+    if (!y || !m || !d) return dateStr;
+    return `${d}/${m}/${y}`;
+  }
+
   // For backward compatibility with old invoices
   const items = invoice.items || [
     {
@@ -84,6 +92,10 @@ const ViewBill = () => {
   const isIndia = (invoice.country || '').toLowerCase() === 'india';
   const isGujarat = isIndia && (invoice.state || '').toLowerCase() === 'gujarat';
 
+  console.log('isIndia:', isIndia);
+  console.log('invoice.total_tax_in_words:', invoice.total_tax_in_words);
+  console.log('invoice:', invoice);
+
   return (
     <div className="viewbill-layout">
       <Header />
@@ -96,7 +108,7 @@ const ViewBill = () => {
           <h1 className="viewbill-title">Tax Invoice</h1>
         </div>
         <div className="taxinvoices-content-inner">
-          <div className="table-bordered main-box" style={{ border: "2px solid rgb(97, 94, 94)" }}>
+          <div className="table-bordered main-box" style={{ border: "2px solid rgb(97, 94, 94)",width:"100%" }}>
             <div className="date-tables">
               {/* Left side - Seller, Buyer, Consignee */}
               <div className="col-6">
@@ -160,7 +172,7 @@ const ViewBill = () => {
                     </tr>
                     <tr>
                       <td>Date</td>
-                      <td>{invoice.invoice_date}</td>
+                      <td>{formatDateDMY(invoice.invoice_date)}</td>
                     </tr>
                     <tr>
                       <td>Delivery Note</td>
@@ -172,7 +184,7 @@ const ViewBill = () => {
                     </tr>
                     <tr>
                       <td>Delivery Note Date</td>
-                      <td style={{ width: '250px' }}>{invoice.delivery_note_date}</td>
+                      <td style={{ width: '250px' }}>{formatDateDMY(invoice.delivery_note_date)}</td>
                     </tr>
                     <tr>
                       <td>Destination</td>
@@ -203,15 +215,22 @@ const ViewBill = () => {
                           fontSize: '16px',
                           color: '#333',
                           fontWeight: 600,
-                          width: 'max-content',
+                          // width: 'max-content',
                         }}>
                           {invoice.country} - {invoice.currency_symbol || invoice.currency}
                         </div>
                         <br />
                         {(!isIndia) && (
-                          <div className="lut outside-india">
-                            <h4>Declare under LUT </h4>
-                          </div>
+                          <>
+                            <div className="lut outside-india">
+                              <h4>Declare under LUT </h4>
+                            </div>
+                            {invoice.exchange_rate && (
+                              <div style={{ fontWeight: 'bold', color: '#333', marginTop: 8 }}>
+                                1 {invoice.currency || ''} = {invoice.exchange_rate} INR
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                       {isIndia && (
@@ -302,6 +321,25 @@ const ViewBill = () => {
             {/* Amount in words */}
             <div className="row">
               <div className="col-xs-12">
+                {/* Show INR equivalent for foreign countries if exchange_rate and total_with_gst are available */}
+                {(!isIndia && invoice.exchange_rate && invoice.total_with_gst) ? (() => {
+                  const inrEquivalentRaw = Number(invoice.total_with_gst) * Number(invoice.exchange_rate);
+                  const inrEquivalent = Math.round(inrEquivalentRaw);
+                  return (
+                    <>
+                      <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
+                        <span style={{ width: '100%', fontSize: '15px' }}>
+                          <strong>Converted INR Equivalent:</strong> ₹ {inrEquivalent.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
+                        <span style={{ width: '100%', fontSize: '15px' }}>
+                          <strong>Converted INR (in words):</strong> {inrAmountInWords(inrEquivalent)}
+                        </span>
+                      </div>
+                    </>
+                  );
+                })() : null}
                 <div className="table-bordered black-bordered amount-box">
                   <div>
                     <strong>Amount Chargeable (in words):</strong><br />
@@ -390,12 +428,24 @@ const ViewBill = () => {
                   </table>
                 </div>
               )}
-              <div className="col-xs-12">
-                <div>
-                  <h5 style={{ marginBottom: "3px" }}><strong>Remarks:</strong></h5>
-                  <span>{invoice.remark}</span>
+              {/* Remarks: show above Tax Amount (in words) */}
+              {invoice.remark && (
+                <div className="col-xs-12">
+                  <div>
+                    <h5 style={{ marginBottom: "3px" }}><strong>Remarks:</strong></h5>
+                    <span>{invoice.remark}</span>
+                  </div>
                 </div>
-              </div>
+              )}
+              {/* Tax Amount (in words) for India invoices */}
+              {isIndia && invoice.total_tax_in_words && (
+                <div className="col-xs-12 inside-india">
+                  <div>
+                    <strong>Tax Amount (in words):</strong>
+                    <span id="total-tax-in-words"><span className='currency-text'>{invoice.currency_symbol || invoice.currency || 'INR'}</span> {invoice.total_tax_in_words}</span>
+                  </div>
+                </div>
+              )}
             </div>
             {/* Footer - Bank details and signature */}
             <div className="row">

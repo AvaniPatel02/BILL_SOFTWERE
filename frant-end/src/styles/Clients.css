@@ -235,3 +235,24 @@
     font-size: 0.95rem;
   }
 }
+
+.client-blank-row {
+  text-align: center;
+  padding: 20px;
+  background-color: #ffecec;
+}
+
+.client-create-btn {
+  background-color: #28a745;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.client-create-btn:hover {
+  background-color: #218838;
+}
