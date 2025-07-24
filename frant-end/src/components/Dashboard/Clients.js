@@ -37,7 +37,7 @@ const Clients = () => {
     if (!invoices || !Array.isArray(invoices)) {
       return [];
     }
-    
+
     const map = new Map();
     invoices.forEach(inv => {
       const key = `${inv.buyer_name}|${inv.buyer_address}|${inv.buyer_gst}`;
@@ -72,13 +72,13 @@ const Clients = () => {
       const token = localStorage.getItem('access_token');
       // const response = await deleteInvoice(token, invoiceId); // Use service function
       // if (response.status === 204) {
-        // Remove the deleted invoice from the state
-        setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+      // Remove the deleted invoice from the state
+      setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
       // } else if (response.status === 401) {
       //   localStorage.removeItem('access_token');
       //   navigate('/');
       // } else {
-        alert('Failed to delete invoice.');
+      alert('Failed to delete invoice.');
       // }
     } catch (error) {
       alert('Error deleting invoice.');

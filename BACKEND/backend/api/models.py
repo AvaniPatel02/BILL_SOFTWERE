@@ -151,6 +151,7 @@ class Invoice(models.Model):
     total_with_gst = models.FloatField()
     amount_in_words = models.CharField(max_length=255, blank=True, null=True)
     taxtotal = models.FloatField(blank=True, null=True, default=0.0)
+    total_tax_in_words = models.CharField(max_length=255, blank=True, null=True)
 
     # Remarks
     remark = models.TextField(blank=True, null=True, default='')
@@ -165,6 +166,8 @@ class Invoice(models.Model):
 
     # Country flag
     country_flag = models.URLField(max_length=300, blank=True, null=True)
+
+    hns_code = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return f"Invoice {self.invoice_number} - {self.buyer_name}"
@@ -298,5 +301,3 @@ class OtherType(models.Model):
 
     def __str__(self):
         return self.type
-
-
