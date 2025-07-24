@@ -10,4 +10,13 @@ export async function fetchAccountStatement({ buyer_name, buyer_address, buyer_g
   });
   if (!res.ok) throw new Error("Failed to fetch statement");
   return await res.json();
+}
+
+export async function fetchAccounts() {
+  const token = localStorage.getItem("access_token");
+  const res = await fetch(`${API_BASE_URL}/accounts/`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error("Failed to fetch accounts");
+  return await res.json();
 } 
