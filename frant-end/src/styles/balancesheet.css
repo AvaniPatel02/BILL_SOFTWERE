@@ -1,0 +1,51 @@
+.balance-sheet-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px #d9d5d5;
+  padding: 32px 24px;
+}
+
+.balance-sheet-sections {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+}
+
+.balance-sheet-column {
+  flex: 1 1 350px;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.balance-sheet-box {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 18px 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 4px #e0e0e0;
+}
+
+.balance-sheet-box h4 {
+  margin-bottom: 12px;
+  color: #1976d2;
+  border-bottom: 1px solid #bdbdbd;
+  padding-bottom: 4px;
+}
+
+.balance-sheet-box table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.balance-sheet-box td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.balance-sheet-box tr:last-child td {
+  border-bottom: none;
+} 

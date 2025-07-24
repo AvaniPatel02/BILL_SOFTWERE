@@ -1,3 +1,4 @@
+from .models import Employee
 from .models import Invoice
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
@@ -10,6 +11,7 @@ from .models import Buyer
 from .models import CompanyBill, BuyerBill, Salary, OtherTransaction
 from .models import EmployeeActionHistory
 from .models import OtherType
+from .models import BalanceSheet
 
 User = get_user_model()
 
@@ -123,8 +125,6 @@ class CashEntrySerializer(serializers.ModelSerializer):
         model = CashEntry
         fields = ['id', 'amount', 'date', 'description']
 
-# Employee serializer for salary management
-from .models import Employee
 class EmployeeSerializer(serializers.ModelSerializer):
     joining_date = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d'])
 
@@ -195,7 +195,7 @@ class SalarySerializer(serializers.ModelSerializer):
 class OtherTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = OtherTransaction
-        fields = '__all__'
+        fields = ['id', 'user', 'type', 'date', 'amount', 'notice', 'payment_type', 'bank', 'transaction_type', 'partner_name', 'bank_name']
         read_only_fields = ['user']
 
 class EmployeeActionHistorySerializer(serializers.ModelSerializer):
@@ -206,10 +206,15 @@ class EmployeeActionHistorySerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         if instance.date:
-            rep['date'] = instance.date.strftime('%d-%m-%Y %H:%M')
+            rep['date'] = instance.date.strftime('%d-%m-%Y')
         return rep
 
 class OtherTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = OtherType
         fields = ['type']
+
+class BalanceSheetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BalanceSheet
+        fields = ['id', 'year', 'data', 'created_at', 'updated_at']

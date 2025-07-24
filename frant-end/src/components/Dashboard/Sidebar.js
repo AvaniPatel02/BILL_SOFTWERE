@@ -67,9 +67,11 @@ const Sidebar = () => {
             <span>Accounting</span>
           </Link>
         </li>
-        <li className="nav-item">
-          <i className="fas fa-balance-scale"></i>
-          <span>Balance Sheet</span>
+        <li className={`nav-item${location.pathname === "/balancesheet" ? " active" : ""}`}>
+          <Link to="/balancesheet" className="nav-link-full">
+            <i className="fas fa-balance-scale"></i>
+            <span>Balance Sheet</span>
+          </Link>
         </li>
         <li className={`nav-item${location.pathname === "/banking" ? " active" : ""}`}>
           <Link to="/banking" className="nav-link-full">

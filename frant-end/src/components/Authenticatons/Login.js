@@ -114,7 +114,7 @@ const Login = () => {
     }
     setFpLoading(true);
     try {
-      const res = await forgotPasswordSendOtp(fpEmail);
+      const res = await forgotPasswordSendOtp({ email: fpEmail });
       if (res.success) {
         setFpOtpSent(true);
         toast.success("Password reset OTP sent successfully to your email!");
@@ -136,7 +136,7 @@ const Login = () => {
     }
     setFpLoading(true);
     try {
-      const res = await forgotPasswordVerifyOtp(fpEmail, fpOtp);
+      const res = await forgotPasswordVerifyOtp({ email: fpEmail, otp_code: fpOtp });
       if (res.success) {
         setFpOtpVerified(true);
         toast.success("OTP verified successfully! You can now reset your password.");
@@ -167,7 +167,12 @@ const Login = () => {
     }
     setFpLoading(true);
     try {
-      const res = await resetPassword(fpEmail, fpOtp, fpNewPassword, fpConfirmPassword);
+      const res = await resetPassword({
+        email: fpEmail,
+        otp_code: fpOtp,
+        new_password: fpNewPassword,
+        confirm_password: fpConfirmPassword
+      });
       if (res.success) {
         toast.success("Password reset successfully! You can now login with your new password.");
         setMode("login");

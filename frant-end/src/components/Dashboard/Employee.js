@@ -12,7 +12,7 @@ function formatDate(dateStr) {
   if (!dateStr) return '';
   const d = dayjs(dateStr);
   if (!d.isValid()) return dateStr; // fallback if parsing fails
-  return d.format('DD-MM-YYYY HH:mm');
+  return d.format('DD-MM-YYYY');
 }
 
 const Employee = () => {

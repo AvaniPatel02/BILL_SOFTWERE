@@ -67,10 +67,12 @@ const initialOther = {
   date: "",
   amount: "",
   notice: "",
+  partner_name: "", // NEW
+  bank_name: "",    // NEW
   paymentType: "",
   bank: "",
   transactionType: "debit",
-  manualType: false // new field for manual type entry
+  manualType: false
 };
 
 const Banking = () => {
@@ -223,13 +225,14 @@ const Banking = () => {
       payment_type: form.paymentType,
     };
   };
-  const mapOtherPayload = (form) => {
-    return {
-      ...form,
-      payment_type: form.paymentType,
-      transaction_type: form.transactionType,
-    };
-  };
+  // Update mapOtherPayload to include partner_name and bank_name
+  const mapOtherPayload = (form) => ({
+    ...form,
+    payment_type: form.paymentType,
+    transaction_type: form.transactionType,
+    partner_name: form.partner_name,
+    bank_name: form.bank_name,
+  });
 
   // Submit handlers for each form
   const handleCompanySubmit = (e) => {
@@ -530,7 +533,12 @@ const Banking = () => {
               {otherForm.manualType ? (
                 <Input placeholder="Type*" value={otherForm.type} onChange={e => setOtherForm(f => ({ ...f, type: e.target.value }))} required />
               ) : (
-                <Select value={otherForm.type} onChange={e => setOtherForm(f => ({ ...f, type: e.target.value }))} options={otherTypes} required>
+                <Select
+                  value={otherForm.type}
+                  onChange={e => setOtherForm(f => ({ ...f, type: e.target.value, partner_name: "", bank_name: "" }))}
+                  required
+                  options={otherTypes}
+                >
                   <option value="">Select Account</option>
                 </Select>
               )}
@@ -538,6 +546,19 @@ const Banking = () => {
               <Input type="date" value={otherForm.date} onChange={e => setOtherForm(f => ({ ...f, date: e.target.value }))} required />
               <label>Amount</label>
               <Input type="number" placeholder="Amount" value={otherForm.amount} onChange={e => setOtherForm(f => ({ ...f, amount: e.target.value }))} required />
+              {/* Conditional fields for Partner and Loan */}
+              {otherForm.type === "Partner" && !otherForm.manualType && (
+                <>
+                  <label>Partner Name</label>
+                  <Input placeholder="Partner Name*" value={otherForm.partner_name} onChange={e => setOtherForm(f => ({ ...f, partner_name: e.target.value }))} required />
+                </>
+              )}
+              {otherForm.type === "Loan" && !otherForm.manualType && (
+                <>
+                  <label>Bank Name</label>
+                  <Input placeholder="Bank Name*" value={otherForm.bank_name} onChange={e => setOtherForm(f => ({ ...f, bank_name: e.target.value }))} required />
+                </>
+              )}
               <label>Notice</label>
               <Input placeholder="Notice (Optional)" value={otherForm.notice} onChange={e => setOtherForm(f => ({ ...f, notice: e.target.value }))} />
               <div style={{display: 'flex', gap: 16, marginBottom: 8}}>

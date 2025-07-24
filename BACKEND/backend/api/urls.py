@@ -26,6 +26,7 @@ from .views_banking import (
     other_types
 )
 from .views_accounting import account_list, account_statement
+from .views_balancesheet import BalanceSheetView, BalanceSheetSnapshotView
 
 router = DefaultRouter()
 router.register(r'invoices', InvoiceViewSet, basename='invoice')
@@ -117,4 +118,9 @@ urlpatterns += [
 urlpatterns += [
     path('accounts/', account_list, name='account-list'),
     path('accounts/statement/', account_statement, name='account-statement'),
+]
+
+urlpatterns += [
+    path('balancesheet/', BalanceSheetView.as_view(), name='balancesheet'),
+    path('balancesheet/snapshot/', BalanceSheetSnapshotView.as_view(), name='balancesheet-snapshot'),
 ]

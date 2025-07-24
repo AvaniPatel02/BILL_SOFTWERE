@@ -68,13 +68,13 @@ const Dashboard = () => {
           {/* Sidebar Items as Cards */}
           <div className="sidebar-cards-container">
             {[{ icon: "fas fa-user", label: "Buyername", route: "/buyer" },
-              { icon: "fas fa-user", label: "Profile" },
+              { icon: "fas fa-user", label: "Profile", route: "/profile" },
               { icon: "fas fa-file-invoice", label: "Bills", route: "/bills" },
               { icon: "fas fa-user-tie", label: "Employee", route: "/employee" },
               { icon: "fas fa-map-marker-alt", label: "Address" ,route: "/address"},
               { icon: "fas fa-users", label: "Clients", route: "/clients" },
               { icon: "fas fa-calculator", label: "Accounting" ,route: "/accounting"},
-              { icon: "fas fa-balance-scale", label: "Balance Sheet" },
+              { icon: "fas fa-balance-scale", label: "Balance Sheet",route: "/balancesheet" },
               { icon: "fas fa-university", label: "Banking", route: "/banking" },
               { icon: "fas fa-cog", label: "Settings" ,route: "/settings"},
               { icon: "fas fa-image", label: "Update Logo" ,route: "/update-logo"},

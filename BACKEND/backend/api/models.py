@@ -4,7 +4,6 @@ from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
 
-# Create your models here.
 
 class OTP(models.Model):
     email = models.EmailField()
@@ -281,6 +280,8 @@ class OtherTransaction(models.Model):
     payment_type = models.CharField(max_length=50)
     bank = models.CharField(max_length=100, blank=True, null=True)
     transaction_type = models.CharField(max_length=10, choices=[('credit', 'Credit'), ('debit', 'Debit')])
+    partner_name = models.CharField(max_length=255, blank=True, null=True)  # New field for Partner
+    bank_name = models.CharField(max_length=255, blank=True, null=True)     # New field for Loan
 
 
 class EmployeeActionHistory(models.Model):
@@ -298,5 +299,15 @@ class OtherType(models.Model):
 
     def __str__(self):
         return self.type
+
+
+class BalanceSheet(models.Model):
+    year = models.PositiveIntegerField(unique=True)
+    data = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Balance Sheet {self.year}"
 
 
