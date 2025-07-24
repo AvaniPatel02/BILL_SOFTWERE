@@ -56,21 +56,46 @@ const BalanceSheet = () => {
         <div style={{ flex: 1 }}>
           <div className="balance-sheet-container">
             <h2 style={{ textAlign: 'center', marginBottom: 24 }}>Balance Sheet - {financialYear}</h2>
-            <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
-              <label>Financial Year: </label>
-              <input
-                type="text"
-                value={financialYear}
-                onChange={e => setFinancialYear(e.target.value)}
-                pattern="\\d{4}-\\d{4}"
-                placeholder="YYYY-YYYY"
-                minLength={9}
-                maxLength={9}
-              />
-              <button onClick={handleSaveSnapshot} disabled={saving} style={{ padding: '8px 18px', borderRadius: 6, background: '#1976d2', color: '#fff', border: 'none', fontWeight: 600 }}>
+            <div
+              style={{
+                marginBottom: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}
+            >
+              {/* Left side: Label + Input */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <label>Financial Year:</label>
+                <input
+                  type="text"
+                  value={financialYear}
+                  onChange={e => setFinancialYear(e.target.value)}
+                  pattern="\\d{4}-\\d{4}"
+                  placeholder="YYYY-YYYY"
+                  minLength={9}
+                  maxLength={9}
+                  style={{ width: 200, padding: '6px 10px' }}
+                />
+              </div>
+
+              {/* Right side: Button */}
+              <button
+                onClick={handleSaveSnapshot}
+                disabled={saving}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 6,
+                  background: '#1976d2',
+                  color: '#fff',
+                  border: 'none',
+                  fontWeight: 600
+                }}
+              >
                 {saving ? 'Saving...' : 'Save Snapshot'}
               </button>
             </div>
+
             {loading ? <div>Loading...</div> : (
               sheet ? (
                 <div className="balance-sheet-sections">
@@ -122,7 +147,7 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.sundry_debtors_creditors.filter(e => e.type === 'Creditor').map((entry, idx) => (
                             <tr key={entry.name + idx}>
-                              <td>{entry.name} <span style={{color:'#888', fontSize:'12px'}}>({entry.type})</span></td>
+                              <td>{entry.name} <span style={{ color: '#888', fontSize: '12px' }}>({entry.type})</span></td>
                               <td style={{ textAlign: 'right' }}>{entry.amount}</td>
                             </tr>
                           ))}
@@ -220,7 +245,7 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.sundry_debtors_creditors.filter(e => e.type === 'Debtor').map((entry, idx) => (
                             <tr key={entry.name + idx}>
-                              <td>{entry.name} <span style={{color:'#888', fontSize:'12px'}}>({entry.type})</span></td>
+                              <td>{entry.name} <span style={{ color: '#888', fontSize: '12px' }}>({entry.type})</span></td>
                               <td style={{ textAlign: 'right' }}>{entry.amount}</td>
                             </tr>
                           ))}

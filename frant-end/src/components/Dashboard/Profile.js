@@ -103,14 +103,9 @@ const Profile = () => {
     setEdit(false);
   };
 
-  // Handler to open current email modal and send OTP
-  const handleOpenChangeEmail = async () => {
-    setShowCurrentEmailModal(true);
-    setCurrentEmailOtp("");
-    setCurrentEmailOtpSent(false);
-    setCurrentEmailOtpError("");
-    setCurrentEmailOtpVerified(false);
+  const handleSendCurrentEmailOtp = async () => {
     setCurrentEmailOtpLoading(true);
+    setCurrentEmailOtpError("");
     try {
       const token = localStorage.getItem("access_token");
       const res = await sendCurrentEmailOtp(token);
@@ -127,6 +122,16 @@ const Profile = () => {
     } finally {
       setCurrentEmailOtpLoading(false);
     }
+  };
+
+  // Handler to open current email modal (OTP auto-send hatao)
+  const handleOpenChangeEmail = () => {
+    setShowCurrentEmailModal(true);
+    setCurrentEmailOtp("");
+    setCurrentEmailOtpSent(false);
+    setCurrentEmailOtpError("");
+    setCurrentEmailOtpVerified(false);
+    // Yahan OTP send nahi karna!
   };
 
   // Handler to verify current email OTP
@@ -246,9 +251,9 @@ const Profile = () => {
                 <i className="fas fa-exclamation-triangle"></i>
               </div>
               <div className="error-text">Failed to load profile</div>
-              <button 
+              <button
                 className="retry-btn"
-                onClick={() => window.location.reload()} 
+                onClick={() => window.location.reload()}
               >
                 <i className="fas fa-redo"></i> Retry
               </button>
@@ -283,50 +288,50 @@ const Profile = () => {
           <h2 className="profile-title">
             <i className="fas fa-user-circle"></i> Profile
           </h2>
-          
+
           <div className="profile-form">
             <div className="form-group">
               <label>
                 <i className="fas fa-user"></i> Name:
               </label>
               <div className="input-wrapper">
-                <input 
+                <input
                   className={`form-input ${!edit ? 'readonly' : ''}`}
-                  name="first_name" 
-                  value={form.first_name} 
-                  onChange={handleChange} 
-                  disabled={!edit} 
+                  name="first_name"
+                  value={form.first_name}
+                  onChange={handleChange}
+                  disabled={!edit}
                 />
                 {edit && <i className="fas fa-edit input-icon"></i>}
               </div>
             </div>
-            
+
             <div className="form-group">
               <label>
                 <i className="fas fa-phone"></i> Mobile:
               </label>
               <div className="input-wrapper">
-                <input 
+                <input
                   className={`form-input ${!edit ? 'readonly' : ''}`}
-                  name="mobile" 
-                  value={form.mobile} 
-                  onChange={handleChange} 
-                  disabled={!edit} 
+                  name="mobile"
+                  value={form.mobile}
+                  onChange={handleChange}
+                  disabled={!edit}
                 />
                 {edit && <i className="fas fa-edit input-icon"></i>}
               </div>
             </div>
-            
+
             <div className="form-group">
               <label>
                 <i className="fas fa-envelope"></i> Email:
               </label>
               <div className="input-wrapper">
-                <input 
+                <input
                   className="form-input readonly"
-                  name="email" 
-                  value={form.email} 
-                  disabled 
+                  name="email"
+                  value={form.email}
+                  disabled
                 />
                 <i className="fas fa-lock input-icon"></i>
               </div>
@@ -374,14 +379,37 @@ const Profile = () => {
                 <label>Current Email</label>
                 <input className="form-input readonly" value={profile.email} disabled />
               </div>
-              <div className="form-group">
-                <label>Enter OTP</label>
-                <input className="form-input" value={currentEmailOtp} onChange={e => setCurrentEmailOtp(e.target.value)} maxLength={6} />
+              <div className="form-group otp-input-group">
+                <input
+                  className="form-input"
+                  value={currentEmailOtp}
+                  onChange={e => setCurrentEmailOtp(e.target.value)}
+                  maxLength={6}
+                  placeholder="Enter OTP"
+                />
+                <button
+                  className="get-otp-btn"
+                  onClick={handleSendCurrentEmailOtp}
+                  disabled={currentEmailOtpLoading}
+                  type="button"
+                >
+                  {currentEmailOtpLoading
+                    ? "Sending..."
+                    : currentEmailOtpSent
+                      ? "Resend OTP"
+                      : "Get OTP"}
+                </button>
               </div>
               {currentEmailOtpError && <div className="error-text">{currentEmailOtpError}</div>}
               <div className="modal-buttons">
-                <button className="modal-btn cancel-btn" onClick={handleCloseCurrentEmailModal} disabled={currentEmailOtpLoading}>Cancel</button>
-                <button className="modal-btn submit-btn" onClick={handleVerifyCurrentEmailOtp} disabled={currentEmailOtpLoading || !currentEmailOtp}>Submit</button>
+                <button className="modal-btn cancel-btn" onClick={handleCloseCurrentEmailModal}>Cancel</button>
+                <button
+                  className="modal-btn submit-btn"
+                  onClick={handleVerifyCurrentEmailOtp}
+                  disabled={!currentEmailOtp || !currentEmailOtpSent}
+                >
+                  Submit
+                </button>
               </div>
             </div>
           </div>

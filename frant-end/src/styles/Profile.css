@@ -513,6 +513,7 @@
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
+  margin-top: 0px;
   gap: 8px;
   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.2);
   padding: 12px 24px;
@@ -623,4 +624,39 @@
 .profile-content, .back-button {
   position: relative;
   z-index: 2;
+}
+
+.otp-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.get-otp-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.get-otp-btn:disabled {
+  background: #b7e4c7;
+  color: #fff;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.get-otp-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }

@@ -21,4 +21,17 @@ export async function getInvoice(invoiceId) {
     credentials: 'include',
   });
   return response.json();
-} 
+}
+
+export async function deleteInvoice(invoiceId) {
+  const response = await fetch(`${API_BASE_URL}/invoices/${invoiceId}/`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to delete invoice');
+  }
+  return true; // Successful delete
+}
