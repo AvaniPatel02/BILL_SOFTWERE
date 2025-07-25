@@ -28,6 +28,7 @@ import AccountStatement from './components/Dashboard/AccountStatement';
 import ViewBill from './components/Bills/ViewBill';
 import BalanceSheet from './components/Dashboard/BalanceSheet';
 import BankStatements from './components/Dashboard/BankStatements';
+import EditInvoice from './components/TaxInvoices/EditInvoice'; // Import karo
 
 
 function MainLayout() {
@@ -67,6 +68,7 @@ function MainLayout() {
           <Route path="/account-statement" element={<ProtectedRoute><AccountStatement /></ProtectedRoute>} />
           <Route path="/balancesheet" element={<ProtectedRoute><BalanceSheet /></ProtectedRoute>} />
           <Route path="/bank-statements" element={<ProtectedRoute><BankStatements /></ProtectedRoute>} />
+          <Route path="/edit-invoice/:id" element={<EditInvoice />} />
         </Routes>
       </div>
     </div>

@@ -8,11 +8,12 @@ function getAuthHeaders() {
 }
 
 export async function getSettings() {
-  const res = await fetch(`${API_BASE_URL}/auth/settings/`, {
-    headers: getAuthHeaders(),
-    credentials: 'include',
+  const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+  const res = await fetch(`/api/settings`, {
+    headers: { Authorization: `Bearer ${token}` }
   });
-  return res.json();
+  if (!res.ok) throw new Error('Failed to fetch settings');
+  return await res.json();
 }
 
 export async function updateSettings(data) {

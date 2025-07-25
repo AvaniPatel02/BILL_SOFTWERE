@@ -3,12 +3,24 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Clients.css';
-import { getInvoices } from '../../services/clientsApi'; // Removed deleteInvoice import
+import { getInvoices } from '../../services/clientsApi';
 
 const Clients = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+//   navigate('/taxinvoices', {
+//   state: {
+//     buyerData: {
+//       buyer_name: client.buyer_name,
+//       buyer_address: client.buyer_address,
+//       buyer_gst: client.buyer_gst,
+//       country: latestInvoice?.country || 'India',
+//       state: latestInvoice?.state || 'Gujarat',
+//     }
+//   }
+// });
 
   useEffect(() => {
     const fetchInvoices = async () => {
