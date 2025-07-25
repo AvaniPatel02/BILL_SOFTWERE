@@ -27,6 +27,7 @@ import Accounting from './components/Dashboard/Accounting';
 import AccountStatement from './components/Dashboard/AccountStatement';
 import ViewBill from './components/Bills/ViewBill';
 import BalanceSheet from './components/Dashboard/BalanceSheet';
+import BankStatements from './components/Dashboard/BankStatements';
 
 
 function MainLayout() {
@@ -65,6 +66,7 @@ function MainLayout() {
           <Route path="/accounting" element={<ProtectedRoute><Accounting /></ProtectedRoute>} />
           <Route path="/account-statement" element={<ProtectedRoute><AccountStatement /></ProtectedRoute>} />
           <Route path="/balancesheet" element={<ProtectedRoute><BalanceSheet /></ProtectedRoute>} />
+          <Route path="/bank-statements" element={<ProtectedRoute><BankStatements /></ProtectedRoute>} />
         </Routes>
       </div>
     </div>

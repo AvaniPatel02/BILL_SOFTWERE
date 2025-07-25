@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Invoice, Buyer, CompanyBill, Salary, OtherTransaction, BalanceSheet
+from .models import Invoice, Buyer, CompanyBill, Salary, OtherTransaction, BalanceSheet, ArchivedInvoice
 from .serializers import BalanceSheetSerializer
 from django.db.models import Sum
 from collections import defaultdict
@@ -115,7 +115,7 @@ class BalanceSheetView(APIView):
         # Sundry Debtors/Creditors calculation (full accounting logic)
         # 1. Collect all unique buyer/company names from invoices, buyers, company bills, and relevant OtherTransactions
         all_names = set()
-        invoices = Invoice.objects.filter(invoice_date__gte=fy_start, invoice_date__lte=fy_end)
+        invoices = Invoice.objects.filter(invoice_date__gte=fy_start, invoice_date__lte=fy_end, is_deleted=False)
         for inv in invoices:
             all_names.add(inv.buyer_name.strip())
         buyers = Buyer.objects.filter(date__gte=fy_start, date__lte=fy_end)
@@ -136,7 +136,7 @@ class BalanceSheetView(APIView):
                 continue
             total = 0.0
             # Add all invoice amounts (debit)
-            total += sum(float(inv.base_amount) for inv in invoices if inv.buyer_name.strip() == key)
+            total += sum(float(getattr(inv, 'total_tax_amount', getattr(inv, 'total_with_gst', 0))) for inv in invoices if inv.buyer_name.strip() == key)
             # Add all buyer amounts (debit)
             total += sum(float(b.amount) for b in buyers if b.name.strip() == key)
             # Subtract all company bill amounts (credit)
@@ -154,6 +154,23 @@ class BalanceSheetView(APIView):
                 sundry_debtors_creditors.append({"name": name, "amount": amount, "type": "Debtor"})
             else:
                 sundry_debtors_creditors.append({"name": name, "amount": abs(amount), "type": "Creditor"})
+
+        # Add deleted invoices to Unsecure Loan (Debit)
+        deleted_invoices = Invoice.objects.filter(invoice_date__gte=fy_start, invoice_date__lte=fy_end, is_deleted=True)
+        for inv in deleted_invoices:
+            unsecure_loan_debit.append({
+                "name": inv.buyer_name,
+                "amount": float(getattr(inv, 'total_tax_amount', getattr(inv, 'total_with_gst', 0))),
+                "type": "Unsecure Loan"
+            })
+        # Add archived invoices to Unsecure Loan (Debit)
+        archived_invoices = ArchivedInvoice.objects.filter(invoice_date__gte=fy_start, invoice_date__lte=fy_end)
+        for inv in archived_invoices:
+            unsecure_loan_debit.append({
+                "name": inv.buyer_name,
+                "amount": float(inv.total_tax_amount if inv.total_tax_amount is not None else (inv.total_with_gst or 0)),
+                "type": "Unsecure Loan"
+            })
 
         # Custom Types from OtherTransaction (excluding partner, loan, fixed assets, unsecure loan)
         custom_types_credit = defaultdict(float)

@@ -9,6 +9,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, date
 import json
+from .models import ArchivedInvoice
 
 
 # Serializer for Invoice
@@ -34,6 +35,45 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        invoice = self.get_object()
+        fy = invoice.financial_year
+
+        # Extract the numeric part of the invoice number
+        try:
+            current_number = int(invoice.invoice_number.split('-')[0])
+        except Exception:
+            return Response({'error': 'Invalid invoice number format.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Find the max invoice number for this year
+        invoices_for_year = Invoice.objects.filter(financial_year=fy)
+        max_invoice = None
+        max_number = -1
+        for inv in invoices_for_year:
+            try:
+                num = int(inv.invoice_number.split('-')[0])
+                if num > max_number:
+                    max_number = num
+                    max_invoice = inv
+            except Exception:
+                continue
+
+        if invoice.id != max_invoice.id:
+            return Response({'error': 'Only the last generated invoice for this financial year can be deleted.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Archive before delete
+        ArchivedInvoice.objects.create(
+            buyer_name=invoice.buyer_name,
+            invoice_date=invoice.invoice_date,
+            total_tax_amount=getattr(invoice, 'total_tax_amount', None),
+            total_with_gst=getattr(invoice, 'total_with_gst', None),
+            remark=invoice.remark,
+            financial_year=invoice.financial_year,
+            # Add other fields as needed
+        )
+        invoice.delete()
+        return Response(status=204)
 
 def get_financial_year(dt):
     if isinstance(dt, str):
