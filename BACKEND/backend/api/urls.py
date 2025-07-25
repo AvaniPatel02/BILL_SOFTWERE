@@ -23,7 +23,8 @@ from .views_banking import (
     OtherTransactionRetrieveUpdateDestroyView,
     get_unique_buyer_names,
     get_invoices_by_buyer,
-    other_types
+    other_types,
+    bank_cash_transactions,
 )
 from .views_accounting import account_list, account_statement
 from .views_balancesheet import BalanceSheetView, BalanceSheetSnapshotView
@@ -123,4 +124,8 @@ urlpatterns += [
 urlpatterns += [
     path('balancesheet/', BalanceSheetView.as_view(), name='balancesheet'),
     path('balancesheet/snapshot/', BalanceSheetSnapshotView.as_view(), name='balancesheet-snapshot'),
+]
+
+urlpatterns += [
+    path('banking/transactions/', bank_cash_transactions, name='bank-cash-transactions'),
 ]

@@ -198,6 +198,13 @@ class OtherTransactionSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'type', 'date', 'amount', 'notice', 'payment_type', 'bank', 'transaction_type', 'partner_name', 'bank_name']
         read_only_fields = ['user']
 
+    def validate(self, data):
+        if 'transaction_type' not in data or data['transaction_type'] not in ['credit', 'debit']:
+            raise serializers.ValidationError({'transaction_type': 'This field is required and must be either "credit" or "debit".'})
+        if 'payment_type' not in data or data['payment_type'] not in ['Cash', 'Banking']:
+            raise serializers.ValidationError({'payment_type': 'This field is required and must be either "Cash" or "Banking".'})
+        return data
+
 class EmployeeActionHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = EmployeeActionHistory
