@@ -39,23 +39,50 @@ const BankStatements = () => {
   useEffect(() => {
     setError("");
     setLoading(true);
-    let fetchParams = { type: mode.toLowerCase() };
-    if (mode === 'Bank' && selectedBank) {
-      fetchParams = { type: 'bank', name: selectedBank };
-    }
-    if ((mode === 'Bank' && selectedBank) || mode === 'Cash' || mode === 'All') {
-      fetchBankCashTransactions(fetchParams)
-        .then(setTransactions)
-        .catch(() => setError("Failed to fetch transactions"))
-        .finally(() => setLoading(false));
+    let fetchParams = {};
+
+    if (mode === 'Bank') {
+      if (selectedBank) {
+        fetchParams = { type: 'bank', name: selectedBank };
+      } else {
+        fetchParams = { type: 'bank' }; // No name param means all banks
+      }
+    } else if (mode === 'Cash') {
+      fetchParams = { type: 'cash' };
     } else {
-      setTransactions([]);
-      setLoading(false);
+      fetchParams = { type: 'all' };
     }
+
+    fetchBankCashTransactions(fetchParams)
+      .then(setTransactions)
+      .catch(() => setError("Failed to fetch transactions"))
+      .finally(() => setLoading(false));
   }, [mode, selectedBank]);
 
   function renderTransactionsTable(transactions) {
     if (transactions.length === 0) return <div className="alert alert-info">No transactions found.</div>;
+
+    // Debug: log a sample transaction to inspect field names
+    if (transactions.length > 0) {
+      console.log('Sample transaction:', transactions[0]);
+    }
+
+    // Calculate totals
+    let totalCredit = 0, totalDebit = 0, totalAmount = 0;
+
+    // Robust helper to get source
+    const getSource = (tx) => {
+      // Try to detect cash entry by type or by missing bank_name
+      if (
+        (tx.type && tx.type.toLowerCase() === 'cash') ||
+        (!tx.bank_name && !tx.bank && (!tx.type || tx.type.toLowerCase() !== 'bank'))
+      ) return 'Cash';
+      return tx.bank_name || tx.bank || '-';
+    };
+
+    // Robust helper to get details
+    const getDetails = (tx) => tx.details || '-';
+
     return (
       <div className="table-responsive">
         <table className="statement-table">
@@ -63,6 +90,8 @@ const BankStatements = () => {
             <tr>
               <th>Date</th>
               <th>Type</th>
+              <th>Details</th>
+              <th>Source</th>
               <th>Description</th>
               <th>Credit</th>
               <th>Debit</th>
@@ -71,38 +100,58 @@ const BankStatements = () => {
             </tr>
           </thead>
           <tbody>
-            {transactions.map((tx, idx) => (
-              <tr key={idx}>
-                <td>
-                  {editingIdx === idx
-                    ? <input value={editTx.date || ''} onChange={e => setEditTx({...editTx, date: e.target.value})} />
-                    : formatDate(tx.date)}
-                </td>
-                <td>{tx.type}</td>
-                <td>
-                  {editingIdx === idx
-                    ? <input value={editTx.description || ''} onChange={e => setEditTx({...editTx, description: e.target.value})} />
-                    : (tx.description || '-')}
-                </td>
-                <td>{tx.credit ? Number(tx.amount).toFixed(2) : '-'}</td>
-                <td>{tx.debit ? Number(tx.amount).toFixed(2) : '-'}</td>
-                <td>
-                  {editingIdx === idx
-                    ? <input type="number" value={editTx.amount || ''} onChange={e => setEditTx({...editTx, amount: e.target.value})} />
-                    : Number(tx.amount).toFixed(2)}
-                </td>
-                <td>
-                  {editingIdx === idx ? (
-                    <>
-                      <button onClick={() => saveEdit(tx, idx)}>Save</button>
-                      <button onClick={() => setEditingIdx(null)}>Cancel</button>
-                    </>
-                  ) : (
-                    <button onClick={() => { setEditingIdx(idx); setEditTx(tx); }}>Edit</button>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {transactions.map((tx, idx) => {
+              const credit = tx.credit ? Number(tx.amount) : 0;
+              const debit = tx.debit ? Number(tx.amount) : 0;
+              const amount = Number(tx.amount);
+
+              totalCredit += credit;
+              totalDebit += debit;
+              totalAmount += amount;
+
+              return (
+                <tr key={idx}>
+                  <td>
+                    {editingIdx === idx
+                      ? <input value={editTx.date || ''} onChange={e => setEditTx({...editTx, date: e.target.value})} />
+                      : formatDate(tx.date)}
+                  </td>
+                  <td>{tx.type}</td>
+                  <td>{getDetails(tx)}</td>
+                  <td>{getSource(tx)}</td>
+                  <td>
+                    {editingIdx === idx
+                      ? <input value={editTx.description || ''} onChange={e => setEditTx({...editTx, description: e.target.value})} />
+                      : (tx.description || '-')}
+                  </td>
+                  <td>{credit ? credit.toFixed(2) : '-'}</td>
+                  <td>{debit ? debit.toFixed(2) : '-'}</td>
+                  <td>
+                    {editingIdx === idx
+                      ? <input type="number" value={editTx.amount || ''} onChange={e => setEditTx({...editTx, amount: e.target.value})} />
+                      : amount.toFixed(2)}
+                  </td>
+                  <td>
+                    {editingIdx === idx ? (
+                      <>
+                        <button onClick={() => saveEdit(tx, idx)}>Save</button>
+                        <button onClick={() => setEditingIdx(null)}>Cancel</button>
+                      </>
+                    ) : (
+                      <button onClick={() => { setEditingIdx(idx); setEditTx(tx); }}>Edit</button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+            {/* Total Row */}
+            <tr style={{ fontWeight: 'bold', background: '#f5f5f5' }}>
+              <td colSpan={5} style={{ textAlign: 'right' }}>Total</td>
+              <td>{totalCredit.toFixed(2)}</td>
+              <td>{totalDebit.toFixed(2)}</td>
+              <td>{totalAmount.toFixed(2)}</td>
+              <td></td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -156,7 +205,7 @@ const BankStatements = () => {
               </select>
               {mode === 'Bank' && (
                 <select value={selectedBank} onChange={e => setSelectedBank(e.target.value)} className="form-select ms-3" style={{ width: 220 ,height: 40}}>
-                  <option value="">-- Select Bank --</option>
+                  <option value="">-- All Banks --</option>
                   {banks.map(bank => (
                     <option key={bank.id} value={bank.bank_name}>{bank.bank_name} ({bank.account_number})</option>
                   ))}

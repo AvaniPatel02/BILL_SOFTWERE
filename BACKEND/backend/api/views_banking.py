@@ -194,12 +194,13 @@ def bank_cash_transactions(request):
     transactions = []
 
     if ttype in ['all', 'bank']:
-        if ttype == 'bank' and not bank_name:
-            return Response({'error': 'Bank name required for type=bank'}, status=400)
         # CompanyBill (credit)
         cb_qs = CompanyBill.objects.all()
         if ttype == 'bank':
-            cb_qs = cb_qs.filter(payment_type='Banking', bank=bank_name)
+            if bank_name:
+                cb_qs = cb_qs.filter(payment_type='Banking', bank=bank_name)
+            else:
+                cb_qs = cb_qs.filter(payment_type='Banking')
         elif ttype == 'all':
             cb_qs = cb_qs.filter(payment_type='Banking')
         for cb in cb_qs:
@@ -211,11 +212,15 @@ def bank_cash_transactions(request):
                 'debit': False,
                 'description': cb.notice or '',
                 'bank': cb.bank,
+                'details': cb.company,
             })
         # BuyerBill (debit)
         bb_qs = BuyerBill.objects.all()
         if ttype == 'bank':
-            bb_qs = bb_qs.filter(payment_type='Banking', bank=bank_name)
+            if bank_name:
+                bb_qs = bb_qs.filter(payment_type='Banking', bank=bank_name)
+            else:
+                bb_qs = bb_qs.filter(payment_type='Banking')
         elif ttype == 'all':
             bb_qs = bb_qs.filter(payment_type='Banking')
         for bb in bb_qs:
@@ -227,11 +232,15 @@ def bank_cash_transactions(request):
                 'debit': True,
                 'description': bb.notice or '',
                 'bank': bb.bank,
+                'details': bb.name,
             })
         # Salary (debit)
         sal_qs = Salary.objects.all()
         if ttype == 'bank':
-            sal_qs = sal_qs.filter(payment_type='Banking', bank=bank_name)
+            if bank_name:
+                sal_qs = sal_qs.filter(payment_type='Banking', bank=bank_name)
+            else:
+                sal_qs = sal_qs.filter(payment_type='Banking')
         elif ttype == 'all':
             sal_qs = sal_qs.filter(payment_type='Banking')
         for sal in sal_qs:
@@ -243,11 +252,15 @@ def bank_cash_transactions(request):
                 'debit': True,
                 'description': '',
                 'bank': sal.bank,
+                'details': sal.name,
             })
         # OtherTransaction (credit/debit)
         ot_qs = OtherTransaction.objects.all()
         if ttype == 'bank':
-            ot_qs = ot_qs.filter(payment_type='Banking', bank=bank_name)
+            if bank_name:
+                ot_qs = ot_qs.filter(payment_type='Banking', bank=bank_name)
+            else:
+                ot_qs = ot_qs.filter(payment_type='Banking')
         elif ttype == 'all':
             ot_qs = ot_qs.filter(payment_type='Banking')
         for ot in ot_qs:
@@ -259,6 +272,7 @@ def bank_cash_transactions(request):
                 'debit': ot.transaction_type == 'debit',
                 'description': ot.notice or '',
                 'bank': ot.bank,
+                'details': ot.type,
             })
     if ttype in ['all', 'cash']:
         # CompanyBill (credit)
@@ -272,6 +286,7 @@ def bank_cash_transactions(request):
                 'debit': False,
                 'description': cb.notice or '',
                 'bank': None,
+                'details': cb.company,  # <-- add this line
             })
         # BuyerBill (debit)
         bb_qs = BuyerBill.objects.filter(payment_type='Cash')
@@ -284,6 +299,7 @@ def bank_cash_transactions(request):
                 'debit': True,
                 'description': bb.notice or '',
                 'bank': None,
+                'details': bb.name,  # <-- add this line
             })
         # Salary (debit)
         sal_qs = Salary.objects.filter(payment_type='Cash')
@@ -296,6 +312,7 @@ def bank_cash_transactions(request):
                 'debit': True,
                 'description': '',
                 'bank': None,
+                'details': sal.name,  # <-- add this line
             })
         # OtherTransaction (credit/debit)
         ot_qs = OtherTransaction.objects.filter(payment_type='Cash')
@@ -308,6 +325,7 @@ def bank_cash_transactions(request):
                 'debit': ot.transaction_type == 'debit',
                 'description': ot.notice or '',
                 'bank': None,
+                'details': ot.type,  # <-- add this line (or ot.partner_name, ot.bank_name as needed)
             })
     # Sort by date descending
     transactions.sort(key=lambda x: str(x['date']), reverse=True)
