@@ -34,3 +34,7 @@ db.sqlite3
 *.sqlite3
 
 BACKEND/backend/db.sqlite3
+
+__pycache__/
+*.pyc
+/media/
