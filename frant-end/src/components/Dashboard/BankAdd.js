@@ -310,6 +310,9 @@ const BankAdd = () => {
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h2>Bank & Cash Management</h2>
               <div>
+                <button className="btn btn-outline-secondary me-2" onClick={() => navigate('/bank-statements')}>
+                  Statements
+                </button>
                 <button className="btn btn-outline-secondary me-2" onClick={openRecycleModal}>
                   Recycle Entries
                 </button>

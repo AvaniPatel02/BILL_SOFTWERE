@@ -165,8 +165,24 @@ class Invoice(models.Model):
     # Country flag
     country_flag = models.URLField(max_length=300, blank=True, null=True)
 
+    is_deleted = models.BooleanField(default=False)
+
     def __str__(self):
         return f"Invoice {self.invoice_number} - {self.buyer_name}"
+
+
+class ArchivedInvoice(models.Model):
+    buyer_name = models.CharField(max_length=255)
+    invoice_date = models.DateField()
+    total_tax_amount = models.FloatField(null=True, blank=True)
+    total_with_gst = models.FloatField(null=True, blank=True)
+    remark = models.TextField(blank=True, null=True)
+    financial_year = models.CharField(max_length=9)
+    deleted_at = models.DateTimeField(auto_now_add=True)
+    # Add any other fields you want to preserve for reporting
+    
+    def __str__(self):
+        return f"Archived Invoice {self.buyer_name} on {self.invoice_date}" 
 
 
 class BankAccount(models.Model):

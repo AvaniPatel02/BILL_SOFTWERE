@@ -31,8 +31,7 @@ export function submitCompanyBill(data) {
 export function updateCompanyBill(id, data) {
   return fetch(`${API_BASE_URL}/banking/company-bill/${id}/`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
-    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(res => res.json());
 }
@@ -94,8 +93,7 @@ export function submitBuyerBill(data) {
 export function updateBuyerBill(id, data) {
   return fetch(`${API_BASE_URL}/banking/buyer-bill/${id}/`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
-    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(res => res.json());
 }
@@ -131,8 +129,7 @@ export function submitSalary(data) {
 export function updateSalary(id, data) {
   return fetch(`${API_BASE_URL}/banking/salary/${id}/`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
-    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(res => res.json());
 }
@@ -166,10 +163,9 @@ export function submitOtherTransaction(data) {
   }).then(res => res.json());
 }
 export function updateOtherTransaction(id, data) {
-  return fetch(`${API_BASE_URL}/banking/other/${id}/`, {
+  return fetch(`${API_BASE_URL}/banking/other-transaction/${id}/`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
-    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(res => res.json());
 }
@@ -193,4 +189,19 @@ export async function addOtherType(type) {
 // Fetch all 'other' types
 export async function fetchOtherTypes() {
   return fetch(`${API_BASE_URL}/api/other-types/`).then(res => res.json());
+}
+
+// Fetch transactions for bank/cash/all
+export function fetchBankCashTransactions({ type = 'all', name = '' } = {}) {
+  let url = `${API_BASE_URL}/banking/transactions/?type=${type}`;
+  if (type === 'bank' && name) {
+    url += `&name=${encodeURIComponent(name)}`;
+  }
+  return fetch(url, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  }).then(res => {
+    if (!res.ok) throw new Error('Failed to fetch transactions');
+    return res.json();
+  });
 } 

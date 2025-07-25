@@ -526,21 +526,22 @@ const Banking = () => {
           {visibleButton === 4 && (
             <form className="banking-form" onSubmit={handleOtherSubmit}>
               <h3>Other</h3>
-              <label style={{marginBottom: 8}}>
-                <input type="checkbox" checked={otherForm.manualType} onChange={() => setOtherForm(f => ({ ...f, manualType: !f.manualType, type: "" }))} /> Enter Type Manually
-              </label>
               <label>Account Type</label>
-              {otherForm.manualType ? (
-                <Input placeholder="Type*" value={otherForm.type} onChange={e => setOtherForm(f => ({ ...f, type: e.target.value }))} required />
-              ) : (
-                <Select
-                  value={otherForm.type}
-                  onChange={e => setOtherForm(f => ({ ...f, type: e.target.value, partner_name: "", bank_name: "" }))}
-                  required
-                  options={otherTypes}
-                >
-                  <option value="">Select Account</option>
-                </Select>
+              <Select
+                value={otherForm.type}
+                onChange={e => setOtherForm(f => ({ ...f, type: e.target.value, manualType: e.target.value === 'manual' }))}
+                required
+                options={["Partner", "Loan", "Fixed Assets", "Unsecure Loan", "manual"]}
+              >
+                <option value="">Select Account</option>
+                <option value="Partner">Partner</option>
+                <option value="Loan">Loan</option>
+                <option value="Fixed Assets">Fixed Assets</option>
+                <option value="Unsecure Loan">Unsecure Loan</option>
+                <option value="manual">Other (Manual Entry)</option>
+              </Select>
+              {otherForm.manualType && (
+                <Input placeholder="Type*" value={otherForm.type === 'manual' ? '' : otherForm.type} onChange={e => setOtherForm(f => ({ ...f, type: e.target.value }))} required />
               )}
               <label>Date</label>
               <Input type="date" value={otherForm.date} onChange={e => setOtherForm(f => ({ ...f, date: e.target.value }))} required />
