@@ -9,7 +9,7 @@ import html2canvas from 'html2canvas';
 import html2pdf from 'html2pdf.js';
 import { getSettings } from '../../services/settingsApi';
 import { getNextInvoiceNumber } from '../../services/taxInvoiceApi';
-
+import { useLocation } from 'react-router-dom';
 
 const Taxinvoices = () => {
   // State for all fields
@@ -48,6 +48,26 @@ const Taxinvoices = () => {
   const [formDisabled, setFormDisabled] = useState(false);
   const [exchangeRate, setExchangeRate] = useState(null);
   const invoiceRef = useRef();
+  const location = useLocation();
+
+   // Pre-fill logic
+  useEffect(() => {
+    if (location.state && location.state.buyerData) {
+      const { buyer_name, buyer_address, buyer_gst, country, state } = location.state.buyerData;
+      setBillTo({ title: buyer_name || '', address: buyer_address || '', gst: buyer_gst || '' });
+
+      // Country select
+      if (country && countryList.length > 0) {
+        const foundCountry = countryList.find(c => c.name === country);
+        if (foundCountry) setSelectedCountry(foundCountry);
+        else setSelectedCountry({ name: 'India', symbol: '₹', code: 'INR' });
+      }
+
+      // State select
+      if (state) setSelectedState(state);
+    }
+  }, [location.state, countryList]);
+  
   // Fetch settings from backend on mount
   useEffect(() => {
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
@@ -57,6 +77,13 @@ const Taxinvoices = () => {
       });
     }
   }, []);
+
+  // Helper to format date as dd/mm/yyyy
+function formatDateDMY(dateStr) {
+  if (!dateStr) return '';
+  const [yyyy, mm, dd] = dateStr.split('-');
+  return `${dd}/${mm}/${yyyy}`;
+}
   // Fetch countries on mount (unchanged)
   useEffect(() => {
     fetch('https://restcountries.com/v3.1/all?fields=name,currencies')
@@ -1071,7 +1098,7 @@ const Taxinvoices = () => {
                         </tr>
                         <tr>
                           <td>Date</td>
-                          <td>{date}</td>
+                           <td>{formatDateDMY(date)}</td>
                         </tr>
                         <tr>
                           <td>Delivery Note</td>
@@ -1083,7 +1110,7 @@ const Taxinvoices = () => {
                         </tr>
                         <tr>
                           <td>Delivery Note Date</td>
-                          <td style={{ width: '250px' }}>{deliveryNoteDate}</td>
+                          <td style={{ width: '250px' }}>{formatDateDMY(deliveryNoteDate)}</td>
                         </tr>
                         <tr>
                           <td>Destination</td>
