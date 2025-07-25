@@ -26,3 +26,40 @@ export async function calculateInvoice(data) {
   });
   return res.json();
 }
+
+export async function getInvoiceById(id) {
+  const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+  const res = await fetch(`/api/invoices/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error('Failed to fetch invoice');
+  return await res.json();
+}
+
+export async function updateInvoice(id, data) {
+  const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+  const res = await fetch(`/api/invoices/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Failed to update invoice');
+  return await res.json();
+}
+
+export async function addInvoice(data) {
+  const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+  const res = await fetch(`/api/invoices`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Failed to add invoice');
+  return await res.json();
+}
