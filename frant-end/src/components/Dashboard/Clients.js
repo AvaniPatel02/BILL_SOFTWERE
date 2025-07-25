@@ -3,15 +3,13 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Clients.css';
-import { getInvoices, deleteInvoice } from '../../services/clientsApi';
+import { getInvoices } from '../../services/clientsApi'; // Removed deleteInvoice import
 
 const Clients = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [deletedRows, setDeletedRows] = useState([]); // Track deleted rows
   const navigate = useNavigate();
 
-  // Fetch invoices from backend
   useEffect(() => {
     const fetchInvoices = async () => {
       setLoading(true);
@@ -43,14 +41,16 @@ const Clients = () => {
       }
       map.get(key).push(inv);
     });
+    
     return Array.from(map.entries()).map(([key, invList]) => {
-      invList.sort((a, b) => new Date(b.invoice_date) - new Date(a.invoice_date));
+      // Sort by date (newest first)
+      const sortedInvoices = invList.sort((a, b) => new Date(b.invoice_date) - new Date(a.invoice_date));
+      
       return {
         buyer_name: invList[0].buyer_name,
         buyer_address: invList[0].buyer_address,
         buyer_gst: invList[0].buyer_gst,
-        mostRecentInvoice: invList[0],
-        allInvoices: invList
+        allInvoices: sortedInvoices
       };
     });
   }, [invoices]);
@@ -59,28 +59,17 @@ const Clients = () => {
   const handleEdit = (invoiceId) => navigate(`/edit-invoice/${invoiceId}`);
   const handleDownload = (invoiceId) => alert('Download invoice ' + invoiceId);
 
-  const handleDelete = async (invoiceId) => {
-    if (!window.confirm('Are you sure you want to delete this invoice?')) return;
-    setLoading(true);
-    try {
-      await deleteInvoice(invoiceId); 
-
-      // Add this row to deletedRows (instead of removing from state)
-      setDeletedRows(prev => [...prev, invoiceId]);
-    } catch (error) {
-      alert('Error deleting invoice.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleNewBill = (client) => {
+    // Find the latest invoice for this client to get country and state
+    const latestInvoice = client.allInvoices[0];
     navigate('/taxinvoices', {
       state: {
         buyerData: {
           buyer_name: client.buyer_name,
           buyer_address: client.buyer_address,
           buyer_gst: client.buyer_gst,
+          country: latestInvoice?.country || 'India',
+          state: latestInvoice?.state || 'Gujarat',
         }
       }
     });
@@ -128,23 +117,6 @@ const Clients = () => {
                     </tr>
                   ) : (
                     uniqueClients.map((client, idx) => {
-                      const isDeleted = deletedRows.includes(client.mostRecentInvoice.id);
-                      // Agar client delete ho gaya to ek hi row dikhao
-                      if (isDeleted) {
-                        return (
-                          <tr key={client.mostRecentInvoice.id || idx}>
-                            <td colSpan="5" className="client-blank-row">
-                              <button
-                                className="client-create-btn"
-                                onClick={() => handleNewBill(client)}
-                              >
-                                + Create New Bill
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      }
-                      // Multiple bills ke liye row grouping
                       return client.allInvoices.map((inv, billIdx) => (
                         <tr
                           key={inv.id}
@@ -163,8 +135,6 @@ const Clients = () => {
                               </td>
                             </>
                           )}
-                          {/* Agar pehli row nahi hai to blank cell skip karo */}
-                          {billIdx !== 0 && null}
                           <td>{inv.invoice_number}</td>
                           <td>
                             {inv.currency} {parseFloat(inv.total_with_gst).toFixed(2)}
@@ -199,16 +169,6 @@ const Clients = () => {
                                 <i className="fa-solid fa-download"></i>
                               </button>
                               <span className="client-tooltip-text">Download</span>
-                            </div>
-                            <div className="client-tooltip-container">
-                              <button
-                                className="client-action-btn client-delete"
-                                onClick={() => handleDelete(inv.id)}
-                                disabled={loading}
-                              >
-                                <i className="fa-solid fa-trash"></i>
-                              </button>
-                              <span className="client-tooltip-text">Delete</span>
                             </div>
                             <div className="client-tooltip-container">
                               <button
