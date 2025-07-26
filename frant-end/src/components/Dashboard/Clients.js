@@ -3,7 +3,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Clients.css';
-import { getInvoices } from '../../services/clientsApi';
+import { getInvoices, deleteInvoice } from '../../services/clientsApi';
 
 const Clients = () => {
   const [invoices, setInvoices] = useState([]);
@@ -70,6 +70,17 @@ const Clients = () => {
   const handleView = (invoiceId) => navigate(`/view-bill/${invoiceId}`);
   const handleEdit = (invoiceId) => navigate(`/edit-invoice/${invoiceId}`);
   const handleDownload = (invoiceId) => alert('Download invoice ' + invoiceId);
+  const handleDelete = async (invoiceId) => {
+    if (window.confirm('Are you sure you want to delete this invoice?')) {
+      try {
+        await deleteInvoice(invoiceId);
+        alert('Invoice deleted successfully!');
+        window.location.reload(); // or call fetchInvoices() if you want to avoid reload
+      } catch (err) {
+        alert('Failed to delete invoice: ' + err.message);
+      }
+    }
+  };
 
   const handleNewBill = (client) => {
     // Find the latest invoice for this client to get country and state
@@ -86,6 +97,19 @@ const Clients = () => {
       }
     });
   };
+
+  // Group all invoices by financial year and find the max invoice for each year
+  const maxInvoicePerYear = React.useMemo(() => {
+    const map = {};
+    invoices.forEach(inv => {
+      const year = inv.financial_year;
+      const num = parseInt((inv.invoice_number || '').split('-')[0]);
+      if (!map[year] || num > map[year].num) {
+        map[year] = { id: inv.id, num };
+      }
+    });
+    return map;
+  }, [invoices]);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -192,6 +216,18 @@ const Clients = () => {
                               </button>
                               <span className="client-tooltip-text">New Bill</span>
                             </div>
+                            {maxInvoicePerYear[inv.financial_year]?.id === inv.id && (
+                              <div className="client-tooltip-container">
+                                <button
+                                  className="client-action-btn client-delete"
+                                  onClick={() => handleDelete(inv.id)}
+                                  disabled={loading}
+                                >
+                                  <i className="fa-solid fa-trash"></i>
+                                </button>
+                                <span className="client-tooltip-text">Delete</span>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ));

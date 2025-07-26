@@ -195,7 +195,7 @@ class SalarySerializer(serializers.ModelSerializer):
 class OtherTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = OtherTransaction
-        fields = ['id', 'user', 'type', 'date', 'amount', 'notice', 'payment_type', 'bank', 'transaction_type', 'partner_name', 'bank_name']
+        fields = ['id', 'user', 'type', 'date', 'amount', 'notice', 'payment_type', 'bank', 'transaction_type', 'bank_name', 'name']
         read_only_fields = ['user']
 
     def validate(self, data):
