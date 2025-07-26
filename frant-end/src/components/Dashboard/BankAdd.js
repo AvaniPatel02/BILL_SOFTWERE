@@ -362,16 +362,6 @@ const BankAdd = () => {
                         <td className="text-center">
                           <div className="tooltip-container">
                             <button
-                              className="action-btn edit"
-                              onClick={() => handleEditBank(bank)}
-                              disabled={loading}
-                            >
-                              <i className="fa-solid fa-pen-to-square"></i>
-                            </button>
-                            <span className="tooltip-text" style={{ top: "20px", left: "60px" }}>Edit</span>
-                          </div>
-                          <div className="tooltip-container">
-                            <button
                               className="action-btn delete"
                               onClick={() => openDeleteModal('bank', bank.id)}
                               disabled={loading}
@@ -408,16 +398,6 @@ const BankAdd = () => {
                         <td className="text-center">{entry.description || "-"}</td>
                         <td className="text-center">{entry.amount}</td>
                         <td className="text-center">
-                          <div className="tooltip-container">
-                            <button
-                              className="action-btn edit"
-                              onClick={() => handleEditCashEntry(entry)}
-                              disabled={loading}
-                            >
-                              <i className="fa-solid fa-pen-to-square"></i>
-                            </button>
-                            <span className="tooltip-text" style={{ top: "20px", left: "60px" }}>Edit</span>
-                          </div>
                           <div className="tooltip-container">
                             <button
                               className="action-btn delete"

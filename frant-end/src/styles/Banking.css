@@ -114,6 +114,13 @@
   background: #fff;
 }
 
+.banking-input-bankingjs {
+  height: 48px !important;
+  font-size: 1.08rem;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
 .banking-form-btn-row {
   display: flex;
   gap: 18px;

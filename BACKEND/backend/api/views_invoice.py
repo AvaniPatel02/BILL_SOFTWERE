@@ -62,6 +62,20 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         if invoice.id != max_invoice.id:
             return Response({'error': 'Only the last generated invoice for this financial year can be deleted.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Check for related transactions
+        from .models import OtherTransaction, CompanyBill, BuyerBill, Salary
+        has_related = (
+            OtherTransaction.objects.filter(user=invoice.user, name=invoice.buyer_name).exists() or
+            CompanyBill.objects.filter(company=invoice.buyer_name).exists() or
+            BuyerBill.objects.filter(name=invoice.buyer_name).exists() or
+            Salary.objects.filter(name=invoice.buyer_name).exists()
+        )
+
+        if not has_related:
+            # Do not archive or mark as deleted, just return success
+            invoice.delete()
+            return Response({'success': True, 'message': 'Invoice deleted, but not archived as unsecure loan because no related transactions found.'}, status=204)
+
         # Archive before delete
         ArchivedInvoice.objects.create(
             buyer_name=invoice.buyer_name,

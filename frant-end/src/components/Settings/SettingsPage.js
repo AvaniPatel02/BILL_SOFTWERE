@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../Dashboard/Sidebar';
 import '../../styles/Settings.css';
-import Toast from '../Toast';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { getSettings, updateSettings } from '../../services/settingsApi';
 
 const SettingsPage = () => {
@@ -25,9 +26,6 @@ const SettingsPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [newHsn, setNewHsn] = useState('');
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('success');
-  const [showToast, setShowToast] = useState(false);
   // Always get token from localStorage
   const token = localStorage.getItem('access_token');
 
@@ -147,38 +145,32 @@ const SettingsPage = () => {
       data.append('logo', formData.logo);
     }
 
-    const res = await fetch('http://localhost:8000/api/auth/settings/', {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // 'Content-Type' नहीं डालना है
-      },
-      body: data,
-    });
-    setLoading(false);
-    if (res.ok) {
-      setToastMessage('Settings updated successfully!');
-      setToastType('success');
-      setShowToast(true);
-    } else {
-      const errorData = await res.json().catch(() => ({}));
-      console.log('Backend error:', errorData);
-      setToastMessage('Failed to update settings. ' + (errorData && JSON.stringify(errorData)));
-      setToastType('error');
-      setShowToast(true);
+    try {
+      const res = await fetch('http://localhost:8000/api/auth/settings/', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // 'Content-Type' नहीं डालना है
+        },
+        body: data,
+      });
+      setLoading(false);
+      if (res.ok) {
+        toast.success('Settings updated successfully!');
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        console.log('Backend error:', errorData);
+        toast.error('Failed to update settings. ' + (errorData && JSON.stringify(errorData)));
+      }
+    } catch (err) {
+      setLoading(false);
+      toast.error('Failed to update settings. ' + err.message);
     }
   };
 
   return (
    <div style={{ paddingLeft: "60px" }}>
-      <Toast message="Test Toast" type="success" onClose={() => {}} />
-      {showToast && (
-        <Toast
-          message={toastMessage}
-          type={toastType}
-          onClose={() => setShowToast(false)}
-        />
-      )}
+      <ToastContainer />
       <h1 className="hedding">Your Company details</h1>
 
       <div className="formbody">
