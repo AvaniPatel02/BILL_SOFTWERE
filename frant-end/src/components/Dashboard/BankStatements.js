@@ -61,6 +61,18 @@ const BankStatements = () => {
       .finally(() => setLoading(false));
   }, [mode, selectedBank]);
 
+  // Calculate opening balance and totals for the selected date range
+  const openingBalance = calculateOpeningBalance(transactions, fromDate);
+
+  let totalCredit = 0, totalDebit = 0;
+  let filtered = transactions;
+  if (fromDate) filtered = filtered.filter(tx => tx.date && tx.date >= fromDate);
+  if (toDate) filtered = filtered.filter(tx => tx.date && tx.date <= toDate);
+  filtered.forEach(tx => {
+    if (tx.credit) totalCredit += Number(tx.amount);
+    if (tx.debit) totalDebit += Number(tx.amount);
+  });
+
   function renderTransactionsTable(transactions) {
     if (transactions.length === 0) return <div className="alert alert-info">No transactions found.</div>;
 
@@ -122,22 +134,18 @@ const BankStatements = () => {
               const debit = tx.debit ? Number(tx.amount) : 0;
               const amount = Number(tx.amount);
 
-              totalCredit += credit;
-              totalDebit += debit;
-              totalAmount += amount;
-
               return (
                 <tr key={idx}>
                   <td>
                     {editingIdx === idx
-                      ? <input value={editTx.date || ''} onChange={e => setEditTx({...editTx, date: e.target.value})} />
+                      ? <input value={editTx.date || ''} onChange={e => setEditTx({ ...editTx, date: e.target.value })} />
                       : formatDate(tx.date)}
                   </td>
                   <td>{getDetails(tx)}</td>
                   <td>
                     {editingIdx === idx
-                      ? <input value={editTx.description || ''} onChange={e => setEditTx({...editTx, description: e.target.value})} />
-                      : (tx.description || '-')}
+                      ? <input value={editTx.details || ''} onChange={e => setEditTx({ ...editTx, details: e.target.value })} />
+                      : (tx.details || '-')}
                   </td>
                   <td>{credit ? credit.toFixed(2) : '-'}</td>
                   <td>{debit ? debit.toFixed(2) : '-'}</td>
@@ -191,6 +199,18 @@ const BankStatements = () => {
     }
   }
 
+  function calculateOpeningBalance(transactions, fromDate) {
+    if (!fromDate) return 0;
+    return transactions
+      .filter(tx => tx.date && tx.date < fromDate)
+      .reduce((sum, tx) => {
+        const amount = Number(tx.amount);
+        if (tx.credit) return sum + amount;
+        if (tx.debit) return sum - amount;
+        return sum;
+      }, 0);
+  }
+
   return (
     <div className="bills-layout">
       <Header />
@@ -203,6 +223,10 @@ const BankStatements = () => {
           </div>
           <div className="container mt-4">
             <div className="d-flex align-items-center mb-3">
+              <label className="me-2">From:</label>
+              <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="form-control me-3" style={{ width: 180 }} />
+              <label className="me-2">To:</label>
+              <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="form-control me-3" style={{ width: 180 }} />
               <label className="me-2">View:</label>
               <select value={mode} onChange={e => setMode(e.target.value)} className="form-select" style={{ width: 180, height: 40 }}>
                 <option value="All">All</option>
@@ -251,4 +275,4 @@ const BankStatements = () => {
   );
 };
 
-export default BankStatements; 
+export default BankStatements;
