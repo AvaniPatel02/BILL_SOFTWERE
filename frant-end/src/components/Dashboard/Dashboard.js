@@ -1,13 +1,47 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import "../../styles/Dashboard.css";
 
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { useNavigate } from 'react-router-dom';
+import { getInvoices } from '../../services/clientsApi';
+import { listCompanyBills, listBuyerBills } from '../../services/bankingApi';
+import { getEmployees } from '../../services/employeeApi';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  // State for dynamic counts
+  const [clientCount, setClientCount] = useState(0);
+  const [billCount, setBillCount] = useState(0);
+  const [employeeCount, setEmployeeCount] = useState(0);
+
+  useEffect(() => {
+    // Fetch clients (unique by buyer_name, buyer_address, buyer_gst)
+    getInvoices().then((invoices) => {
+      if (!invoices || !Array.isArray(invoices)) {
+        setClientCount(0);
+        return;
+      }
+      const map = new Map();
+      invoices.forEach(inv => {
+        const key = `${inv.buyer_name}|${inv.buyer_address}|${inv.buyer_gst}`;
+        if (!map.has(key)) {
+          map.set(key, true);
+        }
+      });
+      setClientCount(map.size);
+    });
+    // Fetch bills (company + buyer)
+    Promise.all([listCompanyBills(), listBuyerBills()]).then(([companyBills, buyerBills]) => {
+      setBillCount((companyBills?.length || 0) + (buyerBills?.length || 0));
+    });
+    // Fetch employees
+    getEmployees().then((emps) => {
+      setEmployeeCount(Array.isArray(emps) ? emps.length : 0);
+    });
+  }, []);
+
   return (
     <>
       <Header />
@@ -17,26 +51,26 @@ const Dashboard = () => {
           <div className="fact-container">
             <div className="stats-container">
               {/* Clients */}
-              <div className="stat-card bg-grey">
+              <div className="stat-card bg-grey" onClick={() => navigate('/clients')} style={{ cursor: 'pointer' }}>
                 <img
                   src="/clicnet.gif"
                   alt="Total Clients"
                   className="stat-icon"
                   style={{ height: "80px", marginBottom: "0px" }}
                 />
-                <div className="stat-value">10</div>
+                <div className="stat-value">{clientCount}</div>
                 <div className="stat-label">Clients</div>
               </div>
 
               {/* Total Bills */}
-              <div className="stat-card bg-green">
+              <div className="stat-card bg-green" onClick={() => navigate('/bills')} style={{ cursor: 'pointer' }}>
                 <img
                   src="/total-bill.gif"
                   alt="Total Bills"
                   className="stat-icon"
                   style={{ height: "80px", marginBottom: "0px" }}
                 />
-                <div className="stat-value">25</div>
+                <div className="stat-value">{billCount}</div>
                 <div className="stat-label">Total Bills</div>
               </div>
 
@@ -48,7 +82,7 @@ const Dashboard = () => {
                   className="stat-icon"
                   style={{ height: "80px", marginBottom: "0px" }}
                 />
-                <div className="stat-value">5</div>
+                <div className="stat-value">{employeeCount}</div>
                 <div className="stat-label">Total Employee</div>
               </div>
 

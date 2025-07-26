@@ -28,8 +28,8 @@ const BankStatements = () => {
   const [error, setError] = useState("");
   const [editingIdx, setEditingIdx] = useState(null);
   const [editTx, setEditTx] = useState({});
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,17 +74,45 @@ const BankStatements = () => {
   });
 
   function renderTransactionsTable(transactions) {
-    let filtered = transactions;
-    if (fromDate) filtered = filtered.filter(tx => tx.date && tx.date >= fromDate);
-    if (toDate) filtered = filtered.filter(tx => tx.date && tx.date <= toDate);
-    if (filtered.length === 0) return <div className="alert alert-info">No transactions found.</div>;
+    if (transactions.length === 0) return <div className="alert alert-info">No transactions found.</div>;
 
-    const parseDate = (d) => new Date(d?.split('T')[0]);
-    const sorted = [...filtered].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+    // Sort transactions by date ascending (oldest first)
+    const sortedTransactions = [...transactions].sort((a, b) => {
+      // Parse as YYYY-MM-DD
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateA - dateB;
+    });
 
-    // Calculate opening balance for the table - only for Bank or Cash mode and when date is selected
-    const tableOpeningBalance = (mode === 'Bank' || mode === 'Cash') && fromDate ? calculateOpeningBalance(transactions, fromDate) : 0;
-    const showOpeningBalance = (mode === 'Bank' || mode === 'Cash') && fromDate;
+    // Filter by fromDate and toDate
+    const filteredTransactions = sortedTransactions.filter(tx => {
+      if (!fromDate && !toDate) return true;
+      const txDate = new Date(tx.date);
+      if (fromDate && txDate < new Date(fromDate)) return false;
+      if (toDate && txDate > new Date(toDate)) return false;
+      return true;
+    });
+
+    // Debug: log a sample transaction to inspect field names
+    if (filteredTransactions.length > 0) {
+      console.log('Sample transaction:', filteredTransactions[0]);
+    }
+
+    // Calculate totals
+    let totalCredit = 0, totalDebit = 0, totalAmount = 0;
+
+    // Robust helper to get source
+    const getSource = (tx) => {
+      // Try to detect cash entry by type or by missing bank_name
+      if (
+        (tx.type && tx.type.toLowerCase() === 'cash') ||
+        (!tx.bank_name && !tx.bank && (!tx.type || tx.type.toLowerCase() !== 'bank'))
+      ) return 'Cash';
+      return tx.bank_name || tx.bank || '-';
+    };
+
+    // Robust helper to get details
+    const getDetails = (tx) => tx.details || '-';
 
     return (
       <div className="table-responsive">
@@ -93,6 +121,7 @@ const BankStatements = () => {
             <tr>
               <th>Date</th>
               <th>Details</th>
+              <th>Description</th>
               <th>Credit</th>
               <th>Debit</th>
               <th>Amount</th>
@@ -100,18 +129,7 @@ const BankStatements = () => {
             </tr>
           </thead>
           <tbody>
-            {/* Add opening balance row only for Bank or Cash mode and when date is selected */}
-            {showOpeningBalance && (
-              <tr style={{ fontWeight: 'bold', background: '#e6f7ff' }}>
-                <td>{formatDate(fromDate)}</td>
-                <td>Opening Balance</td>
-                <td>-</td>
-                <td>-</td>
-                <td>{tableOpeningBalance.toFixed(2)}</td>
-                <td></td>
-              </tr>
-            )}
-            {sorted.map((tx, idx) => {
+            {filteredTransactions.map((tx, idx) => {
               const credit = tx.credit ? Number(tx.amount) : 0;
               const debit = tx.debit ? Number(tx.amount) : 0;
               const amount = Number(tx.amount);
@@ -123,6 +141,7 @@ const BankStatements = () => {
                       ? <input value={editTx.date || ''} onChange={e => setEditTx({ ...editTx, date: e.target.value })} />
                       : formatDate(tx.date)}
                   </td>
+                  <td>{getDetails(tx)}</td>
                   <td>
                     {editingIdx === idx
                       ? <input value={editTx.details || ''} onChange={e => setEditTx({ ...editTx, details: e.target.value })} />
@@ -130,37 +149,23 @@ const BankStatements = () => {
                   </td>
                   <td>{credit ? credit.toFixed(2) : '-'}</td>
                   <td>{debit ? debit.toFixed(2) : '-'}</td>
+                  <td>{amount.toFixed(2)}</td>
                   <td>
-                    {editingIdx === idx
-                      ? <input type="number" value={editTx.amount || ''} onChange={e => setEditTx({ ...editTx, amount: e.target.value })} />
-                      : amount.toFixed(2)}
-                  </td>
-                  <td>
-                    {editingIdx === idx ? (
-                      <>
-                        <button onClick={() => saveEdit(tx, idx)}>Save</button>
-                        <button onClick={() => setEditingIdx(null)}>Cancel</button>
-                      </>
-                    ) : (
-                      <button onClick={() => { setEditingIdx(idx); setEditTx(tx); }}>Edit</button>
-                    )}
+                     {/* Action column intentionally left empty (Edit removed) */}
                   </td>
                 </tr>
               );
             })}
-            <tr style={{ fontWeight: 'bold', background: '#f5f5f5' }}>
-              <td colSpan={2} style={{ textAlign: 'right' }}>
-                {showOpeningBalance ? 'Total (Including Opening Balance)' : 'Total'}
-              </td>
-              <td>{totalCredit.toFixed(2)}</td>
-              <td>{totalDebit.toFixed(2)}</td>
-              <td>
-                {showOpeningBalance 
-                ? (tableOpeningBalance + totalCredit - totalDebit).toFixed(2)
-                : (totalCredit - totalDebit).toFixed(2)}
-              </td>
-              <td></td>
-            </tr>
+            {/* Total Row */}
+            {mode !== 'All' && (
+              <tr style={{ fontWeight: 'bold', background: '#f5f5f5' }}>
+                <td colSpan={3} style={{ textAlign: 'right' }}>Total</td>
+                <td>{totalCredit.toFixed(2)}</td>
+                <td>{totalDebit.toFixed(2)}</td>
+                <td>{(totalCredit - totalDebit).toFixed(2)}</td>
+                <td></td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -237,32 +242,12 @@ const BankStatements = () => {
                 </select>
               )}
             </div>
-            <div className="mb-3">
-              {mode === 'Bank' && selectedBank && fromDate && (
-                <>
-                  <strong>Opening Balance for {selectedBank} as on {formatDate(fromDate)}: </strong>
-                  {(() => {
-                    const bankObj = banks.find(b => b.bank_name === selectedBank);
-                    const txs = transactions.filter(tx => tx.bank_name === selectedBank);
-                    let opening = calculateOpeningBalance(txs, fromDate);
-                    // Agar koi transaction nahi hai aur fromDate blank hai, to banks table ka amount dikhao
-                    if ((!txs || txs.length === 0) && (!fromDate || fromDate === '')) {
-                      return bankObj ? Number(bankObj.amount).toFixed(2) : '0.00';
-                    }
-                    return opening.toFixed(2);
-                  })()}
-                </>
-              )}
-              {mode === 'Cash' && fromDate && (
-                <>
-                  <strong>Cash Opening Balance as on {formatDate(fromDate)}: </strong>
-                  {calculateOpeningBalance(
-                    transactions.filter(tx => tx.type === 'Cash' || tx.cash),
-                    fromDate
-                  ).toFixed(2)}
-                </>
-              )}
-              {/* Remove the All mode opening balance display */}
+            {/* Date range filter */}
+            <div className="d-flex align-items-center mb-3">
+              <label className="me-2">From Date:</label>
+              <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="form-control me-3" style={{ width: 180 }} />
+              <label className="me-2">To Date:</label>
+              <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="form-control" style={{ width: 180 }} />
             </div>
             {/* Placeholder for statements display */}
             {mode === 'Bank' && selectedBank && (

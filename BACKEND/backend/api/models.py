@@ -296,8 +296,8 @@ class OtherTransaction(models.Model):
     payment_type = models.CharField(max_length=50)
     bank = models.CharField(max_length=100, blank=True, null=True)
     transaction_type = models.CharField(max_length=10, choices=[('credit', 'Credit'), ('debit', 'Debit')])
-    partner_name = models.CharField(max_length=255, blank=True, null=True)  # New field for Partner
-    bank_name = models.CharField(max_length=255, blank=True, null=True)     # New field for Loan
+    bank_name = models.CharField(max_length=255, blank=True, null=True)
+    name = models.CharField(max_length=255, blank=True, null=True)
 
 
 class EmployeeActionHistory(models.Model):

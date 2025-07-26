@@ -43,9 +43,9 @@ const BalanceSheet = () => {
 
   // Helper to get display name for OtherTransaction
   const getOtherDisplayName = (type, entry) => {
-    if (type === 'Partner' && entry.partner_name) return entry.partner_name;
     if (type === 'Loan' && entry.bank_name) return entry.bank_name;
-    return entry.notice || entry.name || '';
+    if (entry.name) return entry.name;
+    return '';
   };
 
   return (
@@ -107,8 +107,8 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.capital.map((item, idx) => (
                             <tr key={item.name + idx}>
-                              <td>{item.partner_name || item.name || item.notice}</td>
-                              <td style={{ textAlign: 'right' }}>{item.amount}</td>
+                              <td>{item.amount}</td>
+                              <td style={{ textAlign: 'right' }}>{item.partner_name || item.name || item.notice}</td>
                             </tr>
                           ))}
                         </tbody></table>
@@ -120,8 +120,8 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.loan_credit.map((item, idx) => (
                             <tr key={item.name + idx}>
-                              <td>{item.bank_name || item.name || item.notice}</td>
-                              <td style={{ textAlign: 'right' }}>{item.amount}</td>
+                              <td>{item.amount}</td>
+                              <td style={{ textAlign: 'right' }}>{item.bank_name || item.name || item.notice}</td>
                             </tr>
                           ))}
                         </tbody></table>
@@ -133,8 +133,8 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.unsecure_loan_credit.map((item, idx) => (
                             <tr key={item.name + idx}>
-                              <td>{item.bank_name || item.name || item.notice}</td>
-                              <td style={{ textAlign: 'right' }}>{item.amount}</td>
+                              <td>{item.amount}</td>
+                              <td style={{ textAlign: 'right' }}>{item.bank_name || item.name || item.notice}</td>
                             </tr>
                           ))}
                         </tbody></table>
@@ -147,8 +147,8 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.sundry_debtors_creditors.filter(e => e.type === 'Creditor').map((entry, idx) => (
                             <tr key={entry.name + idx}>
-                              <td>{entry.name} <span style={{ color: '#888', fontSize: '12px' }}>({entry.type})</span></td>
-                              <td style={{ textAlign: 'right' }}>{entry.amount}</td>
+                              <td>{entry.amount}</td>
+                              <td style={{ textAlign: 'right' }}>{entry.name}</td>
                             </tr>
                           ))}
                         </tbody></table>
@@ -162,10 +162,12 @@ const BalanceSheet = () => {
                           <div key={type}>
                             <strong>{type}</strong>
                             <table><tbody>
-                              <tr>
-                                <td>{type}</td>
-                                <td style={{ textAlign: 'right' }}>{entries[0][1]}</td>
-                              </tr>
+                              {entries.map((entry, idx) => (
+                                <tr key={idx}>
+                                  <td>{entry[1]}</td>
+                                  <td style={{ textAlign: 'right' }}>{entry[0]}</td>
+                                </tr>
+                              ))}
                             </tbody></table>
                           </div>
                         ))}
@@ -179,7 +181,7 @@ const BalanceSheet = () => {
                         <h4>Fixed Assets</h4>
                         <table><tbody>
                           {sheet.fixed_assets.map(([name, amt]) => (
-                            <tr key={name}><td>{name}</td><td style={{ textAlign: 'right' }}>{amt}</td></tr>
+                            <tr key={name}><td>{amt}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
                           ))}
                         </tbody></table>
                       </div>
@@ -190,8 +192,8 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.loan_debit.map((item, idx) => (
                             <tr key={item.name + idx}>
-                              <td>{item.bank_name || item.name || item.notice}</td>
-                              <td style={{ textAlign: 'right' }}>{item.amount}</td>
+                              <td>{item.amount}</td>
+                              <td style={{ textAlign: 'right' }}>{item.bank_name || item.name || item.notice}</td>
                             </tr>
                           ))}
                         </tbody></table>
@@ -203,8 +205,8 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.unsecure_loan_debit.map((item, idx) => (
                             <tr key={item.name + idx}>
-                              <td>{item.bank_name || item.name || item.notice}</td>
-                              <td style={{ textAlign: 'right' }}>{item.amount}</td>
+                              <td>{item.amount}</td>
+                              <td style={{ textAlign: 'right' }}>{item.bank_name || item.name || item.notice}</td>
                             </tr>
                           ))}
                         </tbody></table>
@@ -212,10 +214,10 @@ const BalanceSheet = () => {
                     )}
                     {sheet.salary && sheet.salary.length > 0 && (
                       <div className="balance-sheet-box">
-                        <h4>Salary</h4>
+                        <h4>Expense</h4>
                         <table><tbody>
                           {sheet.salary.map(([name, amt]) => (
-                            <tr key={name}><td>{name}</td><td style={{ textAlign: 'right' }}>{amt}</td></tr>
+                            <tr key={name}><td>{amt}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
                           ))}
                           <tr style={{ fontWeight: 'bold', borderTop: '2px solid #ccc' }}>
                             <td>Total</td>
@@ -229,7 +231,7 @@ const BalanceSheet = () => {
                         <h4>Buyers</h4>
                         <table><tbody>
                           {sheet.buyer.map(([name, amt]) => (
-                            <tr key={name}><td>{name}</td><td style={{ textAlign: 'right' }}>{amt}</td></tr>
+                            <tr key={name}><td>{amt}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
                           ))}
                           <tr style={{ fontWeight: 'bold', borderTop: '2px solid #ccc' }}>
                             <td>Total</td>
@@ -245,8 +247,8 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.sundry_debtors_creditors.filter(e => e.type === 'Debtor').map((entry, idx) => (
                             <tr key={entry.name + idx}>
-                              <td>{entry.name} <span style={{ color: '#888', fontSize: '12px' }}>({entry.type})</span></td>
-                              <td style={{ textAlign: 'right' }}>{entry.amount}</td>
+                              <td>{entry.amount}</td>
+                              <td style={{ textAlign: 'right' }}>{entry.name}</td>
                             </tr>
                           ))}
                         </tbody></table>
@@ -260,10 +262,12 @@ const BalanceSheet = () => {
                           <div key={type}>
                             <strong>{type}</strong>
                             <table><tbody>
-                              <tr>
-                                <td>{type}</td>
-                                <td style={{ textAlign: 'right' }}>{entries[0][1]}</td>
-                              </tr>
+                              {entries.map((entry, idx) => (
+                                <tr key={idx}>
+                                  <td>{entry[1]}</td>
+                                  <td style={{ textAlign: 'right' }}>{entry[0]}</td>
+                                </tr>
+                              ))}
                             </tbody></table>
                           </div>
                         ))}

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import '../../styles/Banking.css';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   submitCompanyBill,
   submitBuyerBill,
@@ -24,12 +26,12 @@ const sampleInvoices = ["INV-001", "INV-002", "INV-003"];
 
 // Helper for input fields
 const Input = ({ type = "text", ...props }) => (
-  <input className="banking-input" type={type} {...props} />
+  <input className="banking-input banking-input-bankingjs" type={type} {...props} />
 );
 
 // Helper for select fields
 const Select = ({ options, children, ...props }) => (
-  <select className="banking-input" {...props}>
+  <select className="banking-input banking-input-bankingjs" {...props}>
     {children}
     {options && options.map((opt, i) => (
       <option key={i} value={opt}>{opt}</option>
@@ -67,7 +69,6 @@ const initialOther = {
   date: "",
   amount: "",
   notice: "",
-  partner_name: "", // NEW
   bank_name: "",    // NEW
   paymentType: "",
   bank: "",
@@ -85,7 +86,10 @@ const Banking = () => {
   const [buyerNames, setBuyerNames] = useState([]);
   const [invoicesForBuyer, setInvoicesForBuyer] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [otherTypes, setOtherTypes] = useState(sampleTypes);
+  const defaultTypes = ["Partner", "Loan", "Unsecure Loan", "Fixed Assets", "Assets"];
+  const [otherTypes, setOtherTypes] = useState(defaultTypes);
+  const [manualType, setManualType] = useState(false);
+  const [newType, setNewType] = useState("");
 
   useEffect(() => {
     fetchBanks().then(data => {
@@ -190,9 +194,17 @@ const Banking = () => {
   // Fetch other types on mount
   useEffect(() => {
     fetchOtherTypes().then(data => {
-      if (Array.isArray(data)) setOtherTypes(data);
-      else if (data && Array.isArray(data.types)) setOtherTypes(data.types);
-      else setOtherTypes(sampleTypes);
+      let backendTypes = [];
+      if (Array.isArray(data)) backendTypes = data;
+      else if (data && Array.isArray(data.types)) backendTypes = data.types;
+      // Merge and deduplicate (case-insensitive)
+      const allTypes = [...defaultTypes];
+      backendTypes.forEach(type => {
+        if (!allTypes.some(def => def.toLowerCase() === type.toLowerCase())) {
+          allTypes.push(type);
+        }
+      });
+      setOtherTypes(allTypes);
     });
   }, []);
 
@@ -230,8 +242,8 @@ const Banking = () => {
     ...form,
     payment_type: form.paymentType,
     transaction_type: form.transactionType,
-    partner_name: form.partner_name,
-    bank_name: form.bank_name,
+    bank_name: form.type === "Loan" ? form.bank_name : "",
+    name: form.type !== "Loan" ? form.name : "",
   });
 
   // Submit handlers for each form
@@ -245,14 +257,14 @@ const Banking = () => {
       .then(response => {
         console.log('Backend response:', response);
         if (response && response.id) {
-          alert('Company Bill submitted!');
+          toast.success('Company Bill submitted!');
           resetForm(setCompanyForm, initialCompany);
         } else {
-          alert('Error: ' + JSON.stringify(response));
+          toast.error('Error: ' + JSON.stringify(response));
         }
       })
       .catch(error => {
-        alert('Error submitting Company Bill');
+        toast.error('Error submitting Company Bill');
         console.error(error);
       });
   };
@@ -279,14 +291,14 @@ const Banking = () => {
       .then(response => {
         console.log('Backend response:', response);
         if (response && response.id) {
-          alert('Buyer Bill submitted!');
+          toast.success('Buyer Bill submitted!');
           resetForm(setBuyerForm, initialBuyer);
         } else {
-          alert('Error: ' + JSON.stringify(response));
+          toast.error('Error: ' + JSON.stringify(response));
         }
       })
       .catch(error => {
-        alert('Error submitting Buyer Bill');
+        toast.error('Error submitting Buyer Bill');
         console.error(error);
       });
   };
@@ -301,14 +313,14 @@ const Banking = () => {
       .then(response => {
         console.log('Backend response:', response);
         if (response && response.id) {
-          alert('Salary submitted!');
+          toast.success('Salary submitted!');
           resetForm(setSalaryForm, initialSalary);
         } else {
-          alert('Error: ' + JSON.stringify(response));
+          toast.error('Error: ' + JSON.stringify(response));
         }
       })
       .catch(error => {
-        alert('Error submitting Salary');
+        toast.error('Error submitting Salary');
         console.error(error);
       });
   };
@@ -320,7 +332,16 @@ const Banking = () => {
       await addOtherType(typeToUse);
       // Refresh the types list
       const updatedTypes = await fetchOtherTypes();
-      setOtherTypes(Array.isArray(updatedTypes) ? updatedTypes : updatedTypes.types || sampleTypes);
+      let backendTypes = [];
+      if (Array.isArray(updatedTypes)) backendTypes = updatedTypes;
+      else if (updatedTypes && Array.isArray(updatedTypes.types)) backendTypes = updatedTypes.types;
+      const allTypes = [...defaultTypes];
+      backendTypes.forEach(type => {
+        if (!allTypes.some(def => def.toLowerCase() === type.toLowerCase())) {
+          allTypes.push(type);
+        }
+      });
+      setOtherTypes(allTypes);
     }
     const payload = mapOtherPayload(otherForm);
     delete payload.paymentType;
@@ -331,14 +352,14 @@ const Banking = () => {
       .then(response => {
         console.log('Backend response:', response);
         if (response && response.id) {
-          alert('Other Transaction submitted!');
+          toast.success('Other Transaction submitted!');
           resetForm(setOtherForm, initialOther);
         } else {
-          alert('Error: ' + JSON.stringify(response));
+          toast.error('Error: ' + JSON.stringify(response));
         }
       })
       .catch(error => {
-        alert('Error submitting Other Transaction');
+        toast.error('Error submitting Other Transaction');
         console.error(error);
       });
   };
@@ -348,6 +369,7 @@ const Banking = () => {
       <Header />
       <Sidebar />
       <div className="container">
+        <ToastContainer />
         <div className="banking-header-group">
           <h1 className="banking-title">Banking</h1>
         </div>
@@ -526,40 +548,93 @@ const Banking = () => {
           {visibleButton === 4 && (
             <form className="banking-form" onSubmit={handleOtherSubmit}>
               <h3>Other</h3>
-              <label>Account Type</label>
-              <Select
-                value={otherForm.type}
-                onChange={e => setOtherForm(f => ({ ...f, type: e.target.value, manualType: e.target.value === 'manual' }))}
-                required
-                options={["Partner", "Loan", "Fixed Assets", "Unsecure Loan", "manual"]}
-              >
-                <option value="">Select Account</option>
-                <option value="Partner">Partner</option>
-                <option value="Loan">Loan</option>
-                <option value="Fixed Assets">Fixed Assets</option>
-                <option value="Unsecure Loan">Unsecure Loan</option>
-                <option value="manual">Other (Manual Entry)</option>
-              </Select>
-              {otherForm.manualType && (
-                <Input placeholder="Type*" value={otherForm.type === 'manual' ? '' : otherForm.type} onChange={e => setOtherForm(f => ({ ...f, type: e.target.value }))} required />
+              <label style={{marginBottom: 8}}>
+                <input
+                  type="checkbox"
+                  checked={manualType}
+                  onChange={() => {
+                    setManualType(!manualType);
+                    setNewType("");
+                    if (!manualType) setOtherForm(f => ({ ...f, type: "" }));
+                  }}
+                /> Enter Type Manually
+              </label>
+              {!manualType ? (
+                <Select
+                  value={otherForm.type || ""}
+                  onChange={e => setOtherForm(f => ({ ...f, type: e.target.value }))}
+                  required
+                >
+                  <option value="">Select Account</option>
+                  {otherTypes.map((type, idx) => (
+                    <option key={type.toLowerCase()} value={type}>{type}</option>
+                  ))}
+                </Select>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Input
+                    placeholder="Enter new type"
+                    value={newType}
+                    onChange={e => setNewType(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (
+                        newType &&
+                        !otherTypes.some(t => t.toLowerCase() === newType.toLowerCase())
+                      ) {
+                        await addOtherType(newType);
+                        const updatedTypes = await fetchOtherTypes();
+                        // Merge and deduplicate again
+                        const allTypes = [...defaultTypes];
+                        let backendTypes = [];
+                        if (Array.isArray(updatedTypes)) backendTypes = updatedTypes;
+                        else if (updatedTypes && Array.isArray(updatedTypes.types)) backendTypes = updatedTypes.types;
+                        backendTypes.forEach(type => {
+                          if (!allTypes.some(def => def.toLowerCase() === type.toLowerCase())) {
+                            allTypes.push(type);
+                          }
+                        });
+                        setOtherTypes(allTypes);
+                        setOtherForm(f => ({ ...f, type: newType }));
+                        setManualType(false);
+                        setNewType("");
+                      }
+                    }}
+                    style={{ padding: '6px 12px' }}
+                  >
+                    Add
+                  </button>
+                </div>
               )}
               <label>Date</label>
               <Input type="date" value={otherForm.date} onChange={e => setOtherForm(f => ({ ...f, date: e.target.value }))} required />
               <label>Amount</label>
               <Input type="number" placeholder="Amount" value={otherForm.amount} onChange={e => setOtherForm(f => ({ ...f, amount: e.target.value }))} required />
               {/* Conditional fields for Partner and Loan */}
-              {otherForm.type === "Partner" && !otherForm.manualType && (
-                <>
-                  <label>Partner Name</label>
-                  <Input placeholder="Partner Name*" value={otherForm.partner_name} onChange={e => setOtherForm(f => ({ ...f, partner_name: e.target.value }))} required />
-                </>
-              )}
-              {otherForm.type === "Loan" && !otherForm.manualType && (
+              {otherForm.type === "Loan" ? (
                 <>
                   <label>Bank Name</label>
-                  <Input placeholder="Bank Name*" value={otherForm.bank_name} onChange={e => setOtherForm(f => ({ ...f, bank_name: e.target.value }))} required />
+                  <Input
+                    placeholder="Bank Name*"
+                    value={otherForm.bank_name}
+                    onChange={e => setOtherForm(f => ({ ...f, bank_name: e.target.value }))}
+                    required
+                  />
                 </>
-              )}
+              ) : otherForm.type ? (
+                <>
+                  <label>Name</label>
+                  <Input
+                    placeholder="Name*"
+                    value={otherForm.name}
+                    onChange={e => setOtherForm(f => ({ ...f, name: e.target.value }))}
+                    required
+                  />
+                </>
+              ) : null}
               <label>Notice</label>
               <Input placeholder="Notice (Optional)" value={otherForm.notice} onChange={e => setOtherForm(f => ({ ...f, notice: e.target.value }))} />
               <div style={{display: 'flex', gap: 16, marginBottom: 8}}>
