@@ -173,19 +173,30 @@ const BalanceSheet = () => {
                         ))}
                       </div>
                     )}
-                  </div>
-                  {/* Debit Side */}
-                  <div className="balance-sheet-column">
-                    {sheet.fixed_assets && sheet.fixed_assets.length > 0 && (
+                    {/* Fixed Assets (Credit) - Credit side */}
+                    {sheet.fixed_assets_credit && sheet.fixed_assets_credit.length > 0 && (
                       <div className="balance-sheet-box">
-                        <h4>Fixed Assets</h4>
+                        <h4>Fixed Assets (Credit)</h4>
                         <table><tbody>
-                          {sheet.fixed_assets.map(([name, amt]) => (
+                          {sheet.fixed_assets_credit.map(([name, amt]) => (
                             <tr key={name}><td>{amt}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
                           ))}
                         </tbody></table>
                       </div>
                     )}
+                  </div>
+                                      {/* Debit Side */}
+                    <div className="balance-sheet-column">
+                      {sheet.fixed_assets_debit && sheet.fixed_assets_debit.length > 0 && (
+                        <div className="balance-sheet-box">
+                          <h4>Fixed Assets (Debit)</h4>
+                          <table><tbody>
+                            {sheet.fixed_assets_debit.map(([name, amt]) => (
+                              <tr key={name}><td>{amt}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
+                            ))}
+                          </tbody></table>
+                        </div>
+                      )}
                     {sheet.loan_debit && sheet.loan_debit.length > 0 && (
                       <div className="balance-sheet-box">
                         <h4>Loan (Debit)</h4>

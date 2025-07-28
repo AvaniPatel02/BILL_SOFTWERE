@@ -1025,8 +1025,15 @@ function formatDateDMY(dateStr) {
             <div
               className="pdf invoice-pdf pdf-margine"
               ref={invoiceRef}
-              style={{ width: '1116px', margin: '0 auto', background: '#fff', 
-                // display: 'none' 
+              style={{ 
+                width: '1116px', 
+                margin: '0 auto', 
+                background: '#fff', 
+                display: 'none',
+                position: 'absolute',
+                left: '-9999px',
+                top: '-9999px',
+                zIndex: -1
               }}
             >
               <h1 style={{ textAlign: 'center', fontWeight: '700' }}>Tax Invoice</h1>

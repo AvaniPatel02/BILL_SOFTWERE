@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
+import ReactDOM from 'react-dom/client';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Clients.css';
-import { getInvoices, deleteInvoice } from '../../services/clientsApi';
+import '../../styles/TaxInvoices.css';
+import { getInvoices, deleteInvoice, getInvoice } from '../../services/clientsApi';
+import { getSettings } from '../../services/settingsApi';
+import InvoicePDF from '../TaxInvoices/InvoicePDF';
 
 const Clients = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(null);
+  const [settings, setSettings] = useState(null);
   const navigate = useNavigate();
 
 //   navigate('/taxinvoices', {
@@ -42,6 +48,19 @@ const Clients = () => {
     fetchInvoices();
   }, [navigate]);
 
+  // Load settings for PDF generation
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settingsData = await getSettings();
+        setSettings(settingsData.data || settingsData);
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      }
+    };
+    loadSettings();
+  }, []);
+
   const uniqueClients = React.useMemo(() => {
     if (!invoices || !Array.isArray(invoices)) return [];
     
@@ -69,7 +88,37 @@ const Clients = () => {
 
   const handleView = (invoiceId) => navigate(`/view-bill/${invoiceId}`);
   const handleEdit = (invoiceId) => navigate(`/edit-invoice/${invoiceId}`);
-  const handleDownload = (invoiceId) => alert('Download invoice ' + invoiceId);
+  const handleDownload = async (invoiceId) => {
+    try {
+      setDownloadingInvoice(invoiceId);
+      const invoiceData = await getInvoice(invoiceId);
+      
+      // Create a temporary div for PDF generation
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.zIndex = '-1';
+      document.body.appendChild(tempDiv);
+      
+      // Render the PDF component in the temporary div
+      const root = ReactDOM.createRoot(tempDiv);
+      root.render(
+        <InvoicePDF 
+          invoice={invoiceData} 
+          settings={settings} 
+          onDownloadComplete={() => {
+            setDownloadingInvoice(null);
+            document.body.removeChild(tempDiv);
+            root.unmount();
+          }}
+        />
+      );
+    } catch (error) {
+      alert('Failed to download invoice: ' + error.message);
+      setDownloadingInvoice(null);
+    }
+  };
   const handleDelete = async (invoiceId) => {
     if (window.confirm('Are you sure you want to delete this invoice?')) {
       try {
@@ -200,11 +249,13 @@ const Clients = () => {
                               <button
                                 className="client-action-btn client-download"
                                 onClick={() => handleDownload(inv.id)}
-                                disabled={loading}
+                                disabled={loading || (downloadingInvoice === inv.id)}
                               >
-                                <i className="fa-solid fa-download"></i>
+                                <i className={downloadingInvoice === inv.id ? "fa-solid fa-spinner fa-spin" : "fa-solid fa-download"}></i>
                               </button>
-                              <span className="client-tooltip-text">Download</span>
+                              <span className="client-tooltip-text">
+                                {downloadingInvoice === inv.id ? 'Generating PDF...' : 'Download'}
+                              </span>
                             </div>
                             <div className="client-tooltip-container">
                               <button

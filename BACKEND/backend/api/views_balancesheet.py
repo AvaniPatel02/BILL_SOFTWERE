@@ -84,13 +84,19 @@ class BalanceSheetView(APIView):
         unsecure_loan_credit = [item for item in unsecure_loan if item['amount'] > 0]
         unsecure_loan_debit = [{'name': item['name'], 'amount': abs(item['amount']), 'bank_name': item['bank_name'], 'notice': item['notice']} for item in unsecure_loan if item['amount'] < 0]
 
-        # Fixed Assets from OtherTransaction
-        fixed_assets_dict = defaultdict(float)
+        # Fixed Assets from OtherTransaction - Separate credit and debit
+        fixed_assets_credit_dict = defaultdict(float)
+        fixed_assets_debit_dict = defaultdict(float)
         assets = OtherTransaction.objects.filter(type__iexact='fixed assets', date__gte=fy_start, date__lte=fy_end)
         for a in assets:
             display_name = a.name or a.notice
-            fixed_assets_dict[display_name] += float(a.amount)
-        fixed_assets = [[k, v] for k, v in fixed_assets_dict.items()]
+            amount = float(a.amount)
+            if a.transaction_type == 'credit':
+                fixed_assets_credit_dict[display_name] += amount
+            else:  # debit
+                fixed_assets_debit_dict[display_name] += amount
+        fixed_assets_credit = [[k, v] for k, v in fixed_assets_credit_dict.items()]
+        fixed_assets_debit = [[k, v] for k, v in fixed_assets_debit_dict.items()]
 
         # Salary
         salary_dict = defaultdict(float)
@@ -197,7 +203,8 @@ class BalanceSheetView(APIView):
             "loan_debit": loan_debit,
             "unsecure_loan_credit": unsecure_loan_credit,
             "unsecure_loan_debit": unsecure_loan_debit,
-            "fixed_assets": fixed_assets,
+            "fixed_assets_credit": fixed_assets_credit,
+            "fixed_assets_debit": fixed_assets_debit,
             "salary": salary,
             "salary_total": salary_total,
             "sundry_debtors_creditors": sundry_debtors_creditors,

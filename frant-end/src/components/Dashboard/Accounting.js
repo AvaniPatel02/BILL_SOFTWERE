@@ -95,7 +95,7 @@ const Accounting = () => {
                 }
               >
                 <td>{rowNum++}</td>
-                <td>Buyer Debit</td>
+                <td>Buyer</td>
                 <td>{acc.buyer_name}</td>
                 <td>{bc.amount !== undefined && bc.amount !== null ? Number(bc.amount).toFixed(2) : "-"}</td>
                 <td>{bc.date ? formatDate(bc.date) : "-"}</td>
@@ -164,7 +164,7 @@ const Accounting = () => {
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 ,alignItems: 'center' }}>
               <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', height: '40px' , width: '200px'}}>
                 <option value="All">All</option>
-                <option value="Buyer Debit">Buyer Debit</option>
+                <option value="Buyer Debit">Buyer</option>
                 <option value="Invoice">Invoice</option>
                 <option value="Other">Other</option>
               </select>
