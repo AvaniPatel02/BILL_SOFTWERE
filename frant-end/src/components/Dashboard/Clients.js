@@ -4,8 +4,9 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Clients.css';
-import { getInvoices, deleteInvoice } from '../../services/clientsApi';
-import { CanvasRenderer } from "html2canvas/dist/types/render/canvas/canvas-renderer";
+import { getInvoices, deleteInvoice, getInvoice } from '../../services/clientsApi';
+import { getSettings } from '../../services/settingsApi';
+import InvoicePDF from '../TaxInvoices/InvoicePDF';
 
 const Clients = () => {
   const [invoices, setInvoices] = useState([]);
