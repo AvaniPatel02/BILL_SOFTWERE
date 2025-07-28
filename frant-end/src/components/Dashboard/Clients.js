@@ -249,7 +249,3 @@ export default Clients;
 
 
 
-250 Car
-300 recharge card 
-1350 jamvana 
-800 cricat
