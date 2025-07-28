@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Eye, EyeSlash } from "react-bootstrap-icons";
 import "../../styles/Signup.css";
 import Footer from './Footer';
 import Toast from '../Toast';
@@ -13,7 +12,7 @@ const Signup = () => {
   const [firstName, setFirstName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+
   const [error, setError] = useState("");
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(60);
@@ -251,31 +250,24 @@ const Signup = () => {
               />
 
               <label>Password</label>
-              <div className="password-field">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="Enter password"
-                  autoComplete="new-password"
-                />
-                <span onClick={() => setShowPassword(!showPassword)} className="toggle-password">
-                  {showPassword ? <EyeSlash /> : <Eye />}
-                </span>
-              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Enter password"
+                autoComplete="new-password"
+              />
 
               <label>Confirm Password</label>
-              <div className="password-field">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  placeholder="Confirm password"
-                  autoComplete="new-password"
-                />
-              </div>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="Confirm password"
+                autoComplete="new-password"
+              />
 
               <button type="submit" className="auth-button" disabled={!otpVerified || isSigningUp}
                 style={{ opacity: isSigningUp ? 0.7 : 1, pointerEvents: isSigningUp ? 'none' : 'auto' }}>

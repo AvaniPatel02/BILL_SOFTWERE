@@ -35,3 +35,17 @@ export async function deleteInvoice(invoiceId) {
   }
   return true; // Successful delete
 }
+
+export async function downloadInvoicePDF(invoiceId) {
+  const response = await fetch(`${API_BASE_URL}/invoices/${invoiceId}/download/`, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to download invoice');
+  }
+  
+  const blob = await response.blob();
+  return blob;
+}

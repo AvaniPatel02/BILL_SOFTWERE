@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import ReactDOM from 'react-dom/client';
 import { fetchAccountStatement } from "../../services/accountingApi";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import "../../styles/TaxInvoices.css";
+import AccountStatementPDF from './AccountStatementPDF';
 
 const AccountStatement = () => {
   const location = useLocation();
@@ -16,7 +16,7 @@ const AccountStatement = () => {
   const [error, setError] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -32,45 +32,34 @@ const AccountStatement = () => {
       .finally(() => setLoading(false));
   }, [buyer_name, buyer_address, buyer_gst, fromDate, toDate]);
 
-  const handlePDF = () => {
-    setIsGeneratingPDF(true);
-    const doc = new jsPDF("p", "mm", "a4");
-    const pageWidth = doc.internal.pageSize.getWidth();
-    let cursorY = 15;
-    doc.setFontSize(14);
-    doc.text("Statement of Account", pageWidth / 2, cursorY, { align: "center" });
-    cursorY += 10;
-    if (fromDate || toDate) {
-      const dateText = `Statement${fromDate ? ` From: ${fromDate}` : ""}${toDate ? ` To: ${toDate}` : ""}`;
-      doc.setFontSize(10);
-      doc.text(dateText, pageWidth / 2, cursorY, { align: "center" });
-      cursorY += 8;
+  const handlePDF = async () => {
+    try {
+      setDownloadingPDF(true);
+
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.zIndex = '-1';
+      document.body.appendChild(tempDiv);
+
+      const root = ReactDOM.createRoot(tempDiv);
+      root.render(
+        <AccountStatementPDF
+          data={data}
+          fromDate={fromDate}
+          toDate={toDate}
+          onDownloadComplete={() => {
+            setDownloadingPDF(false);
+            document.body.removeChild(tempDiv);
+            root.unmount();
+          }}
+        />
+      );
+    } catch (error) {
+      alert('Failed to generate PDF: ' + error.message);
+      setDownloadingPDF(false);
     }
-    doc.setFontSize(11);
-    doc.text(`Name: ${data.buyer_name}`, 10, cursorY);
-    cursorY += 6;
-    doc.text(`GST Number: ${data.buyer_gst}`, 10, cursorY);
-    cursorY += 6;
-    doc.text(`Total Balance: ₹ ${Number(data.total_balance).toFixed(2)}`, 10, cursorY);
-    cursorY += 10;
-    const tableRows = data.statement.map((entry) => [
-      entry.date,
-      entry.description,
-      entry.credit ? `₹ ${Number(entry.credit).toFixed(2)}` : "-",
-      entry.debit ? `₹ ${Math.abs(Number(entry.debit)).toFixed(2)}` : "-",
-      `₹ ${Math.abs(Number(entry.balance)).toFixed(2)}`,
-      entry.type
-    ]);
-    autoTable(doc, {
-      startY: cursorY,
-      head: [["Date", "Description", "Credit (Deposit)", "Debit (Invoice)", "Balance", "Type"]],
-      body: tableRows,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [111, 113, 114] },
-      margin: { left: 10, right: 10 },
-    });
-    doc.save(`Statement-${data.buyer_name}.pdf`);
-    setIsGeneratingPDF(false);
   };
 
   if (loading) return <div className="text-center p-6 text-lg">Loading statement...</div>;
@@ -157,9 +146,9 @@ const AccountStatement = () => {
               onClick={handlePDF}
               className="download-btn"
               style={{ background: "#0d47a1", minWidth: 180 }}
-              disabled={isGeneratingPDF}
+              disabled={downloadingPDF}
             >
-              📄 Generate PDF
+              {downloadingPDF ? '📄 Generating PDF...' : '📄 Generate PDF'}
             </button>
           </div>
         </div>

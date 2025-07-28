@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ReactDOM from 'react-dom/client';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { fetchBanks, fetchCashEntries } from '../../services/bankCashApi';
@@ -10,6 +11,8 @@ import {
   updateSalary,
   updateOtherTransaction
 } from '../../services/bankingApi';
+import './BankStatements.css';
+import BankStatementPDF from './BankStatementPDF';
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -31,6 +34,8 @@ const BankStatements = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const navigate = useNavigate();
+  const tableRef = useRef();
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
 
   useEffect(() => {
     fetchBanks().then(setBanks);
@@ -73,10 +78,43 @@ const BankStatements = () => {
     if (tx.debit) totalDebit += Number(tx.amount);
   });
 
+  async function handleGeneratePDF() {
+    try {
+      setDownloadingPDF(true);
+
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.zIndex = '-1';
+      document.body.appendChild(tempDiv);
+
+      const root = ReactDOM.createRoot(tempDiv);
+      root.render(
+        <BankStatementPDF
+          transactions={transactions}
+          mode={mode}
+          selectedBank={selectedBank}
+          fromDate={fromDate}
+          toDate={toDate}
+          onDownloadComplete={() => {
+            setDownloadingPDF(false);
+            document.body.removeChild(tempDiv);
+            root.unmount();
+          }}
+        />
+      );
+    } catch (error) {
+      alert('Failed to generate PDF: ' + error.message);
+      setDownloadingPDF(false);
+    }
+  }
+
   function renderTransactionsTable(transactions) {
     if (transactions.length === 0) return <div className="alert alert-info">No transactions found.</div>;
 
     // Separate opening balance from other transactions
+    const openingTx = transactions.find(tx => tx.type === 'OpeningBalance');
     const otherTransactions = transactions.filter(tx => tx.type !== 'OpeningBalance');
 
     // Sort other transactions by date ascending (oldest first)
@@ -86,39 +124,52 @@ const BankStatements = () => {
       return dateA - dateB;
     });
 
-    // Filter by fromDate and toDate
-    const filteredTransactions = sortedTransactions.filter(tx => {
-      if (!fromDate && !toDate) return true;
-      const txDate = new Date(tx.date);
-      if (fromDate && txDate < new Date(fromDate)) return false;
-      if (toDate && txDate > new Date(toDate)) return false;
-      return true;
-    });
-
-    // Calculate totals including opening balance
-    let totalCredit = 0, totalDebit = 0;
-    
-    // Add opening balance to total credit
-    if (openingBalance) {
-      totalCredit += Number(openingBalance.amount);
+    // Calculate opening balance as of the day before 'fromDate'
+    let calculatedOpeningBalance = openingTx ? Number(openingTx.amount) : 0;
+    let openingBalanceDate = openingTx ? openingTx.date : null;
+    if (fromDate && openingTx) {
+      // Sum all credits and debits up to (but not including) fromDate
+      sortedTransactions.forEach(tx => {
+        if (tx.date < fromDate) {
+          if (tx.credit) calculatedOpeningBalance += Number(tx.amount);
+          if (tx.debit) calculatedOpeningBalance -= Number(tx.amount);
+        }
+      });
     }
-    
-    // Add other transactions
+
+    // Filter transactions for the table: from 'fromDate' onward
+    let filteredTransactions = sortedTransactions;
+    if (fromDate) {
+      filteredTransactions = filteredTransactions.filter(tx => tx.date >= fromDate);
+    }
+    if (toDate) {
+      filteredTransactions = filteredTransactions.filter(tx => tx.date <= toDate);
+    }
+
+    // Calculate totals for the visible table
+    let totalCredit = 0, totalDebit = 0;
     filteredTransactions.forEach(tx => {
-      const amount = Number(tx.amount);
-      if (tx.credit) {
-        totalCredit += amount;
-      }
-      if (tx.debit) {
-        totalDebit += amount;
-      }
+      if (tx.credit) totalCredit += Number(tx.amount);
+      if (tx.debit) totalDebit += Number(tx.amount);
     });
 
     const getDetails = (tx) => tx.details || '-';
 
     return (
-      <div className="table-responsive">
-        <table className="statement-table">
+      <div className="bankstatements-table-responsive" ref={tableRef}>
+        {((mode === 'Bank' && selectedBank) || mode === 'Cash') && openingTx && (
+          <div className="bankstatements-opening-balance">
+            Opening Balance: <strong>{calculatedOpeningBalance.toFixed(2)}</strong>
+            {fromDate && (
+              <> (as of {(() => {
+                const d = new Date(fromDate);
+                d.setDate(d.getDate() - 1);
+                return formatDate(d.toISOString().split('T')[0]);
+              })()})</>
+            )}
+          </div>
+        )}
+        <table className="bankstatements-table">
           <thead>
             <tr>
               <th>Date</th>
@@ -131,78 +182,56 @@ const BankStatements = () => {
             </tr>
           </thead>
           <tbody>
-            {openingBalance && (
-              <tr style={{ fontWeight: 'bold', background: '#e6f7ff' }}>
-                <td>{formatDate(openingBalance.date)}</td>
-                <td>Opening Balance</td>
-                <td>Opening Balance</td>
-                <td>{Number(openingBalance.amount).toFixed(2)}</td>
-                <td>-</td>
-                <td>{Number(openingBalance.amount).toFixed(2)}</td>
-                <td>
-                  <button 
-                    className="btn btn-sm btn-outline-primary me-1"
-                    onClick={() => {
-                      setEditingIdx('opening');
-                      setEditTx({
-                        date: openingBalance.date,
-                        amount: openingBalance.amount,
-                        description: 'Opening Balance'
-                      });
-                    }}
-                  >
-                    <i className="fas fa-edit"></i>
-                  </button>
-                </td>
-              </tr>
-            )}
-            {filteredTransactions.map((tx, idx) => {
-              const credit = tx.credit ? Number(tx.amount) : 0;
-              const debit = tx.debit ? Number(tx.amount) : 0;
-              const amount = Number(tx.amount);
-              return (
-                <tr key={idx}>
-                  <td>{formatDate(tx.date)}</td>
-                  <td>{getDetails(tx)}</td>
-                  <td>{tx.details || '-'}</td>
-                  <td>{credit ? credit.toFixed(2) : '-'}</td>
-                  <td>{debit ? debit.toFixed(2) : '-'}</td>
-                  <td>{amount.toFixed(2)}</td>
-                  <td>
-                    <button 
-                      className="btn btn-sm btn-outline-primary me-1"
-                      onClick={() => {
-                        setEditingIdx(idx);
-                        setEditTx({
-                          date: tx.date,
-                          amount: tx.amount,
-                          description: tx.description || ''
-                        });
-                      }}
-                    >
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button 
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() => {
-                        if (window.confirm('Are you sure you want to delete this transaction?')) {
-                          // Add delete functionality here
-                          console.log('Delete transaction:', tx);
-                        }
-                      }}
-                    >
-                      <i className="fas fa-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {(() => {
+              let runningBalance = calculatedOpeningBalance;
+              return filteredTransactions.map((tx, idx) => {
+                const credit = tx.credit ? Number(tx.amount) : 0;
+                const debit = tx.debit ? Number(tx.amount) : 0;
+                runningBalance = runningBalance + credit - debit;
+                return (
+                  <tr key={idx}>
+                    <td>{formatDate(tx.date)}</td>
+                    <td>{getDetails(tx)}</td>
+                    <td>{tx.details || '-'}</td>
+                    <td>{credit ? credit.toFixed(2) : '-'}</td>
+                    <td>{debit ? debit.toFixed(2) : '-'}</td>
+                    <td>{runningBalance.toFixed(2)}</td>
+                    <td>
+                      <button 
+                        className="btn btn-sm btn-outline-primary me-1"
+                        onClick={() => {
+                          setEditingIdx(idx);
+                          setEditTx({
+                            date: tx.date,
+                            amount: tx.amount,
+                            description: tx.description || ''
+                          });
+                        }}
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      <button 
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to delete this transaction?')) {
+                            // Add delete functionality here
+                            console.log('Delete transaction:', tx);
+                          }
+                        }}
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              });
+            })()}
             {/* Total Row */}
             <tr style={{ fontWeight: 'bold', background: '#f5f5f5' }}>
               <td colSpan={3} style={{ textAlign: 'right' }}>Total</td>
               <td>{totalCredit.toFixed(2)}</td>
               <td>{totalDebit.toFixed(2)}</td>
-              <td>{(totalCredit - totalDebit).toFixed(2)}</td>
+              <td>{(calculatedOpeningBalance + totalCredit - totalDebit).toFixed(2)}</td>
               <td></td>
             </tr>
           </tbody>
@@ -241,16 +270,16 @@ const BankStatements = () => {
 
 
   return (
-    <div className="bills-layout">
+    <div className="bankstatements-layout">
       <Header />
-      <div className="bills-content">
+      <div className="bankstatements-content">
         <Sidebar />
-        <div className="container">
-          <div className="personbill-header-group">
-            <button className="personbill-back-btn" onClick={() => navigate(-1)}>Back</button>
-            <h1 className="personbill-title">Bank & Cash Statements</h1>
+        <div className="bankstatements-container">
+          <div className="bankstatements-header-group">
+            <button className="bankstatements-back-btn" onClick={() => navigate(-1)}>Back</button>
+            <h1 className="bankstatements-title">Bank & Cash Statements</h1>
           </div>
-          <div className="container mt-4">
+          <div className="bankstatements-controls">
             <div className="d-flex align-items-center mb-3">
               <label className="me-2">From:</label>
               <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="form-control me-3" style={{ width: 180 }} />
@@ -271,25 +300,25 @@ const BankStatements = () => {
                 </select>
               )}
             </div>
-            {/* Placeholder for statements display */}
+            <button className="bankstatements-generatepdf-btn" onClick={handleGeneratePDF} disabled={downloadingPDF}>
+              {downloadingPDF ? <span className="bankstatements-spinner" /> : 'Generate PDF'}
+            </button>
+          </div>
+          <div className="bankstatements-table-section">
+            {/* Heading inside container, above opening balance and table */}
             {mode === 'Bank' && selectedBank && (
-              <div>
-                <h3>Transactions for {selectedBank}</h3>
-                {loading ? <div>Loading...</div> : error ? <div className="alert alert-danger">{error}</div> : renderTransactionsTable(transactions)}
-              </div>
+              <h2 className="bankstatements-table-heading">Transactions for {selectedBank}</h2>
             )}
             {mode === 'Cash' && (
-              <div>
-                <h3>Total Cash: {cashEntries.reduce((sum, entry) => sum + Number(entry.amount), 0).toFixed(2)}</h3>
-                {loading ? <div>Loading...</div> : error ? <div className="alert alert-danger">{error}</div> : renderTransactionsTable(transactions)}
-              </div>
+              <h2 className="bankstatements-table-heading">Cash Transactions</h2>
             )}
             {mode === 'All' && (
-              <div>
-                <h3>All Bank & Cash Entries</h3>
-                {loading ? <div>Loading...</div> : error ? <div className="alert alert-danger">{error}</div> : renderTransactionsTable(transactions)}
-              </div>
+              <h2 className="bankstatements-table-heading">All Bank & Cash Entries</h2>
             )}
+            {/* Table and opening balance */}
+            {mode === 'Bank' && selectedBank && (loading ? <div>Loading...</div> : error ? <div className="alert alert-danger">{error}</div> : renderTransactionsTable(transactions))}
+            {mode === 'Cash' && (loading ? <div>Loading...</div> : error ? <div className="alert alert-danger">{error}</div> : renderTransactionsTable(transactions))}
+            {mode === 'All' && (loading ? <div>Loading...</div> : error ? <div className="alert alert-danger">{error}</div> : renderTransactionsTable(transactions))}
             
             {/* Edit Modal */}
             {editingIdx !== null && (

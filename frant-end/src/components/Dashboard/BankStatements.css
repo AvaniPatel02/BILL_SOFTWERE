@@ -1,19 +1,42 @@
-/* .personbill-container {
+.bankstatements-layout {
+  min-height: 100vh;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+}
+
+.bankstatements-content {
+  /* display: flex; */
+  flex: 1;
+  padding: 20px;
+  background: #f8f9fa;
+  min-height: calc(100vh - 80px);
+  /* background: #fff; */
+  padding: 0rem 2rem 2rem 2rem;
+  border-radius: 10px;
+  /* box-shadow: 0 2px 0px rgba(0, 0, 0, 0.07); */
+  margin-top: 2rem;
+  margin: 2rem auto 0 auto;
+  max-width: 1204px;
+  width: 100%;
+}
+
+.bankstatements-container {
   background: #fff;
   padding: 2rem;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   margin-top: 2rem;
-} */
+}
 
-.personbill-header-bar {
+.bankstatements-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
 }
 
-.personbill-back-btn {
+.bankstatements-back-btn {
   background: #eee;
   border: none;
   padding: 0.5rem 1.2rem;
@@ -23,11 +46,11 @@
   margin-right: 1rem;
   transition: background 0.2s;
 }
-.personbill-back-btn:hover {
+.bankstatements-back-btn:hover {
   background: #ddd;
 }
 
-.personbill-title {
+.bankstatements-title {
   flex: 1 1;
   text-align: end;
   color: #333;
@@ -35,7 +58,7 @@
   font-size: 2rem;
   font-weight: 700;
 }
-.personbill-new-btn {
+.bankstatements-new-btn {
   background: #4caf50;
   color: #fff;
   border: none;
@@ -45,32 +68,32 @@
   font-weight: 500;
   transition: background 0.2s;
 }
-.personbill-new-btn:hover {
+.bankstatements-new-btn:hover {
   background: #388e3c;
 }
 
-.personbill-table-container {
+.bankstatements-table-container {
   overflow-x: auto;
 }
 
-.personbill-table {
+.bankstatements-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
 }
 
-.personbill-table th, .personbill-table td {
+.bankstatements-table th, .bankstatements-table td {
   border: 1px solid #e0e0e0;
   padding: 0.75rem 1rem;
   text-align: left;
 }
 
-.personbill-table th {
+.bankstatements-table th {
   background: #f5f5f5;
   font-weight: 600;
 }
 
-.personbill-action-btn {
+.bankstatements-action-btn {
   background: #1976d2;
   color: #fff;
   border: none;
@@ -81,15 +104,14 @@
   font-size: 0.95rem;
   transition: background 0.2s;
 }
-.personbill-action-btn:last-child {
+.bankstatements-action-btn:last-child {
   margin-right: 0;
 }
-.personbill-action-btn:hover {
+.bankstatements-action-btn:hover {
   background: #0d47a1;
 }
 
-.personbill-header-group {
-
+.bankstatements-header-group {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -100,26 +122,24 @@
   border-radius: 10px;
 }
 
-.personbill-table-outer {
+.bankstatements-table-outer {
   margin-top: 1.5rem;
 }
 
-/* New classes with personbill prefix */
-.personbill-year_container {
+.bankstatements-year_container {
   padding: 20px;
   background: #f8f9fa;
   min-height: calc(100vh - 80px);
   background: #fff;
   padding: 0rem 2rem 2rem 2rem;
   border-radius: 10px;
-  /* box-shadow: 0 2px 0px rgba(0, 0, 0, 0.07); */
   margin-top: 2rem;
   margin: 2rem auto 0 auto;
   max-width: 1204px;
   width: 100%;
 }
 
-.personbill-hadar-container {
+.bankstatements-hadar-container {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -131,16 +151,16 @@
   background: white;
 }
 
-.personbill-text-center {
+.bankstatements-text-center {
   text-align: center;
 }
 
-.personbill-tooltip-container {
+.bankstatements-tooltip-container {
   position: relative;
   display: inline-block;
 }
 
-.personbill-tooltip-text {
+.bankstatements-tooltip-text {
   visibility: hidden;
   width: 120px;
   background-color: #555;
@@ -158,13 +178,12 @@
   font-size: 12px;
 }
 
-.personbill-tooltip-container:hover .personbill-tooltip-text {
+.bankstatements-tooltip-container:hover .bankstatements-tooltip-text {
   visibility: visible;
   opacity: 1;
 }
 
-/* Action button styles */
-.personbill-action-btn {
+.bankstatements-action-btn {
   background: none;
   border: none;
   padding: 8px;
@@ -175,34 +194,88 @@
   position: relative;
 }
 
-.personbill-view {
+.bankstatements-view {
   color: #007bff;
 }
 
-.personbill-view:hover {
+.bankstatements-view:hover {
   background: #e3f2fd;
   color: #0056b3;
 }
 
-.personbill-download {
+.bankstatements-download {
   color: #28a745;
 }
 
-.personbill-download:hover {
+.bankstatements-download:hover {
   background: #e8f5e8;
   color: #1e7e34;
 }
 
-.personbill-new {
+.bankstatements-new {
   color: #ffc107;
 }
 
-.personbill-new:hover {
+.bankstatements-new:hover {
   background: #fff8e1;
   color: #e0a800;
 }
 
-.personbill-action-btn:disabled {
+.bankstatements-action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.bankstatements-generatepdf-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+}
+.bankstatements-generatepdf-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bankstatements-spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  border-top: 3px solid #1976d2;
+  border-radius: 50%;
+  animation: bankstatements-spin 1s linear infinite;
+  display: inline-block;
+}
+@keyframes bankstatements-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.bankstatements-opening-balance {
+  background: #e6f7ff;
+  color: #005580;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  display: inline-block;
+}
+
+.bankstatements-table-heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1976d2;
+  margin-bottom: 16px;
+  margin-top: 0;
+  text-align: center;
 } 
