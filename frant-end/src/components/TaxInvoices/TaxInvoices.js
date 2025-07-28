@@ -47,10 +47,11 @@ const Taxinvoices = () => {
   const [loadingInvoiceNumber, setLoadingInvoiceNumber] = useState(true);
   const [formDisabled, setFormDisabled] = useState(false);
   const [exchangeRate, setExchangeRate] = useState(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const invoiceRef = useRef();
   const location = useLocation();
 
-   // Pre-fill logic
+  // Pre-fill logic
   useEffect(() => {
     if (location.state && location.state.buyerData) {
       const { buyer_name, buyer_address, buyer_gst, country, state } = location.state.buyerData;
@@ -67,7 +68,7 @@ const Taxinvoices = () => {
       if (state) setSelectedState(state);
     }
   }, [location.state, countryList]);
-  
+
   // Fetch settings from backend on mount
   useEffect(() => {
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
@@ -79,11 +80,11 @@ const Taxinvoices = () => {
   }, []);
 
   // Helper to format date as dd/mm/yyyy
-function formatDateDMY(dateStr) {
-  if (!dateStr) return '';
-  const [yyyy, mm, dd] = dateStr.split('-');
-  return `${dd}/${mm}/${yyyy}`;
-}
+  function formatDateDMY(dateStr) {
+    if (!dateStr) return '';
+    const [yyyy, mm, dd] = dateStr.split('-');
+    return `${dd}/${mm}/${yyyy}`;
+  }
   // Fetch countries on mount (unchanged)
   useEffect(() => {
     fetch('https://restcountries.com/v3.1/all?fields=name,currencies')
@@ -281,41 +282,52 @@ function formatDateDMY(dateStr) {
       return;
     }
 
-    const element = invoiceRef.current;
-    const prevDisplay = element.style.display;
-    element.style.display = 'block';
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Show PDF generation message
+    setIsGeneratingPDF(true);
 
-    const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-    element.style.display = prevDisplay;
+    try {
+      const element = invoiceRef.current;
+      const prevDisplay = element.style.display;
+      element.style.display = 'block';
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-    const imgData = canvas.toDataURL('image/png');
-    if (!imgData.startsWith('data:image/png')) {
-      alert('Failed to generate a valid PNG image for PDF.');
-      return;
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      element.style.display = prevDisplay;
+
+      const imgData = canvas.toDataURL('image/png');
+      if (!imgData.startsWith('data:image/png')) {
+        alert('Failed to generate a valid PNG image for PDF.');
+        return;
+      }
+
+      const filename = `Invoice_${invoiceNumber || 'NoNumber'}_${date || ''}.pdf`;
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 15; // 15mm margin on all sides
+      const imgProps = pdf.getImageProperties(imgData);
+      // Calculate available width/height after margin
+      const pdfWidth = pageWidth - 2 * margin;
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      let finalHeight = pdfHeight;
+      let finalWidth = pdfWidth;
+      // If height exceeds available space, scale down
+      if (pdfHeight > pageHeight - 2 * margin) {
+        finalHeight = pageHeight - 2 * margin;
+        finalWidth = (imgProps.width * finalHeight) / imgProps.height;
+      }
+      // Center horizontally, always start at margin from top
+      const x = margin + (pdfWidth - finalWidth) / 2;
+      const y = margin;
+      pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight, undefined, 'FAST');
+      pdf.save(filename);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      // Hide PDF generation message
+      setIsGeneratingPDF(false);
     }
-
-    const filename = `Invoice_${invoiceNumber || 'NoNumber'}_${date || ''}.pdf`;
-    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const margin = 15; // 15mm margin on all sides
-    const imgProps = pdf.getImageProperties(imgData);
-    // Calculate available width/height after margin
-    const pdfWidth = pageWidth - 2 * margin;
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    let finalHeight = pdfHeight;
-    let finalWidth = pdfWidth;
-    // If height exceeds available space, scale down
-    if (pdfHeight > pageHeight - 2 * margin) {
-      finalHeight = pageHeight - 2 * margin;
-      finalWidth = (imgProps.width * finalHeight) / imgProps.height;
-    }
-    // Center horizontally, always start at margin from top
-    const x = margin + (pdfWidth - finalWidth) / 2;
-    const y = margin;
-    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight, undefined, 'FAST');
-    pdf.save(filename);
   };
 
 
@@ -453,7 +465,11 @@ function formatDateDMY(dateStr) {
                       </tr>
                       <tr>
                         <td>
-                          {settings?.seller_address}<br />
+                          <div style={{ whiteSpace: 'pre-line' }}>
+                            <div style={{ whiteSpace: 'pre-line' }}>
+                              {settings?.seller_address}
+                            </div>
+                          </div>
                           GSTIN/UIN: {settings?.seller_gstin} <br />
                           Email: {settings?.seller_email}<br />
                           PAN: {settings?.seller_pan}
@@ -468,9 +484,9 @@ function formatDateDMY(dateStr) {
                       </tr>
                       <tr>
                         <td>
-                          Title:<input name="billToTitle" type="text" className="billToTitle" style={{ marginBottom: '5px' }} value={billTo.title} onChange={e => setBillTo({ ...billTo, title: e.target.value })} />
-                          Address:<textarea name="billToAddress" className="billToAddress" style={{ width: '100%', height: '100px' }} value={billTo.address} onChange={e => setBillTo({ ...billTo, address: e.target.value })}></textarea>
-                          GSTIN/UIN: <input name="billToGST" type="text" className="billToGST" value={billTo.gst} onChange={e => setBillTo({ ...billTo, gst: e.target.value })} />
+                          Title:<input name="billToTitle" type="text" className="billToTitle" style={{ marginBottom: '5px' }} value={billTo.title} onChange={e => setBillTo({ title: e.target.value })} disabled={formDisabled} />
+                          Address:<textarea name="billToAddress" className="billToAddress" style={{ width: '100%', height: '100px' }} value={billTo.address} onChange={e => setBillTo({ ...billTo, address: e.target.value })} disabled={formDisabled}></textarea>
+                          GSTIN/UIN: <input name="billToGST" type="text" className="billToGST" value={billTo.gst} onChange={e => setBillTo({ ...billTo, gst: e.target.value })} disabled={formDisabled} />
                         </td>
                       </tr>
                     </tbody>
@@ -482,9 +498,9 @@ function formatDateDMY(dateStr) {
                       </tr>
                       <tr>
                         <td>
-                          Title:<input name="shipToTitle" type="text" className="shipToTitle" style={{ marginBottom: '5px' }} value={shipTo.title} onChange={e => setShipTo({ ...shipTo, title: e.target.value })} />
-                          Address:<textarea name="shipToAddress" className="shipToAddress" style={{ width: '100%', height: '100px' }} value={shipTo.address} onChange={e => setShipTo({ ...shipTo, address: e.target.value })}></textarea>
-                          GSTIN/UIN: <input name="shipToGST" type="text" className="shipToGST" value={shipTo.gst} onChange={e => setShipTo({ ...shipTo, gst: e.target.value })} />
+                          Title:<input name="shipToTitle" type="text" className="shipToTitle" style={{ marginBottom: '5px' }} value={shipTo.title} onChange={e => setShipTo({ ...shipTo, title: e.target.value })} disabled={formDisabled} />
+                          Address:<textarea name="shipToAddress" className="shipToAddress" style={{ width: '100%', height: '100px' }} value={shipTo.address} onChange={e => setShipTo({ ...shipTo, address: e.target.value })} disabled={formDisabled}></textarea>
+                          GSTIN/UIN: <input name="shipToGST" type="text" className="shipToGST" value={shipTo.gst} onChange={e => setShipTo({ ...shipTo, gst: e.target.value })} disabled={formDisabled} />
                         </td>
                       </tr>
                     </tbody>
@@ -497,7 +513,7 @@ function formatDateDMY(dateStr) {
                       <tr>
                         <td>Invoice No.</td>
                         <td>
-                          <input type="text" name="invoiceNumber" value={loadingInvoiceNumber ? 'Loading...' : (invoiceNumber || '')} readOnly />
+                          <input type="text" name="invoiceNumber" value={loadingInvoiceNumber ? 'Loading...' : (invoiceNumber || '')} readOnly disabled={formDisabled} />
                         </td>
                       </tr>
                       <tr>
@@ -506,16 +522,17 @@ function formatDateDMY(dateStr) {
                           <input type="date" id="datePicker" value={date} onChange={e => {
                             setDate(e.target.value);
                             fetchInvoiceNumberForDate(e.target.value);
-                          }} />
+
+                          }} disabled={formDisabled} />
                         </td>
                       </tr>
                       <tr>
                         <td>Delivery Note</td>
-                        <td style={{ width: '250px' }}><input type="text" name="deliveryNote" className="deliveryNote" value={deliveryNote} onChange={e => setDeliveryNote(e.target.value)} /></td>
+                        <td style={{ width: '250px' }}><input type="text" name="deliveryNote" className="deliveryNote" value={deliveryNote} onChange={e => setDeliveryNote(e.target.value)} disabled={formDisabled} /></td>
                       </tr>
                       <tr>
                         <td>Mode/Terms of Payment</td>
-                        <td style={{ width: '250px' }}><input type="text" name="modeOfPayment" className="modeOfPayment" value={modeOfPayment} onChange={e => setModeOfPayment(e.target.value)} /></td>
+                        <td style={{ width: '250px' }}><input type="text" name="modeOfPayment" className="modeOfPayment" value={modeOfPayment} onChange={e => setModeOfPayment(e.target.value)} disabled={formDisabled} /></td>
                       </tr>
                       <tr>
                         <td>Delivery Note Date</td>
@@ -526,13 +543,14 @@ function formatDateDMY(dateStr) {
                             className="deliveryNoteDate"
                             value={deliveryNoteDate}
                             onChange={e => setDeliveryNoteDate(e.target.value)}
+                            disabled={formDisabled}
                           />
                         </td>
                       </tr>
 
                       <tr>
                         <td>Destination</td>
-                        <td style={{ width: '250px' }}><input type="text" name="destination" className="destination" value={destination} onChange={e => setDestination(e.target.value)} /></td>
+                        <td style={{ width: '250px' }}><input type="text" name="destination" className="destination" value={destination} onChange={e => setDestination(e.target.value)} disabled={formDisabled} /></td>
                       </tr>
                     </tbody>
                   </table>
@@ -543,7 +561,7 @@ function formatDateDMY(dateStr) {
                       </tr>
                       <tr>
                         <td style={{ height: '110px' }}>
-                          <textarea name="termsOfDelivery" className="termsOfDelivery" style={{ width: '100%', height: '100%' }} value={termsOfDelivery} onChange={e => setTermsOfDelivery(e.target.value)}></textarea>
+                          <textarea name="termsOfDelivery" className="termsOfDelivery" style={{ width: '100%', height: '100%' }} value={termsOfDelivery} onChange={e => setTermsOfDelivery(e.target.value)} disabled={formDisabled}></textarea>
                         </td>
                       </tr>
                     </tbody>
@@ -678,7 +696,7 @@ function formatDateDMY(dateStr) {
                 </div>
 
               </div>
-            
+
 
               {/* total table */}
               <div className="row" style={!showInsideIndia ? { marginTop: '20px' } : {}}>
@@ -705,6 +723,7 @@ function formatDateDMY(dateStr) {
                             onChange={e => setGstConsultancy(e.target.value)}
                             rows={4} // jitni lines dikhani ho utni rows set karo
                             style={{ width: "100%", resize: "vertical", padding: "8px", height: "46px", marginTop: "8px" }}
+                            disabled={formDisabled}
                           />
                         </td>
                         <td style={{ width: '130px' }}>
@@ -740,16 +759,16 @@ function formatDateDMY(dateStr) {
                       {showInsideIndia && selectedState !== 'Gujarat' && <>
                         <tr className="outside-india">
                           <td></td>
-                          <td  style={{height:'61.5px'}}><span style={{ float: 'right',paddingTop:'11px', }}>IGST @ 18%</span></td>
+                          <td style={{ height: '61.5px' }}><span style={{ float: 'right', paddingTop: '11px', }}>IGST @ 18%</span></td>
                           <td></td>
                           <td></td>
-                          <td style={{paddingTop:'17px'}}>18%</td>
-                          <td style={{paddingTop:'17px'}} id="igst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.igst}</td>
+                          <td style={{ paddingTop: '17px' }}>18%</td>
+                          <td style={{ paddingTop: '17px' }} id="igst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.igst}</td>
                         </tr>
                       </>}
                       <tr>
-                        <td style={{height:'61.5px',paddingTop:'20px'}} colSpan="5" className="text-right"><strong>Total</strong></td>
-                        <td style={{paddingTop:'20px'}}><strong id="total-with-gst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.total_with_gst}</strong></td>
+                        <td style={{ height: '61.5px', paddingTop: '20px' }} colSpan="5" className="text-right"><strong>Total</strong></td>
+                        <td style={{ paddingTop: '20px' }}><strong id="total-with-gst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.total_with_gst}</strong></td>
                       </tr>
                     </tbody>
                   </table>
@@ -784,23 +803,23 @@ function formatDateDMY(dateStr) {
                     return (
                       <>
                         {/* Flex row for Declare under LUT and exchange rate, only for foreign countries */}
-                      
+
                         {/* INR equivalent in numbers (right) */}
                         <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
-                          <span style={{ width: '100%',  fontSize: '15px' }}>
-                        <strong>Converted INR Equivalent:</strong>    ₹ {inrEquivalent.toLocaleString('en-IN')}
+                          <span style={{ width: '100%', fontSize: '15px' }}>
+                            <strong>Converted INR Equivalent:</strong>    ₹ {inrEquivalent.toLocaleString('en-IN')}
                           </span>
                         </div>
                         {/* INR equivalent in words (left) */}
                         <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
-                          <span style={{ width: '100%',  fontSize: '15px' }}>
-                         <strong> Converted INR (in words):</strong> {inrAmountInWords(inrEquivalent)}
+                          <span style={{ width: '100%', fontSize: '15px' }}>
+                            <strong> Converted INR (in words):</strong> {inrAmountInWords(inrEquivalent)}
                           </span>
                         </div>
                       </>
                     );
                   })()}
-                  <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px',fontSize:"20px", paddingTop:'20px' } : {}}>
+                  <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px', fontSize: "20px", paddingTop: '20px' } : {}}>
                     <div>
                       <strong>Totale Amount (in words):</strong><br />
                       <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p>
@@ -831,29 +850,29 @@ function formatDateDMY(dateStr) {
                       </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                          <td style={{ border: '1px solid #000' }}><span className="hns_select_text">{hnsSelect}</span></td>
-                          <td style={{ border: '1px solid #000' }} id="taxable-value">
-                            {selectedCountry.symbol}{baseAmount}
-                          </td>
-                          <td style={{ border: '1px solid #000' }}>9%</td>
-                          <td style={{ border: '1px solid #000' }} id="tax-cgst">{selectedCountry.symbol}{calculationResult.cgst}</td>
-                          <td style={{ border: '1px solid #000' }}>9%</td>
-                          <td style={{ border: '1px solid #000' }} id="tax-sgst">{selectedCountry.symbol}{calculationResult.sgst}</td>
-                          <td style={{ border: '1px solid #000' }} id="all-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
-                        </tr>
-                        <tr className="total-row">
-                          <td style={{ border: '1px solid #000' }}>Total</td>
-                          <td style={{ border: '1px solid #000' }} id="total-taxable">
-                            {selectedCountry.symbol}{baseAmount}
-                          </td>
-                          <td style={{ border: '1px solid #000' }}></td>
-                          <td style={{ border: '1px solid #000' }} id="total-tax-cgst">{selectedCountry.symbol}{calculationResult.cgst}</td>
-                          <td style={{ border: '1px solid #000' }}></td>
-                          <td style={{ border: '1px solid #000' }} id="total-tax-sgst">{selectedCountry.symbol}{calculationResult.sgst}</td>
-                          <td style={{ border: '1px solid #000' }} id="total-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
-                        </tr>
-                      </tbody>
+                      <tr>
+                        <td style={{ border: '1px solid #000' }}><span className="hns_select_text">{hnsSelect}</span></td>
+                        <td style={{ border: '1px solid #000' }} id="taxable-value">
+                          {selectedCountry.symbol}{baseAmount}
+                        </td>
+                        <td style={{ border: '1px solid #000' }}>9%</td>
+                        <td style={{ border: '1px solid #000' }} id="tax-cgst">{selectedCountry.symbol}{calculationResult.cgst}</td>
+                        <td style={{ border: '1px solid #000' }}>9%</td>
+                        <td style={{ border: '1px solid #000' }} id="tax-sgst">{selectedCountry.symbol}{calculationResult.sgst}</td>
+                        <td style={{ border: '1px solid #000' }} id="all-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                      </tr>
+                      <tr className="total-row">
+                        <td style={{ border: '1px solid #000' }}>Total</td>
+                        <td style={{ border: '1px solid #000' }} id="total-taxable">
+                          {selectedCountry.symbol}{baseAmount}
+                        </td>
+                        <td style={{ border: '1px solid #000' }}></td>
+                        <td style={{ border: '1px solid #000' }} id="total-tax-cgst">{selectedCountry.symbol}{calculationResult.cgst}</td>
+                        <td style={{ border: '1px solid #000' }}></td>
+                        <td style={{ border: '1px solid #000' }} id="total-tax-sgst">{selectedCountry.symbol}{calculationResult.sgst}</td>
+                        <td style={{ border: '1px solid #000' }} id="total-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                      </tr>
+                    </tbody>
                   </table>
                 </div>}
                 {showInsideIndia && selectedState !== 'Gujarat' && <div className="col-xs-12 outside-india">
@@ -871,21 +890,21 @@ function formatDateDMY(dateStr) {
                       </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                          <td><span className="hns_select_text">{hnsSelect}</span></td>
-                          <td id="taxable-value">{selectedCountry.symbol}{baseAmount}</td>
-                          <td>18%</td>
-                          <td id="igst">{selectedCountry.symbol}{calculationResult.igst}</td>
-                          <td id="all-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
-                        </tr>
-                        <tr className="total-row">
-                          <td>Total</td>
-                          <td id="total-taxable">{selectedCountry.symbol}{baseAmount}</td>
-                          <td></td>
-                          <td id="total-tax-igst">{selectedCountry.symbol}{calculationResult.igst}</td>
-                          <td id="total-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
-                        </tr>
-                      </tbody>
+                      <tr>
+                        <td><span className="hns_select_text">{hnsSelect}</span></td>
+                        <td id="taxable-value">{selectedCountry.symbol}{baseAmount}</td>
+                        <td>18%</td>
+                        <td id="igst">{selectedCountry.symbol}{calculationResult.igst}</td>
+                        <td id="all-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                      </tr>
+                      <tr className="total-row">
+                        <td>Total</td>
+                        <td id="total-taxable">{selectedCountry.symbol}{baseAmount}</td>
+                        <td></td>
+                        <td id="total-tax-igst">{selectedCountry.symbol}{calculationResult.igst}</td>
+                        <td id="total-tax-amount">{selectedCountry.symbol}{calculationResult.total_tax_amount}</td>
+                      </tr>
+                    </tbody>
                   </table>
                 </div>}
                 <div>
@@ -898,7 +917,7 @@ function formatDateDMY(dateStr) {
                   <div className="col-xs-12">
                     <div>
                       <h5 style={{ marginBottom: "3px" }}><strong>Remarks:</strong></h5>
-                      <input name="remark" type="text" className="remark" style={{ width: '550px', height: "50px" }} value={remark} onChange={e => setRemark(e.target.value)} />
+                      <input name="remark" type="text" className="remark" style={{ width: '550px', height: "50px" }} value={remark} onChange={e => setRemark(e.target.value)} disabled={formDisabled} />
                     </div>
                   </div>
                 </div>
@@ -941,7 +960,7 @@ function formatDateDMY(dateStr) {
                 <button
                   className="download-btn"
                   id="download-btn"
-                  disabled={loadingInvoiceNumber || !invoiceNumber}
+                  disabled={loadingInvoiceNumber || !invoiceNumber || isGeneratingPDF}
                   onClick={async () => {
                     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
                     const parseNumber = v => v === '' || v == null ? 0 : Number(v);
@@ -955,64 +974,72 @@ function formatDateDMY(dateStr) {
                       alert('Please select a state for India.');
                       return;
                     }
-                    const isForeign = selectedCountry.name !== 'India';
-                    const exchange_rate = isForeign && exchangeRate ? Number(exchangeRate) : 1;
-                    const totalWithGst = calculationResult.total_with_gst == null ? 0 : Number(calculationResult.total_with_gst);
-                    const inr_equivalent = isForeign && exchangeRate && totalWithGst
-                      ? Number((totalWithGst * exchange_rate).toFixed(2))
-                      : 0;
 
-                    const invoiceData = {
-                      buyer_name: billTo.title,
-                      buyer_address: billTo.address,
-                      buyer_gst: billTo.gst || '',
-                      consignee_name: shipTo.title || '',
-                      consignee_address: shipTo.address || '',
-                      consignee_gst: shipTo.gst || '',
-                      financial_year: financialYear || '2025-2026',
-                      invoice_number: invoiceNumber,
-                      invoice_date: parseDate(date),
-                      delivery_note: deliveryNote || '',
-                      payment_mode: modeOfPayment || '',
-                      delivery_note_date: parseDate(deliveryNoteDate),
-                      destination: destination || '',
-                      terms_to_delivery: termsOfDelivery || '',
-                      country: selectedCountry.name,
-                      currency: selectedCountry.code,
-                      currency_symbol: selectedCountry.symbol,
-                      state: selectedCountry.name === 'India' ? selectedState : 'N/A',
-                      particulars: gstConsultancy || '',
-                      total_hours: parseNumber(totalHours),
-                      rate: parseNumber(rate),
-                      base_amount: parseNumber(baseAmount),
-                      total_amount: parseNumber(calculationResult.total_with_gst),
-                      cgst: calculationResult.cgst == null ? 0 : Number(calculationResult.cgst),
-                      sgst: calculationResult.sgst == null ? 0 : Number(calculationResult.sgst),
-                      igst: calculationResult.igst == null ? 0 : Number(calculationResult.igst),
-                      total_with_gst: calculationResult.total_with_gst == null ? 0 : Number(calculationResult.total_with_gst),
-                      amount_in_words: calculationResult.amount_in_words || '',
-                      taxtotal: calculationResult.taxtotal == null ? 0 : Number(calculationResult.taxtotal),
-                      remark: remark || '',
-                      exchange_rate: exchange_rate,
-                      inr_equivalent: inr_equivalent,
-                      country_flag: '',
-                    };
-                    if (!formDisabled) {
-                      // First time: save invoice, then lock form and allow further downloads
-                      try {
+                    setIsGeneratingPDF(true); // Disable button while generating PDF
+
+                    try {
+                      const isForeign = selectedCountry.name !== 'India';
+                      const exchange_rate = isForeign && exchangeRate ? Number(exchangeRate) : 1;
+                      const totalWithGst = calculationResult.total_with_gst == null ? 0 : Number(calculationResult.total_with_gst);
+                      const inr_equivalent = isForeign && exchangeRate && totalWithGst
+                        ? Number((totalWithGst * exchange_rate).toFixed(2))
+                        : 0;
+
+                      const invoiceData = {
+                        buyer_name: billTo.title,
+                        buyer_address: billTo.address,
+                        buyer_gst: billTo.gst || '',
+                        consignee_name: shipTo.title || '',
+                        consignee_address: shipTo.address || '',
+                        consignee_gst: shipTo.gst || '',
+                        financial_year: financialYear || '2025-2026',
+                        invoice_number: invoiceNumber,
+                        invoice_date: parseDate(date),
+                        delivery_note: deliveryNote || '',
+                        payment_mode: modeOfPayment || '',
+                        delivery_note_date: parseDate(deliveryNoteDate),
+                        destination: destination || '',
+                        terms_to_delivery: termsOfDelivery || '',
+                        country: selectedCountry.name,
+                        currency: selectedCountry.code,
+                        currency_symbol: selectedCountry.symbol,
+                        state: selectedCountry.name === 'India' ? selectedState : 'N/A',
+                        particulars: gstConsultancy || '',
+                        total_hours: parseNumber(totalHours),
+                        rate: parseNumber(rate),
+                        base_amount: parseNumber(baseAmount),
+                        total_amount: parseNumber(calculationResult.total_with_gst),
+                        cgst: calculationResult.cgst == null ? 0 : Number(calculationResult.cgst),
+                        sgst: calculationResult.sgst == null ? 0 : Number(calculationResult.sgst),
+                        igst: calculationResult.igst == null ? 0 : Number(calculationResult.igst),
+                        total_with_gst: calculationResult.total_with_gst == null ? 0 : Number(calculationResult.total_with_gst),
+                        amount_in_words: calculationResult.amount_in_words || '',
+                        taxtotal: calculationResult.taxtotal == null ? 0 : Number(calculationResult.taxtotal),
+                        remark: remark || '',
+                        exchange_rate: exchange_rate,
+                        inr_equivalent: inr_equivalent,
+                        country_flag: '',
+                      };
+
+                      if (!formDisabled) {
+                        // First time: save invoice, then lock form and allow further downloads
                         await addInvoice(invoiceData);
                         setFormDisabled(true);
-                        handleDownloadPDF();
-                      } catch (err) {
-                        alert('Failed to save invoice: ' + (err.message || err));
                       }
-                    } else {
-                      // Already saved: just download PDF again
-                      handleDownloadPDF();
+
+                      await handleDownloadPDF();
+                    } catch (err) {
+                      alert('Failed to process invoice: ' + (err.message || err));
+                    } finally {
+                      setIsGeneratingPDF(false); // Re-enable button after PDF is generated
                     }
                   }}
                 >
-                  {loadingInvoiceNumber ? 'Loading Invoice Number...' : 'Download PDF'}
+                  {loadingInvoiceNumber
+                    ? 'Loading Invoice Number...'
+                    : isGeneratingPDF
+                      ? 'Generating PDF...'
+                      : 'Download PDF'}
                 </button>
               </div>
             </div>
@@ -1025,7 +1052,8 @@ function formatDateDMY(dateStr) {
             <div
               className="pdf invoice-pdf pdf-margine"
               ref={invoiceRef}
-              style={{ width: '1116px', margin: '0 auto', background: '#fff', 
+              style={{
+                width: '1116px', margin: '0 auto', background: '#fff',
                 // display: 'none' 
               }}
             >
@@ -1043,7 +1071,9 @@ function formatDateDMY(dateStr) {
                         <tr>
                           <td>
                             <div style={{ whiteSpace: 'pre-line' }}>
-                              {settings?.seller_address}
+                              <div style={{ whiteSpace: 'pre-line' }}>
+                                {settings?.seller_address}
+                              </div>
                             </div>
                             GSTIN/UIN: {settings?.seller_gstin} <br />
                             Email: {settings?.seller_email}<br />
@@ -1060,7 +1090,7 @@ function formatDateDMY(dateStr) {
                         <tr>
                           <td style={{ minHeight: '100px', height: 'auto', verticalAlign: 'top' }}>
                             <div style={{ minHeight: '100px', whiteSpace: 'pre-line' }}>
-                              <strong>Address:</strong> <span>{billTo.address}</span>
+                              <strong></strong> <span>{billTo.address}</span>
                             </div>
                           </td>
                         </tr>
@@ -1077,7 +1107,7 @@ function formatDateDMY(dateStr) {
                         <tr>
                           <td style={{ minHeight: '100px', height: 'auto', verticalAlign: 'top' }}>
                             <div style={{ minHeight: '100px', whiteSpace: 'pre-line' }}>
-                              <strong>Address:</strong> <span>{shipTo.address}</span>
+                              <strong></strong> <span>{shipTo.address}</span>
                             </div>
                           </td>
 
@@ -1098,7 +1128,7 @@ function formatDateDMY(dateStr) {
                         </tr>
                         <tr>
                           <td>Date</td>
-                           <td>{formatDateDMY(date)}</td>
+                          <td>{formatDateDMY(date)}</td>
                         </tr>
                         <tr>
                           <td>Delivery Note</td>
@@ -1181,7 +1211,7 @@ function formatDateDMY(dateStr) {
                     </div>
                   </div>
                 </div>
-            
+
 
                 {/* total table */}
                 <div className="row" style={!showInsideIndia ? { marginTop: '20px' } : {}}>
@@ -1230,16 +1260,16 @@ function formatDateDMY(dateStr) {
                         {showInsideIndia && selectedState !== 'Gujarat' && <>
                           <tr className="outside-india">
                             <td></td>
-                            <td  style={{height:'61.5px'}}><span style={{ float: 'right',paddingTop:'11px', }}>IGST @ 18%</span></td>
+                            <td style={{ height: '61.5px' }}><span style={{ float: 'right', paddingTop: '11px', }}>IGST @ 18%</span></td>
                             <td></td>
                             <td></td>
-                            <td style={{paddingTop:'17px'}}>18%</td>
-                            <td style={{paddingTop:'17px'}} id="igst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.igst}</td>
+                            <td style={{ paddingTop: '17px' }}>18%</td>
+                            <td style={{ paddingTop: '17px' }} id="igst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.igst}</td>
                           </tr>
                         </>}
                         <tr>
-                          <td style={{height:'61.5px',paddingTop:'20px'}} colSpan="5" className="text-right"><strong>Total</strong></td>
-                          <td style={{paddingTop:'20px'}}><strong id="total-with-gst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.total_with_gst}</strong></td>
+                          <td style={{ height: '61.5px', paddingTop: '20px' }} colSpan="5" className="text-right"><strong>Total</strong></td>
+                          <td style={{ paddingTop: '20px' }}><strong id="total-with-gst"><span className="currency-sym">{selectedCountry.symbol}</span> {calculationResult.total_with_gst}</strong></td>
                         </tr>
                       </tbody>
                     </table>
@@ -1283,23 +1313,23 @@ function formatDateDMY(dateStr) {
                       return (
                         <>
                           {/* Flex row for Declare under LUT and exchange rate, only for foreign countries */}
-                        
+
                           {/* INR equivalent in numbers (right) */}
                           <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
-                            <span style={{ width: '100%',  fontSize: '15px' }}>
-                            <strong>Converted INR Equivalent:</strong>  ₹ {inrEquivalent.toLocaleString('en-IN')}
+                            <span style={{ width: '100%', fontSize: '15px' }}>
+                              <strong>Converted INR Equivalent:</strong>  ₹ {inrEquivalent.toLocaleString('en-IN')}
                             </span>
                           </div>
                           {/* INR equivalent in words (left) */}
                           <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                             <span style={{ width: '100%', fontSize: '15px' }}>
-                           <strong>Converted INR (in words):</strong>  {inrAmountInWords(inrEquivalent)}
+                              <strong>Converted INR (in words):</strong>  {inrAmountInWords(inrEquivalent)}
                             </span>
                           </div>
                         </>
                       );
                     })()}
-                    <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px',fontSize:"20px", paddingTop:'20px' } : {}}>
+                    <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px', fontSize: "20px", paddingTop: '20px' } : {}}>
                       <div>
                         <strong>Totale Amount (in words):</strong><br />
                         <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p>

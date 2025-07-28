@@ -83,7 +83,26 @@ const Address = () => {
             <h1 className="address-title">Address Book</h1>
             <button
               className="address-new-btn"
-              onClick={() => navigate('/taxinvoices')}
+              onClick={() => {
+                if (uniqueAddresses.length > 0) {
+                  // पहले एड्रेस के डेटा के साथ नेविगेट करें
+                  const selectedAddress = uniqueAddresses[0];
+                  navigate('/taxinvoices', {
+                    state: {
+                      buyerData: {
+                        buyer_name: selectedAddress.buyer_name,
+                        buyer_address: selectedAddress.buyer_address,
+                        buyer_gst: selectedAddress.buyer_gst,
+                        country: 'India', // डिफ़ॉल्ट देश
+                        state: 'Gujarat', // डिफ़ॉल्ट राज्य
+                      }
+                    }
+                  });
+                } else {
+                  // कोई एड्रेस नहीं है तो सीधे नेविगेट करें
+                  navigate('/taxinvoices');
+                }
+              }}
             >
               + New Bill
             </button>
@@ -97,6 +116,7 @@ const Address = () => {
                     <th>Buyer Name</th>
                     <th>Address</th>
                     <th>GSTIN/UIN</th>
+                    
                   </tr>
                 </thead>
                 <tbody>
@@ -123,6 +143,7 @@ const Address = () => {
                             : address.buyer_address}
                         </td>
                         <td>{address.buyer_gst}</td>
+                        
                       </tr>
                     ))
                   )}
@@ -136,4 +157,4 @@ const Address = () => {
   );
 };
 
-export default Address; 
+export default Address;

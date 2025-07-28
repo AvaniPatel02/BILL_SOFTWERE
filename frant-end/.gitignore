@@ -38,3 +38,22 @@ BACKEND/backend/db.sqlite3
 __pycache__/
 *.pyc
 /media/
+
+
+*.pyc
+db.sqlite3
+
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore virtual environment
+env/
+BACKEND/env/
+
+
+echo "__pycache__/"
+echo "*.pyc" 
+echo "BACKEND/env/"
+echo "BACKEND/backend/db.sqlite3" >>
