@@ -25,6 +25,8 @@ from .views_banking import (
     get_invoices_by_buyer,
     other_types,
     bank_cash_transactions,
+    calculate_bank_totals,
+    calculate_cash_totals,
 )
 from .views_accounting import account_list, account_statement
 from .views_balancesheet import BalanceSheetView, BalanceSheetSnapshotView
@@ -128,4 +130,6 @@ urlpatterns += [
 
 urlpatterns += [
     path('banking/transactions/', bank_cash_transactions, name='bank-cash-transactions'),
+    path('calculate-bank-totals/<str:bank_name>/', calculate_bank_totals, name='calculate-bank-totals'),
+    path('calculate-cash-totals/', calculate_cash_totals, name='calculate-cash-totals'),
 ]

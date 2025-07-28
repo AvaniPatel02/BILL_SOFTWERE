@@ -19,6 +19,8 @@ import {
   restoreCashEntry,
   permanentDeleteBank,
   permanentDeleteCashEntry,
+  calculateBankTotals,
+  calculateCashTotals,
 } from "../../services/bankCashApi";
 
 function formatDate(date) {
@@ -47,6 +49,8 @@ const BankAdd = () => {
   const [error, setError] = useState("");
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
   const [permanentDeleteTarget, setPermanentDeleteTarget] = useState(null); // {type: 'bank'|'cash', id}
+  const [bankTotals, setBankTotals] = useState({});
+  const [cashTotals, setCashTotals] = useState({});
 
   // Fetch all data on mount
   useEffect(() => {
@@ -66,6 +70,35 @@ const BankAdd = () => {
       .catch(() => setError("Failed to fetch data"))
       .finally(() => setLoading(false));
   }, []);
+
+  // Add after the initial data fetching useEffect
+  useEffect(() => {
+    const fetchBankTotals = async () => {
+      const totals = {};
+      for (const bank of banks) {
+        try {
+          const result = await calculateBankTotals(bank.bank_name);
+          totals[bank.id] = result;
+        } catch (e) {
+          totals[bank.id] = { netAmount: '0.00' };
+        }
+      }
+      setBankTotals(totals);
+    };
+    if (banks.length > 0) fetchBankTotals();
+  }, [banks]);
+
+  useEffect(() => {
+    const fetchCashTotals = async () => {
+      try {
+        const result = await calculateCashTotals();
+        setCashTotals(result);
+      } catch (e) {
+        setCashTotals({ netAmount: '0.00' });
+      }
+    };
+    fetchCashTotals();
+  }, [cashEntries]);
 
   // Handlers for Bank
   const resetForm = () => {
@@ -358,7 +391,14 @@ const BankAdd = () => {
                       <tr key={bank.id}>
                         <td className="text-center">{bank.bank_name}</td>
                         <td className="text-center">{bank.account_number}</td>
-                        <td className="text-center">{bank.amount}</td>
+                        <td className="text-center fw-bold">{
+                          (() => {
+                            const totals = bankTotals[bank.id] || { netAmount: '0.00' };
+                            const baseAmount = parseFloat(bank.amount) || 0;
+                            const netTransactions = parseFloat(totals.netAmount) || 0;
+                            return (baseAmount + netTransactions).toFixed(2);
+                          })()
+                        }</td>
                         <td className="text-center">
                           <div className="tooltip-container">
                             <button
@@ -396,7 +436,14 @@ const BankAdd = () => {
                       <tr key={entry.id}>
                         <td className="text-center">{formatDate(entry.date)}</td>
                         <td className="text-center">{entry.description || "-"}</td>
-                        <td className="text-center">{entry.amount}</td>
+                        <td className="text-center fw-bold">{
+                          (() => {
+                            const totals = cashTotals || { netAmount: '0.00' };
+                            const baseAmount = parseFloat(entry.amount) || 0;
+                            const netTransactions = parseFloat(totals.netAmount) || 0;
+                            return (baseAmount + netTransactions).toFixed(2);
+                          })()
+                        }</td>
                         <td className="text-center">
                           <div className="tooltip-container">
                             <button

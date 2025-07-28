@@ -61,8 +61,8 @@ const BankStatements = () => {
       .finally(() => setLoading(false));
   }, [mode, selectedBank]);
 
-  // Calculate opening balance and totals for the selected date range
-  const openingBalance = calculateOpeningBalance(transactions, fromDate);
+  // Find the actual opening balance transaction from the API
+  const openingBalance = transactions.find(tx => tx.type === 'OpeningBalance');
 
   let totalCredit = 0, totalDebit = 0;
   let filtered = transactions;
@@ -76,9 +76,11 @@ const BankStatements = () => {
   function renderTransactionsTable(transactions) {
     if (transactions.length === 0) return <div className="alert alert-info">No transactions found.</div>;
 
-    // Sort transactions by date ascending (oldest first)
-    const sortedTransactions = [...transactions].sort((a, b) => {
-      // Parse as YYYY-MM-DD
+    // Separate opening balance from other transactions
+    const otherTransactions = transactions.filter(tx => tx.type !== 'OpeningBalance');
+
+    // Sort other transactions by date ascending (oldest first)
+    const sortedTransactions = otherTransactions.sort((a, b) => {
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
       return dateA - dateB;
@@ -93,25 +95,25 @@ const BankStatements = () => {
       return true;
     });
 
-    // Debug: log a sample transaction to inspect field names
-    if (filteredTransactions.length > 0) {
-      console.log('Sample transaction:', filteredTransactions[0]);
+    // Calculate totals including opening balance
+    let totalCredit = 0, totalDebit = 0;
+    
+    // Add opening balance to total credit
+    if (openingBalance) {
+      totalCredit += Number(openingBalance.amount);
     }
+    
+    // Add other transactions
+    filteredTransactions.forEach(tx => {
+      const amount = Number(tx.amount);
+      if (tx.credit) {
+        totalCredit += amount;
+      }
+      if (tx.debit) {
+        totalDebit += amount;
+      }
+    });
 
-    // Calculate totals
-    let totalCredit = 0, totalDebit = 0, totalAmount = 0;
-
-    // Robust helper to get source
-    const getSource = (tx) => {
-      // Try to detect cash entry by type or by missing bank_name
-      if (
-        (tx.type && tx.type.toLowerCase() === 'cash') ||
-        (!tx.bank_name && !tx.bank && (!tx.type || tx.type.toLowerCase() !== 'bank'))
-      ) return 'Cash';
-      return tx.bank_name || tx.bank || '-';
-    };
-
-    // Robust helper to get details
     const getDetails = (tx) => tx.details || '-';
 
     return (
@@ -129,43 +131,80 @@ const BankStatements = () => {
             </tr>
           </thead>
           <tbody>
+            {openingBalance && (
+              <tr style={{ fontWeight: 'bold', background: '#e6f7ff' }}>
+                <td>{formatDate(openingBalance.date)}</td>
+                <td>Opening Balance</td>
+                <td>Opening Balance</td>
+                <td>{Number(openingBalance.amount).toFixed(2)}</td>
+                <td>-</td>
+                <td>{Number(openingBalance.amount).toFixed(2)}</td>
+                <td>
+                  <button 
+                    className="btn btn-sm btn-outline-primary me-1"
+                    onClick={() => {
+                      setEditingIdx('opening');
+                      setEditTx({
+                        date: openingBalance.date,
+                        amount: openingBalance.amount,
+                        description: 'Opening Balance'
+                      });
+                    }}
+                  >
+                    <i className="fas fa-edit"></i>
+                  </button>
+                </td>
+              </tr>
+            )}
             {filteredTransactions.map((tx, idx) => {
               const credit = tx.credit ? Number(tx.amount) : 0;
               const debit = tx.debit ? Number(tx.amount) : 0;
               const amount = Number(tx.amount);
-
               return (
                 <tr key={idx}>
-                  <td>
-                    {editingIdx === idx
-                      ? <input value={editTx.date || ''} onChange={e => setEditTx({ ...editTx, date: e.target.value })} />
-                      : formatDate(tx.date)}
-                  </td>
+                  <td>{formatDate(tx.date)}</td>
                   <td>{getDetails(tx)}</td>
-                  <td>
-                    {editingIdx === idx
-                      ? <input value={editTx.details || ''} onChange={e => setEditTx({ ...editTx, details: e.target.value })} />
-                      : (tx.details || '-')}
-                  </td>
+                  <td>{tx.details || '-'}</td>
                   <td>{credit ? credit.toFixed(2) : '-'}</td>
                   <td>{debit ? debit.toFixed(2) : '-'}</td>
                   <td>{amount.toFixed(2)}</td>
                   <td>
-                     {/* Action column intentionally left empty (Edit removed) */}
+                    <button 
+                      className="btn btn-sm btn-outline-primary me-1"
+                      onClick={() => {
+                        setEditingIdx(idx);
+                        setEditTx({
+                          date: tx.date,
+                          amount: tx.amount,
+                          description: tx.description || ''
+                        });
+                      }}
+                    >
+                      <i className="fas fa-edit"></i>
+                    </button>
+                    <button 
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to delete this transaction?')) {
+                          // Add delete functionality here
+                          console.log('Delete transaction:', tx);
+                        }
+                      }}
+                    >
+                      <i className="fas fa-trash"></i>
+                    </button>
                   </td>
                 </tr>
               );
             })}
             {/* Total Row */}
-            {mode !== 'All' && (
-              <tr style={{ fontWeight: 'bold', background: '#f5f5f5' }}>
-                <td colSpan={3} style={{ textAlign: 'right' }}>Total</td>
-                <td>{totalCredit.toFixed(2)}</td>
-                <td>{totalDebit.toFixed(2)}</td>
-                <td>{(totalCredit - totalDebit).toFixed(2)}</td>
-                <td></td>
-              </tr>
-            )}
+            <tr style={{ fontWeight: 'bold', background: '#f5f5f5' }}>
+              <td colSpan={3} style={{ textAlign: 'right' }}>Total</td>
+              <td>{totalCredit.toFixed(2)}</td>
+              <td>{totalDebit.toFixed(2)}</td>
+              <td>{(totalCredit - totalDebit).toFixed(2)}</td>
+              <td></td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -199,17 +238,7 @@ const BankStatements = () => {
     }
   }
 
-  function calculateOpeningBalance(transactions, fromDate) {
-    if (!fromDate) return 0;
-    return transactions
-      .filter(tx => tx.date && tx.date < fromDate)
-      .reduce((sum, tx) => {
-        const amount = Number(tx.amount);
-        if (tx.credit) return sum + amount;
-        if (tx.debit) return sum - amount;
-        return sum;
-      }, 0);
-  }
+
 
   return (
     <div className="bills-layout">
@@ -242,8 +271,6 @@ const BankStatements = () => {
                 </select>
               )}
             </div>
-            {/* Date range filter */}
-          
             {/* Placeholder for statements display */}
             {mode === 'Bank' && selectedBank && (
               <div>
@@ -261,6 +288,56 @@ const BankStatements = () => {
               <div>
                 <h3>All Bank & Cash Entries</h3>
                 {loading ? <div>Loading...</div> : error ? <div className="alert alert-danger">{error}</div> : renderTransactionsTable(transactions)}
+              </div>
+            )}
+            
+            {/* Edit Modal */}
+            {editingIdx !== null && (
+              <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                <div className="modal-dialog">
+                  <div className="modal-content">
+                    <div className="modal-header">
+                      <h5 className="modal-title">Edit Transaction</h5>
+                      <button type="button" className="btn-close" onClick={() => setEditingIdx(null)}></button>
+                    </div>
+                    <div className="modal-body">
+                      <div className="mb-3">
+                        <label className="form-label">Date</label>
+                        <input 
+                          type="date" 
+                          className="form-control" 
+                          value={editTx.date || ''} 
+                          onChange={e => setEditTx({...editTx, date: e.target.value})}
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Amount</label>
+                        <input 
+                          type="number" 
+                          className="form-control" 
+                          value={editTx.amount || ''} 
+                          onChange={e => setEditTx({...editTx, amount: e.target.value})}
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Description</label>
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          value={editTx.description || ''} 
+                          onChange={e => setEditTx({...editTx, description: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    <div className="modal-footer">
+                      <button type="button" className="btn btn-secondary" onClick={() => setEditingIdx(null)}>Cancel</button>
+                      <button type="button" className="btn btn-primary" onClick={() => {
+                        const currentTx = editingIdx === 'opening' ? openingBalance : transactions[editingIdx];
+                        saveEdit(currentTx, editingIdx);
+                      }}>Save</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
