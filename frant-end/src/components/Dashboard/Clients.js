@@ -4,6 +4,7 @@ import Header from './Header';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Clients.css';
 import { getInvoices, deleteInvoice } from '../../services/clientsApi';
+import { CanvasRenderer } from "html2canvas/dist/types/render/canvas/canvas-renderer";
 
 const Clients = () => {
   const [invoices, setInvoices] = useState([]);
@@ -244,3 +245,11 @@ const Clients = () => {
 };
 
 export default Clients;
+
+
+
+
+250 Car
+300 recharge card 
+1350 jamvana 
+800 cricat

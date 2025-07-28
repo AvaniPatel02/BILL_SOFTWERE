@@ -243,12 +243,7 @@ const BankStatements = () => {
               )}
             </div>
             {/* Date range filter */}
-            <div className="d-flex align-items-center mb-3">
-              <label className="me-2">From Date:</label>
-              <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="form-control me-3" style={{ width: 180 }} />
-              <label className="me-2">To Date:</label>
-              <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="form-control" style={{ width: 180 }} />
-            </div>
+          
             {/* Placeholder for statements display */}
             {mode === 'Bank' && selectedBank && (
               <div>
