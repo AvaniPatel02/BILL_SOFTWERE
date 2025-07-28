@@ -190,6 +190,7 @@ class BankAccount(models.Model):
     bank_name = models.CharField(max_length=255)
     account_number = models.CharField(max_length=50)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
+    is_opening_balance = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
@@ -208,6 +209,7 @@ class CashEntry(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     date = models.DateField()
     description = models.TextField(blank=True, null=True)
+    is_opening_balance = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 

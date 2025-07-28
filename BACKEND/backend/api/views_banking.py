@@ -26,17 +26,18 @@ class CompanyBillListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         company_bill = serializer.save()
-        amount = Decimal(str(company_bill.amount))
-        if company_bill.payment_type == 'Banking' and company_bill.bank:
-            bank = BankAccount.objects.filter(bank_name=company_bill.bank, is_deleted=False).first()
-            if bank:
-                bank.amount += amount
-                bank.save()
-        elif company_bill.payment_type == 'Cash':
-            cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
-            if cash:
-                cash.amount += amount
-                cash.save()
+        # Removed automatic bank amount updates
+        # amount = Decimal(str(company_bill.amount))
+        # if company_bill.payment_type == 'Banking' and company_bill.bank:
+        #     bank = BankAccount.objects.filter(bank_name=company_bill.bank, is_deleted=False).first()
+        #     if bank:
+        #         bank.amount += amount
+        #         bank.save()
+        # elif company_bill.payment_type == 'Cash':
+        #     cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
+        #     if cash:
+        #         cash.amount += amount
+        #         cash.save()
 
 class CompanyBillRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CompanyBill.objects.all()
@@ -51,17 +52,18 @@ class BuyerBillListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         buyer_bill = serializer.save()
-        amount = Decimal(str(buyer_bill.amount))
-        if buyer_bill.payment_type == 'Banking' and buyer_bill.bank:
-            bank = BankAccount.objects.filter(bank_name=buyer_bill.bank, is_deleted=False).first()
-            if bank:
-                bank.amount -= amount
-                bank.save()
-        elif buyer_bill.payment_type == 'Cash':
-            cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
-            if cash:
-                cash.amount -= amount
-                cash.save()
+        # Removed automatic bank amount updates
+        # amount = Decimal(str(buyer_bill.amount))
+        # if buyer_bill.payment_type == 'Banking' and buyer_bill.bank:
+        #     bank = BankAccount.objects.filter(bank_name=buyer_bill.bank, is_deleted=False).first()
+        #     if bank:
+        #         bank.amount -= amount
+        #         bank.save()
+        # elif buyer_bill.payment_type == 'Cash':
+        #     cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
+        #     if cash:
+        #         cash.amount -= amount
+        #         cash.save()
 
 class BuyerBillRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BuyerBill.objects.all()
@@ -76,17 +78,18 @@ class SalaryListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         salary = serializer.save()
-        amount = Decimal(str(salary.amount))
-        if salary.payment_type == 'Banking' and salary.bank:
-            bank = BankAccount.objects.filter(bank_name=salary.bank, is_deleted=False).first()
-            if bank:
-                bank.amount -= amount
-                bank.save()
-        elif salary.payment_type == 'Cash':
-            cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
-            if cash:
-                cash.amount -= amount
-                cash.save()
+        # Removed automatic bank amount updates
+        # amount = Decimal(str(salary.amount))
+        # if salary.payment_type == 'Banking' and salary.bank:
+        #     bank = BankAccount.objects.filter(bank_name=salary.bank, is_deleted=False).first()
+        #     if bank:
+        #         bank.amount -= amount
+        #         bank.save()
+        # elif salary.payment_type == 'Cash':
+        #     cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
+        #     if cash:
+        #         cash.amount -= amount
+        #         cash.save()
 
 class SalaryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Salary.objects.all()
@@ -101,23 +104,24 @@ class OtherTransactionListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         other = serializer.save(user=self.request.user)
-        amount = Decimal(str(other.amount))
-        if other.payment_type == 'Banking' and other.bank:
-            bank = BankAccount.objects.filter(bank_name=other.bank, is_deleted=False).first()
-            if bank:
-                if other.transaction_type == 'credit':
-                    bank.amount += amount
-                else:
-                    bank.amount -= amount
-                bank.save()
-        elif other.payment_type == 'Cash':
-            cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
-            if cash:
-                if other.transaction_type == 'credit':
-                    cash.amount += amount
-                else:
-                    cash.amount -= amount
-                cash.save()
+        # Removed automatic bank amount updates
+        # amount = Decimal(str(other.amount))
+        # if other.payment_type == 'Banking' and other.bank:
+        #     bank = BankAccount.objects.filter(bank_name=other.bank, is_deleted=False).first()
+        #     if bank:
+        #         if other.transaction_type == 'credit':
+        #             bank.amount += amount
+        #         else:
+        #             bank.amount -= amount
+        #         bank.save()
+        # elif other.payment_type == 'Cash':
+        #     cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
+        #     if cash:
+        #         if other.transaction_type == 'credit':
+        #             cash.amount += amount
+        #         else:
+        #             cash.amount -= amount
+        #         cash.save()
 
 class OtherTransactionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = OtherTransaction.objects.all()
@@ -192,6 +196,36 @@ def bank_cash_transactions(request):
     bank_name = request.GET.get('name', None)
     user = request.user
     transactions = []
+
+    # Add opening balance for bank
+    if ttype in ['all', 'bank'] and bank_name:
+        opening = BankAccount.objects.filter(user=user, bank_name=bank_name, is_opening_balance=True, is_deleted=False).first()
+        if opening:
+            transactions.append({
+                'type': 'OpeningBalance',
+                'date': opening.date if hasattr(opening, 'date') else None,
+                'amount': float(opening.amount),
+                'credit': True,
+                'debit': False,
+                'description': 'Opening Balance',
+                'bank': bank_name,
+                'details': 'Opening Balance',
+            })
+    
+    # Add opening balance for cash
+    if ttype in ['all', 'cash']:
+        opening = CashEntry.objects.filter(user=user, is_opening_balance=True, is_deleted=False).first()
+        if opening:
+            transactions.append({
+                'type': 'OpeningBalance',
+                'date': opening.date,
+                'amount': float(opening.amount),
+                'credit': True,
+                'debit': False,
+                'description': 'Opening Balance',
+                'bank': None,
+                'details': 'Opening Balance',
+            })
 
     if ttype in ['all', 'bank']:
         # CompanyBill (credit)
@@ -286,7 +320,7 @@ def bank_cash_transactions(request):
                 'debit': False,
                 'description': cb.notice or '',
                 'bank': None,
-                'details': cb.company,  # <-- add this line
+                'details': cb.company,
             })
         # BuyerBill (debit)
         bb_qs = BuyerBill.objects.filter(payment_type='Cash')
@@ -299,7 +333,7 @@ def bank_cash_transactions(request):
                 'debit': True,
                 'description': bb.notice or '',
                 'bank': None,
-                'details': bb.name,  # <-- add this line
+                'details': bb.name,
             })
         # Salary (debit)
         sal_qs = Salary.objects.filter(payment_type='Cash')
@@ -312,7 +346,7 @@ def bank_cash_transactions(request):
                 'debit': True,
                 'description': '',
                 'bank': None,
-                'details': sal.name,  # <-- add this line
+                'details': sal.name,
             })
         # OtherTransaction (credit/debit)
         ot_qs = OtherTransaction.objects.filter(payment_type='Cash')
@@ -325,8 +359,93 @@ def bank_cash_transactions(request):
                 'debit': ot.transaction_type == 'debit',
                 'description': ot.notice or '',
                 'bank': None,
-                'details': ot.type,  # <-- add this line (or ot.partner_name, ot.bank_name as needed)
+                'details': ot.type,
             })
     # Sort by date descending
     transactions.sort(key=lambda x: str(x['date']), reverse=True)
-    return Response(transactions) 
+    return Response(transactions)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def calculate_bank_totals(request, bank_name):
+    """Calculate total credit, debit, and net amount for a specific bank"""
+    from django.db.models import Sum, Q
+    from decimal import Decimal
+    
+    # Get all transactions for this bank
+    company_bills = CompanyBill.objects.filter(
+        payment_type='Banking', 
+        bank=bank_name
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    buyer_bills = BuyerBill.objects.filter(
+        payment_type='Banking', 
+        bank=bank_name
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    salaries = Salary.objects.filter(
+        payment_type='Banking', 
+        bank=bank_name
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    other_credits = OtherTransaction.objects.filter(
+        payment_type='Banking',
+        bank=bank_name,
+        transaction_type='credit'
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    other_debits = OtherTransaction.objects.filter(
+        payment_type='Banking',
+        bank=bank_name,
+        transaction_type='debit'
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    total_credit = company_bills + other_credits
+    total_debit = buyer_bills + salaries + other_debits
+    net_amount = total_credit - total_debit
+    
+    return Response({
+        'totalCredit': float(total_credit),
+        'totalDebit': float(total_debit),
+        'netAmount': float(net_amount)
+    })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def calculate_cash_totals(request):
+    """Calculate total credit, debit, and net amount for all cash transactions"""
+    from django.db.models import Sum, Q
+    from decimal import Decimal
+    
+    # Get all cash transactions
+    company_bills = CompanyBill.objects.filter(
+        payment_type='Cash'
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    buyer_bills = BuyerBill.objects.filter(
+        payment_type='Cash'
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    salaries = Salary.objects.filter(
+        payment_type='Cash'
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    other_credits = OtherTransaction.objects.filter(
+        payment_type='Cash',
+        transaction_type='credit'
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    other_debits = OtherTransaction.objects.filter(
+        payment_type='Cash',
+        transaction_type='debit'
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    total_credit = company_bills + other_credits
+    total_debit = buyer_bills + salaries + other_debits
+    net_amount = total_credit - total_debit
+    
+    return Response({
+        'totalCredit': float(total_credit),
+        'totalDebit': float(total_debit),
+        'netAmount': float(net_amount)
+    }) 
