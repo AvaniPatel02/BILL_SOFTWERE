@@ -140,4 +140,24 @@ export const permanentDeleteCashEntry = (id) =>
     credentials: 'include',
   }).then((res) => {
     if (!res.ok && res.status !== 204) throw new Error("Failed to permanently delete cash entry");
-  }); 
+  });
+
+export const calculateBankTotals = async (bankName) => {
+  let url = `${API_BASE_URL}/calculate-bank-totals/${encodeURIComponent(bankName)}/`;
+  const res = await fetch(url, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error("Failed to calculate bank totals");
+  return res.json();
+};
+
+export const calculateCashTotals = async () => {
+  let url = `${API_BASE_URL}/calculate-cash-totals/`;
+  const res = await fetch(url, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error("Failed to calculate cash totals");
+  return res.json();
+}; 

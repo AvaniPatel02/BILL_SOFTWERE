@@ -17,6 +17,23 @@ def bank_accounts_list_create(request):
     elif request.method == 'POST':
         serializer = BankAccountSerializer(data=request.data)
         if serializer.is_valid():
+            # Check if this is the first entry for this bank
+            bank_name = request.data.get('bank_name')
+            if bank_name:
+                existing_bank = BankAccount.objects.filter(
+                    user=request.user, 
+                    bank_name=bank_name, 
+                    is_deleted=False
+                ).first()
+                
+                if not existing_bank:
+                    # This is the first entry for this bank, mark as opening balance
+                    bank_account = serializer.save(user=request.user)
+                    bank_account.is_opening_balance = True
+                    bank_account.save()
+                    return Response(serializer.data, status=201)
+            
+            # Not the first entry, save normally
             serializer.save(user=request.user)
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
@@ -79,9 +96,16 @@ def cash_entries_list_create(request):
         serializer = CashEntrySerializer(entries, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
+        # Only allow one non-deleted cash entry per user
+        if CashEntry.objects.filter(user=request.user, is_deleted=False).exists():
+            return Response({'error': 'You can only have one cash entry.'}, status=400)
+        
         serializer = CashEntrySerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            # This is the first (and only) cash entry, mark as opening balance
+            cash_entry = serializer.save(user=request.user)
+            cash_entry.is_opening_balance = True
+            cash_entry.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
