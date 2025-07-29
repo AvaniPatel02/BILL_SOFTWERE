@@ -8,6 +8,7 @@ import { getInvoices } from '../../services/addressApi';
 const Address = () => {
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchFilter, setSearchFilter] = useState('');
   const navigate = useNavigate();
 
   // Toast helper
@@ -46,13 +47,35 @@ const Address = () => {
   // Remove duplicate addresses (same buyer_name, buyer_address, buyer_gst)
   const uniqueAddresses = React.useMemo(() => {
     const seen = new Set();
-    return addresses.filter(addr => {
+    let filteredAddresses = addresses.filter(addr => {
       const key = `${addr.buyer_name}|${addr.buyer_address}|${addr.buyer_gst}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
-  }, [addresses]);
+
+    // Filter based on search term
+    if (searchFilter.trim()) {
+      const filterLower = searchFilter.toLowerCase();
+      filteredAddresses = filteredAddresses.filter(addr => {
+        // Check if buyer name matches
+        if (addr.buyer_name && addr.buyer_name.toLowerCase().includes(filterLower)) {
+          return true;
+        }
+        // Check if address matches
+        if (addr.buyer_address && addr.buyer_address.toLowerCase().includes(filterLower)) {
+          return true;
+        }
+        // Check if GST matches
+        if (addr.buyer_gst && addr.buyer_gst.toLowerCase().includes(filterLower)) {
+          return true;
+        }
+        return false;
+      });
+    }
+    
+    return filteredAddresses;
+  }, [addresses, searchFilter]);
 
   // Copy address to clipboard
   const handleCopyAddress = (address) => {
@@ -72,6 +95,11 @@ const Address = () => {
     }
   };
 
+  // Clear search filter
+  const handleClearSearch = () => {
+    setSearchFilter('');
+  };
+
   return (
     <div className="bills-layout">
       <Header />
@@ -80,6 +108,25 @@ const Address = () => {
         <div className="address-container address-book-container">
           <div className="address-header-group">
             <button className="address-back-btn" onClick={() => navigate(-1)}>Back</button>
+            <div className="address-search-container">
+              <input
+                type="text"
+                placeholder="Search by name, address or GST..."
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                className="address-search-input"
+              />
+              <i className="fas fa-search address-search-icon"></i>
+              {searchFilter && (
+                <button
+                  className="address-clear-btn"
+                  onClick={handleClearSearch}
+                  title="Clear search"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              )}
+            </div>
             <h1 className="address-title">Address Book</h1>
             <button
               className="address-new-btn"

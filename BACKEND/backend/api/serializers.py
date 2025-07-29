@@ -12,6 +12,7 @@ from .models import CompanyBill, BuyerBill, Salary, OtherTransaction
 from .models import EmployeeActionHistory
 from .models import OtherType
 from .models import BalanceSheet
+from .models import OtherName
 
 User = get_user_model()
 
@@ -220,6 +221,12 @@ class OtherTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = OtherType
         fields = ['type']
+
+
+class OtherNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OtherName
+        fields = ['id', 'type', 'name', 'created_at']
 
 class BalanceSheetSerializer(serializers.ModelSerializer):
     class Meta:

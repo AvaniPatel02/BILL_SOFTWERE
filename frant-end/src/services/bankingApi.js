@@ -204,4 +204,36 @@ export function fetchBankCashTransactions({ type = 'all', name = '' } = {}) {
     if (!res.ok) throw new Error('Failed to fetch transactions');
     return res.json();
   });
+}
+
+// Get other names for a specific type
+export async function getOtherNames(type) {
+  const token = localStorage.getItem('access_token');
+  const response = await fetch(`${API_BASE_URL}/banking/other-names/?type=${encodeURIComponent(type)}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch other names');
+  }
+  return await response.json();
+}
+
+// Add new other name
+export async function addOtherName(type, name) {
+  const token = localStorage.getItem('access_token');
+  const response = await fetch(`${API_BASE_URL}/banking/other-names/`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ type, name }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to add other name');
+  }
+  return await response.json();
 } 

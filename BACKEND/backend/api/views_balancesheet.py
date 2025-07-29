@@ -183,15 +183,32 @@ class BalanceSheetView(APIView):
         custom_types_credit = defaultdict(list)
         custom_types_debit = defaultdict(list)
         custom_types = OtherTransaction.objects.filter(date__gte=fy_start, date__lte=fy_end).exclude(type__iexact='partner').exclude(type__iexact='loan').exclude(type__iexact='fixed assets').exclude(type__iexact='unsecure loan')
+        
+        # Group by type and name to calculate net amounts
+        custom_types_net = defaultdict(lambda: defaultdict(float))
+        
         for ct in custom_types:
             tkey = ct.type.strip() if ct.type else ''
             if not tkey or tkey.lower() in sundry_keys_set:
                 continue
-            display_name = ct.name or ct.notice or tkey
+            # Prioritize name field, then notice, but never use type name as display name
+            display_name = ct.name if ct.name else (ct.notice if ct.notice else f"Unknown_{ct.id}")
+            amount = float(ct.amount)
+            
             if ct.transaction_type == 'credit':
-                custom_types_credit[tkey].append([display_name, float(ct.amount)])
+                custom_types_net[tkey][display_name] += amount
             elif ct.transaction_type == 'debit':
-                custom_types_debit[tkey].append([display_name, float(ct.amount)])
+                custom_types_net[tkey][display_name] -= amount
+        
+        # Separate into credit and debit based on net amounts
+        for type_key, name_amounts in custom_types_net.items():
+            for name, net_amount in name_amounts.items():
+                if abs(net_amount) > 0.0001:  # Only include non-zero amounts
+                    if net_amount > 0:
+                        custom_types_credit[type_key].append([name, net_amount])
+                    else:
+                        custom_types_debit[type_key].append([name, abs(net_amount)])
+        
         # Remove any empty or zero groups
         custom_types_credit = {k: v for k, v in custom_types_credit.items() if v}
         custom_types_debit = {k: v for k, v in custom_types_debit.items() if v}
@@ -367,7 +384,7 @@ class BalanceSheetSnapshotView(APIView):
         custom_types = OtherTransaction.objects.filter(date__gte=fy_start, date__lte=fy_end).exclude(type__iexact='partner').exclude(type__iexact='loan').exclude(type__iexact='fixed assets').exclude(type__iexact='unsecure loan')
         for ct in custom_types:
             tkey = ct.type.strip() if ct.type else ''
-            display_name = ct.name or ct.notice or tkey
+            display_name = ct.name if ct.name else (ct.notice if ct.notice else "No Name")
             if not tkey or tkey.lower() in sundry_keys_set:
                 continue
             if ct.transaction_type == 'credit':
