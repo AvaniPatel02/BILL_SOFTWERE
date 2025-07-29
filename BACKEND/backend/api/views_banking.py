@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q
-from .models import CompanyBill, BuyerBill, Salary, OtherTransaction, Invoice, Employee, EmployeeActionHistory, OtherType, BankAccount, CashEntry
-from .serializers import CompanyBillSerializer, BuyerBillSerializer, SalarySerializer, OtherTransactionSerializer, OtherTypeSerializer
+from .models import CompanyBill, BuyerBill, Salary, OtherTransaction, Invoice, Employee, EmployeeActionHistory, OtherType, BankAccount, CashEntry, OtherName
+from .serializers import CompanyBillSerializer, BuyerBillSerializer, SalarySerializer, OtherTransactionSerializer, OtherTypeSerializer, OtherNameSerializer
 from django.utils import timezone
 from rest_framework import status
 from decimal import Decimal
@@ -448,4 +448,71 @@ def calculate_cash_totals(request):
         'totalCredit': float(total_credit),
         'totalDebit': float(total_debit),
         'netAmount': float(net_amount)
+    }) 
+
+# OtherName views
+class OtherNameListView(generics.ListCreateAPIView):
+    queryset = OtherName.objects.all()
+    serializer_class = OtherNameSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        type_name = request.query_params.get('type')
+        if type_name:
+            names = OtherName.objects.filter(type=type_name).values_list('name', flat=True)
+            return Response({'names': list(names)})
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        type_name = request.data.get('type')
+        name = request.data.get('name')
+        
+        if not type_name or not name:
+            return Response({'error': 'Type and name are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if name already exists for this type
+        if OtherName.objects.filter(type=type_name, name=name).exists():
+            return Response({'error': 'Name already exists for this type'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        other_name = OtherName.objects.create(type=type_name, name=name)
+        return Response(OtherNameSerializer(other_name).data, status=status.HTTP_201_CREATED) 
+
+# Debug API to show OtherTransaction data
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def debug_other_transactions(request):
+    type_name = request.query_params.get('type')
+    if not type_name:
+        return Response({'error': 'Type parameter required'}, status=400)
+    
+    transactions = OtherTransaction.objects.filter(type=type_name).values(
+        'id', 'type', 'name', 'notice', 'amount', 'transaction_type', 'date'
+    )
+    
+    return Response({
+        'type': type_name,
+        'transactions': list(transactions),
+        'count': transactions.count()
+    }) 
+
+# Migration API to fix existing OtherTransaction data
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def migrate_other_transactions(request):
+    # Find OtherTransaction records where name is empty but notice has data
+    transactions = OtherTransaction.objects.filter(
+        name__isnull=True, 
+        notice__isnull=False
+    ).exclude(notice='')
+    
+    updated_count = 0
+    for transaction in transactions:
+        # Move notice to name field
+        transaction.name = transaction.notice
+        transaction.save()
+        updated_count += 1
+    
+    return Response({
+        'message': f'Updated {updated_count} transactions',
+        'updated_count': updated_count
     }) 

@@ -152,7 +152,7 @@ const Accounting = () => {
       <Header />
       <div style={{ display: "flex" }}>
         <Sidebar />
-        <div style={{ flex: 1, padding: "30px 0", maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ flex: 1, padding: "30px 0", maxWidth: '1300px', margin: "0 auto" }}>
           <div style={{
             background: "#fff",
             borderRadius: "16px",

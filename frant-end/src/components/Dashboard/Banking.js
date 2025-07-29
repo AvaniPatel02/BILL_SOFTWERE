@@ -12,7 +12,9 @@ import {
   getUniqueBuyerNames,
   getInvoicesByBuyer,
   fetchOtherTypes,
-  addOtherType
+  addOtherType,
+  getOtherNames,
+  addOtherName
 } from '../../services/bankingApi';
 import { fetchBanks } from '../../services/bankCashApi';
 import { fetchBuyerNames, addBuyerName } from '../../services/buyerApi';
@@ -73,7 +75,8 @@ const initialOther = {
   paymentType: "",
   bank: "",
   transactionType: "debit",
-  manualType: false
+  manualType: false,
+  manualName: false
 };
 
 const Banking = () => {
@@ -90,6 +93,9 @@ const Banking = () => {
   const [otherTypes, setOtherTypes] = useState(defaultTypes);
   const [manualType, setManualType] = useState(false);
   const [newType, setNewType] = useState("");
+  const [otherNames, setOtherNames] = useState([]);
+  const [manualName, setManualName] = useState(false);
+  const [newName, setNewName] = useState("");
 
   useEffect(() => {
     fetchBanks().then(data => {
@@ -207,6 +213,26 @@ const Banking = () => {
       setOtherTypes(allTypes);
     });
   }, []);
+
+  // Fetch other names when type changes
+  useEffect(() => {
+    if (otherForm.type && otherForm.type !== "Loan") {
+      getOtherNames(otherForm.type)
+        .then(data => {
+          if (data && data.names) {
+            setOtherNames(data.names);
+          } else {
+            setOtherNames([]);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching other names:', error);
+          setOtherNames([]);
+        });
+    } else {
+      setOtherNames([]);
+    }
+  }, [otherForm.type]);
 
   // Helper to get bank balance by name
   const getBankAmount = (bankName) => {
@@ -343,6 +369,20 @@ const Banking = () => {
       });
       setOtherTypes(allTypes);
     }
+
+    // Handle adding new name if manual name is selected
+    if (otherForm.manualName && newName && !otherNames.includes(newName)) {
+      await addOtherName(otherForm.type, newName);
+      // Refresh the names list
+      const updatedNames = await getOtherNames(otherForm.type);
+      if (updatedNames && updatedNames.names) {
+        setOtherNames(updatedNames.names);
+      }
+      setOtherForm(f => ({ ...f, name: newName }));
+      setManualName(false);
+      setNewName("");
+    }
+
     const payload = mapOtherPayload(otherForm);
     delete payload.paymentType;
     delete payload.transactionType;
@@ -603,7 +643,7 @@ const Banking = () => {
                         setNewType("");
                       }
                     }}
-                    style={{ padding: '6px 12px' }}
+                    style={{ padding: '9px 17px', borderRadius:'10px',backgroundColor:'#1842cf',color:'white',border: "0px"}}
                   >
                     Add
                   </button>
@@ -627,12 +667,63 @@ const Banking = () => {
               ) : otherForm.type ? (
                 <>
                   <label>Name</label>
-                  <Input
-                    placeholder="Name*"
-                    value={otherForm.name}
-                    onChange={e => setOtherForm(f => ({ ...f, name: e.target.value }))}
-                    required
-                  />
+                  {/* <div style={{marginBottom: 8}}>
+                    <input
+                      type="checkbox"
+                      checked={otherForm.manualName}
+                      onChange={() => {
+                        setOtherForm(f => ({ ...f, manualName: !f.manualName, name: "" }));
+                        setNewName("");
+                      }}
+                    /> Enter Name Manually
+                  </div> */}
+                  {!otherForm.manualName ? (
+                    <Select
+                      value={otherForm.name || ""}
+                      onChange={e => {
+                        if (e.target.value === "__ADD_NEW__") {
+                          setOtherForm(f => ({ ...f, manualName: true, name: "" }));
+                          setNewName("");
+                        } else {
+                          setOtherForm(f => ({ ...f, name: e.target.value }));
+                        }
+                      }}
+                      required
+                    >
+                      <option value="">-- Select Name --</option>
+                      {otherNames.map((name, idx) => (
+                        <option key={idx} value={name}>{name}</option>
+                      ))}
+                      <option value="__ADD_NEW__">+ Add New Name</option>
+                    </Select>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Input
+                        placeholder="Enter new name"
+                        value={newName}
+                        onChange={e => setNewName(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (newName && !otherNames.includes(newName)) {
+                            await addOtherName(otherForm.type, newName);
+                            const updatedNames = await getOtherNames(otherForm.type);
+                            if (updatedNames && updatedNames.names) {
+                              setOtherNames(updatedNames.names);
+                            }
+                            setOtherForm(f => ({ ...f, name: newName }));
+                            setManualName(false);
+                            setNewName("");
+                          }
+                        }}
+                        style={{ padding: '9px 17px', borderRadius:'10px',backgroundColor:'#1842cf',color:'white',border: "0px"}}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  )}
                 </>
               ) : null}
               <label>Notice</label>

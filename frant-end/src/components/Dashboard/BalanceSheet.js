@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { fetchBalanceSheet, saveBalanceSheetSnapshot } from '../../services/balanceSheetApi';
+import { fetchBalanceSheet } from '../../services/balanceSheetApi';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import BalanceSheetPDF from './BalanceSheetPDF';
 import '../../styles/balancesheet.css';
 
 const BalanceSheet = () => {
+  // Generate year options from 2022 to current year
+  const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let year = 2022; year <= currentYear; year++) {
+      years.push(`${year}-${year + 1}`);
+    }
+    return years;
+  };
+
   // Default to current financial year
   const getDefaultFinancialYear = () => {
     const today = new Date();
@@ -15,11 +26,15 @@ const BalanceSheet = () => {
       return `${year - 1}-${year}`;
     }
   };
+
   const [financialYear, setFinancialYear] = useState(getDefaultFinancialYear());
   const [sheet, setSheet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
+  const [showPDF, setShowPDF] = useState(false);
+
+  const yearOptions = generateYearOptions();
 
   useEffect(() => {
     setLoading(true);
@@ -33,12 +48,18 @@ const BalanceSheet = () => {
       .finally(() => setLoading(false));
   }, [financialYear]);
 
-  const handleSaveSnapshot = () => {
-    setSaving(true);
-    saveBalanceSheetSnapshot(financialYear)
-      .then(() => alert('Snapshot saved!'))
-      .catch(() => alert('Failed to save snapshot.'))
-      .finally(() => setSaving(false));
+  const handleGeneratePDF = () => {
+    if (!sheet) {
+      alert('No data available to generate PDF');
+      return;
+    }
+    setGeneratingPDF(true);
+    setShowPDF(true);
+    setGeneratingPDF(false);
+  };
+
+  const handlePDFComplete = () => {
+    setShowPDF(false);
   };
 
   // Helper to get display name for OtherTransaction
@@ -46,6 +67,14 @@ const BalanceSheet = () => {
     if (type === 'Loan' && entry.bank_name) return entry.bank_name;
     if (entry.name) return entry.name;
     return '';
+  };
+
+  // Helper function to round decimal values
+  const roundAmount = (amount) => {
+    if (amount === null || amount === undefined || amount === '') return 0;
+    const num = parseFloat(amount);
+    if (isNaN(num)) return 0;
+    return Math.round(num); // This will round 0.5 and above to 1, below 0.5 to 0
   };
 
   return (
@@ -67,22 +96,21 @@ const BalanceSheet = () => {
               {/* Left side: Label + Input */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <label>Financial Year:</label>
-                <input
-                  type="text"
+                <select
                   value={financialYear}
                   onChange={e => setFinancialYear(e.target.value)}
-                  pattern="\\d{4}-\\d{4}"
-                  placeholder="YYYY-YYYY"
-                  minLength={9}
-                  maxLength={9}
-                  style={{ width: 200, padding: '6px 10px' }}
-                />
+                  style={{ width: 200, padding:'0px 10px' }}
+                >
+                  {yearOptions.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Right side: Button */}
               <button
-                onClick={handleSaveSnapshot}
-                disabled={saving}
+                onClick={handleGeneratePDF}
+                disabled={generatingPDF}
                 style={{
                   padding: '8px 18px',
                   borderRadius: 6,
@@ -92,7 +120,7 @@ const BalanceSheet = () => {
                   fontWeight: 600
                 }}
               >
-                {saving ? 'Saving...' : 'Save Snapshot'}
+                {generatingPDF ? 'Generating...' : 'Generate PDF'}
               </button>
             </div>
 
@@ -107,7 +135,7 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.capital.map((item, idx) => (
                             <tr key={item.name + idx}>
-                              <td>{item.amount}</td>
+                              <td>{roundAmount(item.amount)}</td>
                               <td style={{ textAlign: 'right' }}>{item.partner_name || item.name || item.notice}</td>
                             </tr>
                           ))}
@@ -120,7 +148,7 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.loan_credit.map((item, idx) => (
                             <tr key={item.name + idx}>
-                              <td>{item.amount}</td>
+                              <td>{roundAmount(item.amount)}</td>
                               <td style={{ textAlign: 'right' }}>{item.bank_name || item.name || item.notice}</td>
                             </tr>
                           ))}
@@ -133,7 +161,7 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.unsecure_loan_credit.map((item, idx) => (
                             <tr key={item.name + idx}>
-                              <td>{item.amount}</td>
+                              <td>{roundAmount(item.amount)}</td>
                               <td style={{ textAlign: 'right' }}>{item.bank_name || item.name || item.notice}</td>
                             </tr>
                           ))}
@@ -147,39 +175,36 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.sundry_debtors_creditors.filter(e => e.type === 'Creditor').map((entry, idx) => (
                             <tr key={entry.name + idx}>
-                              <td>{entry.amount}</td>
+                              <td>{roundAmount(entry.amount)}</td>
                               <td style={{ textAlign: 'right' }}>{entry.name}</td>
                             </tr>
                           ))}
                         </tbody></table>
                       </div>
                     )}
-                    {/* Custom Types Credit */}
-                    {sheet.custom_types_credit && Object.keys(sheet.custom_types_credit).length > 0 && (
-                      <div className="balance-sheet-box">
-                        <h4>Custom Types (Credit)</h4>
-                        {Object.entries(sheet.custom_types_credit).map(([type, entries]) => (
-                          <div key={type}>
-                            <strong>{type}</strong>
-                            <table><tbody>
-                              {entries.map((entry, idx) => (
-                                <tr key={idx}>
-                                  <td>{entry[1]}</td>
-                                  <td style={{ textAlign: 'right' }}>{entry[0]}</td>
-                                </tr>
-                              ))}
-                            </tbody></table>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {/* Custom Types Credit - Each type as separate section */}
+                    {sheet.custom_types_credit && Object.keys(sheet.custom_types_credit).length > 0 && 
+                      Object.entries(sheet.custom_types_credit).map(([type, entries]) => (
+                        <div className="balance-sheet-box" key={`credit-${type}`}>
+                          <h4>{type} (Credit)</h4>
+                          <table><tbody>
+                            {entries.map((entry, idx) => (
+                              <tr key={idx}>
+                                <td>{roundAmount(entry[1])}</td>
+                                <td style={{ textAlign: 'right' }}>{entry[0]}</td>
+                              </tr>
+                            ))}
+                          </tbody></table>
+                        </div>
+                      ))
+                    }
                     {/* Fixed Assets (Credit) - Credit side */}
                     {sheet.fixed_assets_credit && sheet.fixed_assets_credit.length > 0 && (
                       <div className="balance-sheet-box">
                         <h4>Fixed Assets (Credit)</h4>
                         <table><tbody>
                           {sheet.fixed_assets_credit.map(([name, amt]) => (
-                            <tr key={name}><td>{amt}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
+                            <tr key={name}><td>{roundAmount(amt)}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
                           ))}
                         </tbody></table>
                       </div>
@@ -192,7 +217,7 @@ const BalanceSheet = () => {
                           <h4>Fixed Assets (Debit)</h4>
                           <table><tbody>
                             {sheet.fixed_assets_debit.map(([name, amt]) => (
-                              <tr key={name}><td>{amt}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
+                              <tr key={name}><td>{roundAmount(amt)}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
                             ))}
                           </tbody></table>
                         </div>
@@ -203,7 +228,7 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.loan_debit.map((item, idx) => (
                             <tr key={item.name + idx}>
-                              <td>{item.amount}</td>
+                              <td>{roundAmount(item.amount)}</td>
                               <td style={{ textAlign: 'right' }}>{item.bank_name || item.name || item.notice}</td>
                             </tr>
                           ))}
@@ -216,7 +241,7 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.unsecure_loan_debit.map((item, idx) => (
                             <tr key={item.name + idx}>
-                              <td>{item.amount}</td>
+                              <td>{roundAmount(item.amount)}</td>
                               <td style={{ textAlign: 'right' }}>{item.bank_name || item.name || item.notice}</td>
                             </tr>
                           ))}
@@ -228,7 +253,7 @@ const BalanceSheet = () => {
                         <h4>Expense</h4>
                         <table><tbody>
                           {sheet.salary.map(([name, amt]) => (
-                            <tr key={name}><td>{amt}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
+                            <tr key={name}><td>{roundAmount(amt)}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
                           ))}
                           <tr style={{ fontWeight: 'bold', borderTop: '2px solid #ccc' }}>
                             <td>Total</td>
@@ -242,7 +267,7 @@ const BalanceSheet = () => {
                         <h4>Buyers</h4>
                         <table><tbody>
                           {sheet.buyer.map(([name, amt]) => (
-                            <tr key={name}><td>{amt}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
+                            <tr key={name}><td>{roundAmount(amt)}</td><td style={{ textAlign: 'right' }}>{name}</td></tr>
                           ))}
                           <tr style={{ fontWeight: 'bold', borderTop: '2px solid #ccc' }}>
                             <td>Total</td>
@@ -258,32 +283,29 @@ const BalanceSheet = () => {
                         <table><tbody>
                           {sheet.sundry_debtors_creditors.filter(e => e.type === 'Debtor').map((entry, idx) => (
                             <tr key={entry.name + idx}>
-                              <td>{entry.amount}</td>
+                              <td>{roundAmount(entry.amount)}</td>
                               <td style={{ textAlign: 'right' }}>{entry.name}</td>
                             </tr>
                           ))}
                         </tbody></table>
                       </div>
                     )}
-                    {/* Custom Types Debit */}
-                    {sheet.custom_types_debit && Object.keys(sheet.custom_types_debit).length > 0 && (
-                      <div className="balance-sheet-box">
-                        <h4>Custom Types (Debit)</h4>
-                        {Object.entries(sheet.custom_types_debit).map(([type, entries]) => (
-                          <div key={type}>
-                            <strong>{type}</strong>
-                            <table><tbody>
-                              {entries.map((entry, idx) => (
-                                <tr key={idx}>
-                                  <td>{entry[1]}</td>
-                                  <td style={{ textAlign: 'right' }}>{entry[0]}</td>
-                                </tr>
-                              ))}
-                            </tbody></table>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {/* Custom Types Debit - Each type as separate section */}
+                    {sheet.custom_types_debit && Object.keys(sheet.custom_types_debit).length > 0 && 
+                      Object.entries(sheet.custom_types_debit).map(([type, entries]) => (
+                        <div className="balance-sheet-box" key={`debit-${type}`}>
+                          <h4>{type} (Debit)</h4>
+                          <table><tbody>
+                            {entries.map((entry, idx) => (
+                              <tr key={idx}>
+                                <td>{roundAmount(entry[1])}</td>
+                                <td style={{ textAlign: 'right' }}>{entry[0]}</td>
+                              </tr>
+                            ))}
+                          </tbody></table>
+                        </div>
+                      ))
+                    }
                   </div>
                 </div>
               ) : <div>{error}</div>
@@ -291,6 +313,13 @@ const BalanceSheet = () => {
           </div>
         </div>
       </div>
+      {showPDF && (
+        <BalanceSheetPDF 
+          sheet={sheet} 
+          financialYear={financialYear} 
+          onDownloadComplete={handlePDFComplete} 
+        />
+      )}
     </div>
   );
 };

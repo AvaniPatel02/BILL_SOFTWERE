@@ -66,12 +66,12 @@ const Buyer = () => {
       <Header />
       <div style={{ display: "flex" }}>
         <Sidebar />
-        <div className="buyer-content">
+        <div className="buyer-container">
           <div className="buyer-header-group">
             <button className="buyer-back-btn" onClick={() => navigate(-1)}>Back</button>
-            <h2>Buyer Page</h2>
+            <h2 className="buyer-title">Buyer Page</h2>
+            <button className="buyer-newbill-btn" onClick={() => setShowModal(true)}>New Buyer</button>
           </div>
-          <button className="buyer-newbill-btn" onClick={() => setShowModal(true)}>New Buyer</button>
           {showModal && (
             <div className="buyer-modal-overlay">
               <div className="buyer-modal">
@@ -98,39 +98,41 @@ const Buyer = () => {
                   <button className="buyer-modal-save" onClick={handleSave}>Save</button>
                   <button className="buyer-modal-cancel" onClick={handleCancel}>Cancel</button>
                 </div>
-                {error && <div style={{color:'red'}}>{error}</div>}
+                {error && <div className="buyer-error">{error}</div>}
               </div>
             </div>
           )}
           {/* Add Buyer details or functionality here */}
           {loading ? (
-            <div>Loading...</div>
+            <div className="buyer-loading">Loading...</div>
           ) : error ? (
-            <div style={{color:'red'}}>{error}</div>
+            <div className="buyer-error">{error}</div>
           ) : buyers.length > 0 && (
             <div className="buyer-table-outer">
-              <table className="buyer-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Date</th>
-                    <th>Amount</th>
-                    <th>Notes</th>
-                    <th>Payment Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {buyers.map((buyer, idx) => (
-                    <tr key={buyer.id || idx}>
-                      <td>{buyer.name}</td>
-                      <td>{buyer.date}</td>
-                      <td>{buyer.amount}</td>
-                      <td>{buyer.notes}</td>
-                      <td>{buyer.payment_type}</td>
+              <div className="buyer-table-container">
+                <table className="buyer-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Date</th>
+                      <th>Amount</th>
+                      <th>Notes</th>
+                      <th>Payment Type</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {buyers.map((buyer, idx) => (
+                      <tr key={buyer.id || idx}>
+                        <td>{buyer.name}</td>
+                        <td>{buyer.date}</td>
+                        <td>{buyer.amount}</td>
+                        <td>{buyer.notes}</td>
+                        <td>{buyer.payment_type}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

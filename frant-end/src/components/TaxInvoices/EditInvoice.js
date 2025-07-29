@@ -741,13 +741,13 @@ const EditInvoice = () => {
                         {/* INR equivalent in numbers (right) */}
                         <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                           <span style={{ width: '100%',  fontSize: '15px' }}>
-                        <strong>Converted INR Equivalent:</strong>    ₹ {inrEquivalent.toLocaleString('en-IN')}
+                        <strong>Estimated convert INR Equivalent:</strong>    ₹ {inrEquivalent.toLocaleString('en-IN')}
                           </span>
                         </div>
                         {/* INR equivalent in words (left) */}
                         <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                           <span style={{ width: '100%',  fontSize: '15px' }}>
-                         <strong> Converted INR (in words):</strong> {inrAmountInWords(inrEquivalent)}
+                         <strong> Estimated convert INR (in words):</strong> {inrAmountInWords(inrEquivalent)}
                           </span>
                         </div>
                       </>
@@ -945,35 +945,35 @@ const EditInvoice = () => {
                     <table className="table table-bordered black-bordered">
                       <tbody>
                         <tr>
-                          <td className="gray-background"><strong>Buyer (Bill to):</strong> {billTo.title}</td>
+                          <td className="gray-background"><strong>Buyer (Bill to): {billTo.title}</strong></td>
                         </tr>
                         <tr>
                           <td style={{ minHeight: '100px', height: 'auto', verticalAlign: 'top' }}>
                             <div style={{ minHeight: '100px', whiteSpace: 'pre-line' }}>
-                              <strong>Address:</strong> <span>{billTo.address}</span>
+                               <span>{billTo.address}</span>
                             </div>
                           </td>
                         </tr>
                         <tr>
-                          <td className="gray-background"><strong>GSTIN/UIN:</strong> {billTo.gst}</td>
+                          <td className="gray-background"><strong>GSTIN/UIN: {billTo.gst} </strong></td>
                         </tr>
                       </tbody>
                     </table>
                     <table className="table table-bordered black-bordered">
                       <tbody>
                         <tr>
-                          <td className="gray-background"><strong>Consignee (Ship to):</strong>  {shipTo.title}</td>
+                          <td className="gray-background"><strong>Consignee (Ship to): {shipTo.title}</strong></td>
                         </tr>
                         <tr>
                           <td style={{ minHeight: '100px', height: 'auto', verticalAlign: 'top' }}>
                             <div style={{ minHeight: '100px', whiteSpace: 'pre-line' }}>
-                              <strong>Address:</strong> <span>{shipTo.address}</span>
+                               <span>{shipTo.address}</span>
                             </div>
                           </td>
 
                         </tr>
                         <tr>
-                          <td className="gray-background"><strong>GSTIN/UIN:</strong> {shipTo.gst}</td>
+                          <td className="gray-background"><strong>GSTIN/UIN: {shipTo.gst}</strong></td>
                         </tr>
                       </tbody>
                     </table>
@@ -1177,13 +1177,13 @@ const EditInvoice = () => {
                           {/* INR equivalent in numbers (right) */}
                           <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                             <span style={{ width: '100%',  fontSize: '15px' }}>
-                            <strong>Converted INR Equivalent:</strong>  ₹ {inrEquivalent.toLocaleString('en-IN')}
+                            <strong>Estimated convert INR Equivalent:</strong>  ₹ {inrEquivalent.toLocaleString('en-IN')}
                             </span>
                           </div>
                           {/* INR equivalent in words (left) */}
                           <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                             <span style={{ width: '100%', fontSize: '15px' }}>
-                           <strong>Converted INR (in words):</strong>  {inrAmountInWords(inrEquivalent)}
+                           <strong>Estimated convert INR (in words):</strong>  {inrAmountInWords(inrEquivalent)}
                             </span>
                           </div>
                         </>
@@ -1192,7 +1192,7 @@ const EditInvoice = () => {
                     <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px',fontSize:"20px", paddingTop:'20px' } : {}}>
                       <div>
                         <strong>Totale Amount (in words):</strong><br />
-                        <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p>
+                        <strong><p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p></strong>
                         <div className="top-right-corner">
                           <span>E. & O.E</span>
                         </div>

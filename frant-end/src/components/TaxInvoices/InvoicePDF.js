@@ -331,13 +331,13 @@ const InvoicePDF = ({ invoice, settings, onDownloadComplete }) => {
                   {/* INR equivalent in numbers */}
                   <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                     <span style={{ width: '100%', fontSize: '15px' }}>
-                      <strong>Converted INR Equivalent:</strong> ₹ {inrEquivalent.toLocaleString('en-IN')}
+                      <strong>Estimated convert INR Equivalent</strong> ₹ {inrEquivalent.toLocaleString('en-IN')}
                     </span>
                   </div>
                   {/* INR equivalent in words */}
                   <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                     <span style={{ width: '100%', fontSize: '15px' }}>
-                      <strong>Converted INR (in words):</strong> {inrAmountInWords(inrEquivalent)}
+                      <strong>Estimated convert INR (in words) :</strong> {inrAmountInWords(inrEquivalent)}
                     </span>
                   </div>
                 </>
