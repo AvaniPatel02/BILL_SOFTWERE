@@ -319,6 +319,18 @@ class OtherType(models.Model):
         return self.type
 
 
+class OtherName(models.Model):
+    type = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['type', 'name']
+
+    def __str__(self):
+        return f"{self.type} - {self.name}"
+
+
 class BalanceSheet(models.Model):
     year = models.PositiveIntegerField(unique=True)
     data = models.JSONField()

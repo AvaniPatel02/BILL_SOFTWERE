@@ -20,6 +20,16 @@ const AccountStatement = () => {
 
   useEffect(() => {
     setLoading(true);
+    setError("");
+    
+    console.log('Fetching account statement with params:', {
+      buyer_name,
+      buyer_address,
+      buyer_gst,
+      from_date: fromDate,
+      to_date: toDate
+    });
+
     fetchAccountStatement({
       buyer_name,
       buyer_address,
@@ -27,8 +37,14 @@ const AccountStatement = () => {
       from_date: fromDate,
       to_date: toDate
     })
-      .then(setData)
-      .catch(e => setError(e.message))
+      .then(response => {
+        console.log('Account statement response:', response);
+        setData(response);
+      })
+      .catch(e => {
+        console.error('Account statement error:', e);
+        setError(e.message || 'Failed to fetch account statement');
+      })
       .finally(() => setLoading(false));
   }, [buyer_name, buyer_address, buyer_gst, fromDate, toDate]);
 
@@ -64,17 +80,23 @@ const AccountStatement = () => {
 
   if (loading) return <div className="text-center p-6 text-lg">Loading statement...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;
-  if (!data) return null;
+  if (!data) return <div className="text-center p-6 text-lg">No data available</div>;
+
+  // Validate data structure
+  if (!data.buyer_name || !data.statement) {
+    console.error('Invalid data structure:', data);
+    return <div className="text-center p-6 text-lg">Invalid data format</div>;
+  }
 
   return (
     <div>
       <Header />
       <div style={{ display: "flex" }}>
         <Sidebar />
-        <div className="container main-box" style={{ maxWidth: 800, marginTop: 40 }}>
+        <div className="container main-box" style={{ maxWidth: 1300, marginTop: 40,padding :'30px'}}>
           <h2 className="statement-heading" style={{ textAlign: "center", marginBottom: 24 }}>Statement of Account</h2>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-            <div className="mb-4 fs-5">
+            <div className="mb-3">
               <p><strong>Name:</strong> {data.buyer_name}</p>
               <p><strong>GST Number:</strong> {data.buyer_gst}</p>
               <p><strong>Total Balance:</strong> ₹ {Math.abs(Number(data.total_balance)).toFixed(2)}</p>
@@ -111,7 +133,7 @@ const AccountStatement = () => {
                 <th>Credit (Deposit)</th>
                 <th>Debit (Invoice)</th>
                 <th>Balance</th>
-                <th>Type</th>
+                {/* <th>Type</th> */}
               </tr>
             </thead>
             <tbody>
@@ -122,7 +144,7 @@ const AccountStatement = () => {
                   <td className="text-right">{row.credit ? `₹ ${Number(row.credit).toFixed(2)}` : "-"}</td>
                   <td className="text-right">{row.debit ? `₹ ${Math.abs(Number(row.debit)).toFixed(2)}` : "-"}</td>
                   <td className="text-right">₹ {Math.abs(Number(row.balance)).toFixed(2)}</td>
-                  <td className="text-center">{row.type}</td>
+                  {/* <td className="text-center">{row.type}</td> */}
                 </tr>
               ))}
               <tr className="total-row" style={{ background: "#f2f2f2", fontWeight: 600 }}>
@@ -130,7 +152,7 @@ const AccountStatement = () => {
                 <td className="text-right p-2">₹ {Number(data.total_credit).toFixed(2)}</td>
                 <td className="text-right p-2">₹ {Math.abs(Number(data.total_debit)).toFixed(2)}</td>
                 <td className="text-right p-2">₹ {Math.abs(Number(data.total_balance)).toFixed(2)}</td>
-                <td></td>
+                {/* <td></td> */}
               </tr>
             </tbody>
           </table>

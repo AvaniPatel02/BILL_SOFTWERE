@@ -1,6 +1,6 @@
 import React from "react";
 import Header from "./Header";
-import Sidebar from "./Sidebar";
+// import Sidebar from "./Sidebar";
 import "../../styles/Employee.css";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -275,7 +275,7 @@ const Employee = () => {
         <div className="bills-layout">
             <Header />
             <div className="bills-content">
-                <Sidebar />
+                {/* <Sidebar /> */}
                 <div className="container">
                     <div className="personbill-header-group">
                         <button className="personbill-back-btn" onClick={() => navigate(-1)}>Back</button>

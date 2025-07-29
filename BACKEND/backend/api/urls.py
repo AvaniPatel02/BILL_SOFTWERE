@@ -21,6 +21,9 @@ from .views_banking import (
     SalaryRetrieveUpdateDestroyView,
     OtherTransactionListCreateView,
     OtherTransactionRetrieveUpdateDestroyView,
+    OtherNameListView,
+    debug_other_transactions,
+    migrate_other_transactions,
     get_unique_buyer_names,
     get_invoices_by_buyer,
     other_types,
@@ -108,6 +111,15 @@ urlpatterns += [
     # OtherTransaction CRUD
     path('banking/other/', OtherTransactionListCreateView.as_view(), name='other-transaction-list-create'),
     path('banking/other/<int:pk>/', OtherTransactionRetrieveUpdateDestroyView.as_view(), name='other-transaction-detail'),
+
+    # OtherName CRUD
+    path('banking/other-names/', OtherNameListView.as_view(), name='other-name-list-create'),
+
+    # Debug API
+    path('banking/debug-other-transactions/', debug_other_transactions, name='debug-other-transactions'),
+
+    # Migration API
+    path('banking/migrate-other-transactions/', migrate_other_transactions, name='migrate-other-transactions'),
 
     # Company Bill Form Data APIs
     path('banking/company-bill/buyer-names/', get_unique_buyer_names, name='get-unique-buyer-names'),

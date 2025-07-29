@@ -741,7 +741,7 @@ const Taxinvoices = () => {
                       {showInsideIndia && selectedState === 'Gujarat' && <>
                         <tr className="inside-india">
                           <td></td>
-                          <td><span style={{ float: 'right' }}>CGST @ 9%</span></td>
+                          <td><span style={{ textAlign: 'center', display: 'block' }}>CGST @ 9%</span></td>
                           <td></td>
                           <td></td>
                           <td>9%</td>
@@ -749,7 +749,7 @@ const Taxinvoices = () => {
                         </tr>
                         <tr className="inside-india">
                           <td></td>
-                          <td><span style={{ float: 'right' }}>SGST @ 9%</span></td>
+                          <td><span style={{ textAlign: 'center', display: 'block' }}>SGST @ 9%</span></td>
                           <td></td>
                           <td></td>
                           <td>9%</td>
@@ -759,7 +759,7 @@ const Taxinvoices = () => {
                       {showInsideIndia && selectedState !== 'Gujarat' && <>
                         <tr className="outside-india">
                           <td></td>
-                          <td style={{ height: '61.5px' }}><span style={{ float: 'right', paddingTop: '11px', }}>IGST @ 18%</span></td>
+                          <td style={{ height: '61.5px' }}><span style={{ textAlign: 'center', display: 'block', paddingTop: '11px' }}>IGST @ 18%</span></td>
                           <td></td>
                           <td></td>
                           <td style={{ paddingTop: '17px' }}>18%</td>
@@ -807,13 +807,13 @@ const Taxinvoices = () => {
                         {/* INR equivalent in numbers (right) */}
                         <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                           <span style={{ width: '100%', fontSize: '15px' }}>
-                            <strong>Converted INR Equivalent:</strong>    ₹ {inrEquivalent.toLocaleString('en-IN')}
+                            <strong>Estimated convert INR Equivalent:</strong>    ₹ {inrEquivalent.toLocaleString('en-IN')}
                           </span>
                         </div>
                         {/* INR equivalent in words (left) */}
                         <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                           <span style={{ width: '100%', fontSize: '15px' }}>
-                            <strong> Converted INR (in words):</strong> {inrAmountInWords(inrEquivalent)}
+                            <strong> Estimated convert INR (in words):</strong> {inrAmountInWords(inrEquivalent)}
                           </span>
                         </div>
                       </>
@@ -822,7 +822,7 @@ const Taxinvoices = () => {
                   <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px', fontSize: "20px", paddingTop: '20px' } : {}}>
                     <div>
                       <strong>Totale Amount (in words):</strong><br />
-                      <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p>
+                      <strong> <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p></strong>
                       <div className="top-right-corner">
                         <span>E. & O.E</span>
                       </div>
@@ -1091,7 +1091,7 @@ const Taxinvoices = () => {
                     <table className="table table-bordered black-bordered">
                       <tbody>
                         <tr>
-                          <td className="gray-background"><strong>Buyer (Bill to):</strong> {billTo.title}</td>
+                          <td className="gray-background"><strong>Buyer (Bill to): {billTo.title}</strong></td>
                         </tr>
                         <tr>
                           <td style={{ minHeight: '100px', height: 'auto', verticalAlign: 'top' }}>
@@ -1101,14 +1101,14 @@ const Taxinvoices = () => {
                           </td>
                         </tr>
                         <tr>
-                          <td className="gray-background"><strong>GSTIN/UIN:</strong> {billTo.gst}</td>
+                          <td className="gray-background"><strong>GSTIN/UIN: {billTo.gst}</strong></td>
                         </tr>
                       </tbody>
                     </table>
                     <table className="table table-bordered black-bordered">
                       <tbody>
                         <tr>
-                          <td className="gray-background"><strong>Consignee (Ship to):</strong>  {shipTo.title}</td>
+                          <td className="gray-background"><strong>Consignee (Ship to):  {shipTo.title}</strong></td>
                         </tr>
                         <tr>
                           <td style={{ minHeight: '100px', height: 'auto', verticalAlign: 'top' }}>
@@ -1119,7 +1119,7 @@ const Taxinvoices = () => {
 
                         </tr>
                         <tr>
-                          <td className="gray-background"><strong>GSTIN/UIN:</strong> {shipTo.gst}</td>
+                          <td className="gray-background"><strong>GSTIN/UIN: {shipTo.gst}</strong></td>
                         </tr>
                       </tbody>
                     </table>
@@ -1177,7 +1177,7 @@ const Taxinvoices = () => {
                               fontSize: '16px',
                               color: '#333',
                               fontWeight: 600,
-                              width: 'max-content',
+                              width: '50%',
                             }}>
                               {selectedCountry.name} - {selectedCountry.symbol}
                             </div>
@@ -1236,7 +1236,7 @@ const Taxinvoices = () => {
                       <tbody>
                         <tr style={!showInsideIndia ? { height: '150px' } : { height: '111px' }}>
                           <td style={{ textAlign: "center", width: "70px" }}>1</td>
-                          <td style={{ whiteSpace: 'pre-line' }}>
+                          <td style={{ whiteSpace: 'pre-line',textAlign:'center' }}>
                             {gstConsultancy}
                           </td>
                           <td style={{ width: '130px' }}>{hnsSelect}</td>
@@ -1248,7 +1248,7 @@ const Taxinvoices = () => {
                         {showInsideIndia && selectedState === 'Gujarat' && <>
                           <tr className="inside-india">
                             <td></td>
-                            <td><span style={{ float: 'right' }}>CGST @ 9%</span></td>
+                            <td><span style={{ textAlign: 'center', display: 'block' }}>CGST @ 9%</span></td>
                             <td></td>
                             <td></td>
                             <td>9%</td>
@@ -1256,7 +1256,7 @@ const Taxinvoices = () => {
                           </tr>
                           <tr className="inside-india">
                             <td></td>
-                            <td><span style={{ float: 'right' }}>SGST @ 9%</span></td>
+                            <td><span style={{ textAlign: 'center', display: 'block' }}>SGST @ 9%</span></td>
                             <td></td>
                             <td></td>
                             <td>9%</td>
@@ -1266,7 +1266,7 @@ const Taxinvoices = () => {
                         {showInsideIndia && selectedState !== 'Gujarat' && <>
                           <tr className="outside-india">
                             <td></td>
-                            <td style={{ height: '61.5px' }}><span style={{ float: 'right', paddingTop: '11px', }}>IGST @ 18%</span></td>
+                            <td style={{ height: '61.5px' }}><span style={{ textAlign: 'center', display: 'block', paddingTop: '11px' }}>IGST @ 18%</span></td>
                             <td></td>
                             <td></td>
                             <td style={{ paddingTop: '17px' }}>18%</td>
@@ -1323,13 +1323,13 @@ const Taxinvoices = () => {
                           {/* INR equivalent in numbers (right) */}
                           <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                             <span style={{ width: '100%', fontSize: '15px' }}>
-                              <strong>Converted INR Equivalent:</strong>  ₹ {inrEquivalent.toLocaleString('en-IN')}
+                              <strong>Estimated convert INR Equivalent:</strong>  ₹ {inrEquivalent.toLocaleString('en-IN')}
                             </span>
                           </div>
                           {/* INR equivalent in words (left) */}
                           <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                             <span style={{ width: '100%', fontSize: '15px' }}>
-                              <strong>Converted INR (in words):</strong>  {inrAmountInWords(inrEquivalent)}
+                              <strong>Estimated convert INR (in words):</strong>  {inrAmountInWords(inrEquivalent)}
                             </span>
                           </div>
                         </>
@@ -1338,7 +1338,7 @@ const Taxinvoices = () => {
                     <div className="table-bordered black-bordered amount-box" style={!showInsideIndia ? { height: '100px', fontSize: "20px", paddingTop: '20px' } : {}}>
                       <div>
                         <strong>Totale Amount (in words):</strong><br />
-                        <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p>
+                      <strong> <p id="total-in-words"><span className="currency-text">{selectedCountry.code}</span> {calculationResult.amount_in_words}</p></strong>
                         <div className="top-right-corner">
                           <span>E. & O.E</span>
                         </div>
