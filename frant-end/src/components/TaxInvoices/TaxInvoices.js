@@ -1072,7 +1072,7 @@ const Taxinvoices = () => {
                     <table className="table table-bordered black-bordered">
                       <tbody>
                         <tr>
-                          <td className="gray-background"><strong style={{ fontSize: '15px' }}>{settings?.company_name}</strong></td>
+                          <td className="gray-background"><strong>{settings?.company_name}</strong></td>
                         </tr>
                         <tr>
                           <td>

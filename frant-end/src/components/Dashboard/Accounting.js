@@ -37,106 +37,51 @@ const Accounting = () => {
     getAccounts();
   }, []);
 
-  // Filtering logic
+  // Filtering logic - now shows one entry per person with total balance
   const getFilteredRows = () => {
     let rowNum = 1;
     let allRows = [];
-    let seenOther = {};
+    
     accounts.forEach(acc => {
-      // Invoices (debits)
-      if (acc.invoices && acc.invoices.length > 0) {
-        acc.invoices.forEach(inv => {
-          if (
-            (typeFilter === "All" || typeFilter === "Invoice") &&
-            (searchFilter === "" || acc.buyer_name.toLowerCase().includes(searchFilter.toLowerCase()) || (acc.buyer_gst && acc.buyer_gst.toLowerCase().includes(searchFilter.toLowerCase())))
-          ) {
-            allRows.push(
-              <tr key={`inv-${acc.buyer_name}-${inv.id}`}
-                style={{ cursor: "pointer" }}
-                onClick={() =>
-                  navigate("/account-statement", {
-                    state: {
-                      buyer_name: acc.buyer_name,
-                      buyer_address: acc.buyer_address,
-                      buyer_gst: acc.buyer_gst,
-                    }
-                  })
+      // Show only one entry per person with their total calculated balance
+      if (
+        (typeFilter === "All" || 
+         (typeFilter === "Invoice" && acc.latest_transaction?.type === "Invoice") ||
+         (typeFilter === "Buyer Debit" && acc.latest_transaction?.type === "Buyer") ||
+         (typeFilter === "Other" && acc.latest_transaction?.type === "Other")) &&
+        (searchFilter === "" || 
+         acc.buyer_name.toLowerCase().includes(searchFilter.toLowerCase()) || 
+         (acc.buyer_gst && acc.buyer_gst.toLowerCase().includes(searchFilter.toLowerCase())))
+      ) {
+        allRows.push(
+          <tr key={`person-${acc.buyer_name}`}
+            style={{ cursor: "pointer" }}
+            onClick={() =>
+              navigate("/account-statement", {
+                state: {
+                  buyer_name: acc.buyer_name,
+                  buyer_address: acc.buyer_address,
+                  buyer_gst: acc.buyer_gst,
                 }
-              >
-                <td>{rowNum++}</td>
-                <td>Invoice</td>
-                <td>{acc.buyer_name}</td>
-                <td>{inv.total_with_gst !== undefined && inv.total_with_gst !== null ? Number(inv.total_with_gst).toFixed(2) : "-"}</td>
-                <td>{inv.invoice_date ? formatDate(inv.invoice_date) : "-"}</td>
-                <td>{inv.remark || "-"}</td>
-              </tr>
-            );
-          }
-        });
-      }
-      // Buyer debits
-      if (acc.buyer_credits && acc.buyer_credits.length > 0) {
-        acc.buyer_credits.forEach(bc => {
-          if (
-            (typeFilter === "All" || typeFilter === "Buyer Debit") &&
-            (searchFilter === "" || acc.buyer_name.toLowerCase().includes(searchFilter.toLowerCase()) || (acc.buyer_gst && acc.buyer_gst.toLowerCase().includes(searchFilter.toLowerCase())))
-          ) {
-            allRows.push(
-              <tr key={`buyer-${acc.buyer_name}-${bc.id}`}
-                style={{ cursor: "pointer" }}
-                onClick={() =>
-                  navigate("/account-statement", {
-                    state: {
-                      buyer_name: acc.buyer_name,
-                      buyer_address: acc.buyer_address,
-                      buyer_gst: acc.buyer_gst,
-                    }
-                  })
-                }
-              >
-                <td>{rowNum++}</td>
-                <td>Buyer</td>
-                <td>{acc.buyer_name}</td>
-                <td>{bc.amount !== undefined && bc.amount !== null ? Number(bc.amount).toFixed(2) : "-"}</td>
-                <td>{bc.date ? formatDate(bc.date) : "-"}</td>
-                <td>{bc.notes || "-"}</td>
-              </tr>
-            );
-          }
-        });
-      }
-      // Only one 'Other' entry per person
-      if (acc.other_transactions && acc.other_transactions.length > 0) {
-        const firstOther = acc.other_transactions.find(ot => !seenOther[acc.buyer_name]);
-        if (firstOther && !seenOther[acc.buyer_name]) {
-          if (
-            (typeFilter === "All" || typeFilter === "Other") &&
-            (searchFilter === "" || acc.buyer_name.toLowerCase().includes(searchFilter.toLowerCase()) || (acc.buyer_gst && acc.buyer_gst.toLowerCase().includes(searchFilter.toLowerCase())))
-          ) {
-            allRows.push(
-              <tr key={`other-${acc.buyer_name}`}
-                style={{ cursor: "pointer" }}
-                onClick={() =>
-                  navigate("/account-statement", {
-                    state: {
-                      buyer_name: acc.buyer_name,
-                      buyer_address: acc.buyer_address,
-                      buyer_gst: acc.buyer_gst,
-                    }
-                  })
-                }
-              >
-                <td>{rowNum++}</td>
-                <td>Other</td>
-                <td>{acc.buyer_name}</td>
-                <td>{firstOther.amount !== undefined && firstOther.amount !== null ? Number(firstOther.amount).toFixed(2) : "-"}</td>
-                <td>{firstOther.date ? formatDate(firstOther.date) : "-"}</td>
-                <td>{firstOther.notice || "-"}</td>
-              </tr>
-            );
-          }
-          seenOther[acc.buyer_name] = true;
-        }
+              })
+            }
+          >
+            <td>{rowNum++}</td>
+            <td>{acc.primary_type || "Mixed"}</td>
+            <td>{acc.buyer_name}</td>
+            <td style={{ 
+              fontWeight: 'bold', 
+              color: acc.net_amount > 0 ? '#d32f2f' : acc.net_amount < 0 ? '#2e7d32' : '#666'
+            }}>
+              ₹{Math.abs(acc.net_amount).toFixed(2)}
+              <span style={{ fontSize: '10px', marginLeft: '5px', color: '#666' }}>
+                ({acc.net_amount > 0 ? 'Debtor' : acc.net_amount < 0 ? 'Creditor' : 'Settled'})
+              </span>
+            </td>
+            <td>{acc.latest_transaction?.date ? formatDate(acc.latest_transaction.date) : "-"}</td>
+            <td>{acc.latest_transaction?.note || "-"}</td>
+          </tr>
+        );
       }
     });
     return allRows;
@@ -152,7 +97,7 @@ const Accounting = () => {
       <Header />
       <div style={{ display: "flex" }}>
         <Sidebar />
-        <div style={{ flex: 1, padding: "30px 0", maxWidth: '1300px', margin: "0 auto" }}>
+        <div style={{ flex: 1, padding: "30px 0", maxWidth: 900, margin: "0 auto" }}>
           <div style={{
             background: "#fff",
             borderRadius: "16px",
@@ -160,6 +105,20 @@ const Accounting = () => {
             padding: "32px 24px"
           }}>
             <h2 style={{ marginBottom: 16 }}>All Accounts</h2>
+            
+            {/* Info message about total balance */}
+            <div style={{ 
+              marginBottom: 16, 
+              padding: '8px 12px', 
+              backgroundColor: '#e8f5e8', 
+              borderRadius: 6, 
+              fontSize: '12px',
+              color: '#2e7d32',
+              border: '1px solid #c8e6c9'
+            }}>
+              💡 <strong>Total Balance:</strong> Amount column shows the calculated total balance (Debtor/Creditor/Settled) for each person.
+            </div>
+            
             {/* Filter UI */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 ,alignItems: 'center' }}>
               <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={{ padding: 8, borderRadius: 4, border: '1px solid #ccc', height: '40px' , width: '200px'}}>
