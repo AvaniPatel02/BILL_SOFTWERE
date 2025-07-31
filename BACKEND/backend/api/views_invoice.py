@@ -63,11 +63,11 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Only the last generated invoice for this financial year can be deleted.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Check for related transactions
-        from .models import OtherTransaction, CompanyBill, Buyer, Salary
+        from .models import OtherTransaction, CompanyBill, BuyerBill, Salary
         has_related = (
             OtherTransaction.objects.filter(user=invoice.user, name=invoice.buyer_name).exists() or
             CompanyBill.objects.filter(company=invoice.buyer_name).exists() or
-            Buyer.objects.filter(name=invoice.buyer_name).exists() or
+            BuyerBill.objects.filter(name=invoice.buyer_name).exists() or
             Salary.objects.filter(name=invoice.buyer_name).exists()
         )
 

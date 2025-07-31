@@ -54,7 +54,6 @@ def add_buyer_name(request):
         date=date_obj,
         amount=request.data.get('amount') or 0,
         notes=request.data.get('notes', ''),
-        payment_type=request.data.get('payment_type', 'Cash'),
-        bank=request.data.get('bank', '')
+        payment_type=request.data.get('payment_type', 'Cash')
     )
     return Response(BuyerSerializer(buyer).data, status=status.HTTP_201_CREATED) 

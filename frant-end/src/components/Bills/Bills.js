@@ -34,43 +34,36 @@ const Bills = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar />
-      <div style={{ flex: 1 }}>
-        <Header />
-        <div className="bills-container">
-          <div className="bills-year_container">
-            <div className="bills-hadar-container">
-              <button className="bills-back-btn" onClick={() => navigate(-1)}>
-                <i className="fas fa-arrow-left" style={{ marginRight: 8 }}></i> Back
-              </button>
-              <h1 className="bills-title">Bills by Year</h1>
-              <button className="bills-new-btn" onClick={() => navigate('/taxinvoices')}>
-                + New Bill
-              </button>
-            </div>
-            <div className="bills-table-outer">
-              <div className="bills-table-container">
-                <table className="bills-table">
-                  <thead>
-                    <tr>
-                      <th>Years</th>
+    <div className="bills-layout">
+      <Header />
+      <div className="bills-content">
+        <Sidebar />
+        <div className="container">
+          <div className="bills-tabs">
+            <button className="active">Tab 1</button>
+            {/* Aap yahan aur tabs add kar sakte hain */}
+          </div>
+          <div className="bills-tab-content">
+            <div className="bills-table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Years</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {yearRanges.map((year) => (
+                    <tr
+                      key={year}
+                      className={year === currentYearRange ? 'active-year-row' : ''}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => handleRowClick(year)}
+                    >
+                      <td>{year}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {yearRanges.map((year) => (
-                      <tr
-                        key={year}
-                        className={year === currentYearRange ? 'active-year-row' : ''}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => handleRowClick(year)}
-                      >
-                        <td>{year}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

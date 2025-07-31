@@ -7,9 +7,12 @@ from .models import OTP
 from .models import Profile
 from .models import Settings
 from .models import BankAccount, CashEntry
-from .models import CompanyBill, Buyer, Salary, OtherTransaction, OtherType
+from .models import Buyer
+from .models import CompanyBill, BuyerBill, Salary, OtherTransaction
 from .models import EmployeeActionHistory
+from .models import OtherType
 from .models import BalanceSheet
+from .models import OtherName
 
 User = get_user_model()
 
@@ -169,7 +172,7 @@ class BuyerSerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField()
     class Meta:
         model = Buyer
-        fields = ['id', 'user', 'name', 'date', 'amount', 'notes', 'payment_type', 'bank', 'manual', 'created_at']
+        fields = ['id', 'user', 'name', 'date', 'amount', 'notes', 'payment_type', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
 
     def get_date(self, obj):
@@ -178,6 +181,11 @@ class BuyerSerializer(serializers.ModelSerializer):
 class CompanyBillSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyBill
+        fields = '__all__'
+
+class BuyerBillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BuyerBill
         fields = '__all__'
 
 class SalarySerializer(serializers.ModelSerializer):
@@ -194,14 +202,14 @@ class OtherTransactionSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if 'transaction_type' not in data or data['transaction_type'] not in ['credit', 'debit']:
             raise serializers.ValidationError({'transaction_type': 'This field is required and must be either "credit" or "debit".'})
-        if 'payment_type' not in data or data['payment_type'] not in ['Cash', 'Bank']:
-            raise serializers.ValidationError({'payment_type': 'This field is required and must be either "Cash" or "Bank".'})
+        if 'payment_type' not in data or data['payment_type'] not in ['Cash', 'Banking']:
+            raise serializers.ValidationError({'payment_type': 'This field is required and must be either "Cash" or "Banking".'})
         return data
 
 class EmployeeActionHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = EmployeeActionHistory
-        fields = ['id', 'action', 'date']
+        fields = ['id', 'action', 'date', 'details']
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
@@ -209,14 +217,18 @@ class EmployeeActionHistorySerializer(serializers.ModelSerializer):
             rep['date'] = instance.date.strftime('%d-%m-%Y')
         return rep
 
+class OtherTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OtherType
+        fields = ['type']
+
+
+class OtherNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OtherName
+        fields = ['id', 'type', 'name', 'created_at']
+
 class BalanceSheetSerializer(serializers.ModelSerializer):
     class Meta:
         model = BalanceSheet
         fields = ['id', 'year', 'data', 'created_at', 'updated_at']
-
-
-class OtherTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OtherType
-        fields = ['id', 'type_name', 'created_at']
-        read_only_fields = ['id', 'created_at']

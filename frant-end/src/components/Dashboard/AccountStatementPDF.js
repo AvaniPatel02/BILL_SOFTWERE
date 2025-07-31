@@ -193,7 +193,7 @@ const AccountStatementPDF = ({
             <th style={{ border: '2px solid #ddd', padding: '15px 10px', textAlign: 'right', fontWeight: 'bold', fontSize: '18px' }}>Credit (Deposit)</th>
             <th style={{ border: '2px solid #ddd', padding: '15px 10px', textAlign: 'right', fontWeight: 'bold', fontSize: '18px' }}>Debit (Invoice)</th>
             <th style={{ border: '2px solid #ddd', padding: '15px 10px', textAlign: 'right', fontWeight: 'bold', fontSize: '18px' }}>Balance</th>
-            <th style={{ border: '2px solid #ddd', padding: '15px 10px', textAlign: 'center', fontWeight: 'bold', fontSize: '18px' }}>Type</th>
+            {/* <th style={{ border: '2px solid #ddd', padding: '15px 10px', textAlign: 'center', fontWeight: 'bold', fontSize: '18px' }}>Type</th> */}
           </tr>
         </thead>
         <tbody>
@@ -210,7 +210,7 @@ const AccountStatementPDF = ({
               <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'right', fontWeight: 'bold', fontSize: '16px' }}>
                 ₹ {Math.abs(Number(row.balance)).toFixed(2)}
               </td>
-              <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', fontSize: '16px' }}>{row.type}</td>
+              {/* <td style={{ border: '1px solid #ddd', padding: '12px 8px', textAlign: 'center', fontSize: '16px' }}>{row.type}</td> */}
             </tr>
           ))}
           {/* Total Row */}
@@ -225,7 +225,7 @@ const AccountStatementPDF = ({
             <td style={{ border: '2px solid #ddd', padding: '15px 10px', textAlign: 'right', fontSize: '18px' }}>
               ₹ {Math.abs(Number(data.total_balance)).toFixed(2)}
             </td>
-            <td style={{ border: '2px solid #ddd', padding: '15px 10px' }}></td>
+            {/* <td style={{ border: '2px solid #ddd', padding: '15px 10px' }}></td> */}
           </tr>
         </tbody>
       </table>

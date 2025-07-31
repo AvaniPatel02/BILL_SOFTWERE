@@ -252,14 +252,12 @@ class Employee(models.Model):
 
 
 class Buyer(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='buyers', null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='buyers')
     name = models.CharField(max_length=255)
     date = models.DateField()
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     notes = models.TextField(blank=True, null=True)
-    payment_type = models.CharField(max_length=50, choices=[('Bank', 'Bank'), ('Cash', 'Cash')], default='Bank')
-    bank = models.CharField(max_length=100, blank=True, null=True)
-    manual = models.BooleanField(default=False)
+    payment_type = models.CharField(max_length=20, choices=[('Bank', 'Bank'), ('Cash', 'Cash')], default='Bank')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -274,6 +272,15 @@ class CompanyBill(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     payment_type = models.CharField(max_length=50)
     bank = models.CharField(max_length=100, blank=True, null=True)
+
+class BuyerBill(models.Model):
+    name = models.CharField(max_length=255)
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    notice = models.TextField(blank=True, null=True)
+    payment_type = models.CharField(max_length=50)
+    bank = models.CharField(max_length=100, blank=True, null=True)
+    manual = models.BooleanField(default=False)
 
 class Salary(models.Model):
     name = models.CharField(max_length=255)
@@ -296,12 +303,32 @@ class OtherTransaction(models.Model):
 
 
 class EmployeeActionHistory(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    action = models.CharField(max_length=50)  # 'created', 'updated', 'deleted'
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='action_histories')
+    action = models.CharField(max_length=255)
     date = models.DateTimeField(auto_now_add=True)
+    details = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.employee.name} - {self.action} at {self.date}"
+
+
+class OtherType(models.Model):
+    type = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.type
+
+
+class OtherName(models.Model):
+    type = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['type', 'name']
+
+    def __str__(self):
+        return f"{self.type} - {self.name}"
 
 
 class BalanceSheet(models.Model):
@@ -312,17 +339,5 @@ class BalanceSheet(models.Model):
 
     def __str__(self):
         return f"Balance Sheet {self.year}"
-
-
-class OtherType(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='other_types')
-    type_name = models.CharField(max_length=100, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.type_name
-
-    class Meta:
-        unique_together = ['user', 'type_name']
 
 

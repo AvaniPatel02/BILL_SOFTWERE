@@ -48,22 +48,4 @@
 
 .balance-sheet-box tr:last-child td {
   border-bottom: none;
-}
-
-/* Clickable partner names in Capital section */
-.clickable-partner {
-  cursor: pointer;
-  color: #007bff;
-  text-decoration: underline;
-  transition: color 0.2s ease;
-}
-
-.clickable-partner:hover {
-  color: #0056b3;
-  text-decoration: underline;
-}
-
-.non-clickable-partner {
-  cursor: default;
-  color: #666;
 } 

@@ -124,7 +124,7 @@ const InvoicePDF = ({ invoice, settings, onDownloadComplete }) => {
             <table className="table table-bordered black-bordered">
               <tbody>
                 <tr>
-                  <td className="gray-background"><strong >{settings.company_name}</strong></td>
+                  <td className="gray-background"><strong style={{ fontSize: '15px' }}>{settings.company_name}</strong></td>
                 </tr>
                 <tr>
                   <td>
@@ -141,7 +141,7 @@ const InvoicePDF = ({ invoice, settings, onDownloadComplete }) => {
             <table className="table table-bordered black-bordered">
               <tbody>
                 <tr>
-                  <td className="gray-background"><strong>Buyer (Bill to): {invoice.buyer_name}</strong> </td>
+                  <td className="gray-background"><strong>Buyer (Bill to):</strong> {invoice.buyer_name}</td>
                 </tr>
                 <tr>
                   <td style={{ minHeight: '100px', height: 'auto', verticalAlign: 'top' }}>
@@ -151,14 +151,14 @@ const InvoicePDF = ({ invoice, settings, onDownloadComplete }) => {
                   </td>
                 </tr>
                 <tr>
-                  <td className="gray-background"><strong>GSTIN/UIN: {invoice.buyer_gst}</strong> </td>
+                  <td className="gray-background"><strong>GSTIN/UIN:</strong> {invoice.buyer_gst}</td>
                 </tr>
               </tbody>
             </table>
             <table className="table table-bordered black-bordered">
               <tbody>
                 <tr>
-                  <td className="gray-background"><strong>Consignee (Ship to): {invoice.consignee_name}</strong> </td>
+                  <td className="gray-background"><strong>Consignee (Ship to):</strong> {invoice.consignee_name}</td>
                 </tr>
                 <tr>
                   <td style={{ minHeight: '100px', height: 'auto', verticalAlign: 'top' }}>
@@ -168,7 +168,7 @@ const InvoicePDF = ({ invoice, settings, onDownloadComplete }) => {
                   </td>
                 </tr>
                 <tr>
-                  <td className="gray-background"><strong>GSTIN/UIN: {invoice.consignee_gst}</strong> </td>
+                  <td className="gray-background"><strong>GSTIN/UIN:</strong> {invoice.consignee_gst}</td>
                 </tr>
               </tbody>
             </table>
@@ -331,13 +331,13 @@ const InvoicePDF = ({ invoice, settings, onDownloadComplete }) => {
                   {/* INR equivalent in numbers */}
                   <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                     <span style={{ width: '100%', fontSize: '15px' }}>
-                      <strong>Converted INR Equivalent:</strong> ₹ {inrEquivalent.toLocaleString('en-IN')}
+                      <strong>Estimated convert INR Equivalent</strong> ₹ {inrEquivalent.toLocaleString('en-IN')}
                     </span>
                   </div>
                   {/* INR equivalent in words */}
                   <div className="table-bordered black-bordered amount-box" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '48px', height: '70px' }}>
                     <span style={{ width: '100%', fontSize: '15px' }}>
-                      <strong>Converted INR (in words):</strong> {inrAmountInWords(inrEquivalent)}
+                      <strong>Estimated convert INR (in words) :</strong> {inrAmountInWords(inrEquivalent)}
                     </span>
                   </div>
                 </>

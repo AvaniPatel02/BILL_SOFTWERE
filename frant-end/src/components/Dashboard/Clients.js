@@ -13,6 +13,7 @@ const Clients = () => {
   const [loading, setLoading] = useState(false);
   const [downloadingInvoice, setDownloadingInvoice] = useState(null);
   const [settings, setSettings] = useState(null);
+  const [searchFilter, setSearchFilter] = useState('');
   const navigate = useNavigate();
 
 //   navigate('/taxinvoices', {
@@ -72,7 +73,7 @@ const Clients = () => {
       map.get(key).push(inv);
     });
     
-    return Array.from(map.entries()).map(([key, invList]) => {
+    let clients = Array.from(map.entries()).map(([key, invList]) => {
       // Sort by date (newest first)
       const sortedInvoices = invList.sort((a, b) => new Date(b.invoice_date) - new Date(a.invoice_date));
       
@@ -83,7 +84,24 @@ const Clients = () => {
         allInvoices: sortedInvoices
       };
     });
-  }, [invoices]);
+
+    // Filter based on search term
+    if (searchFilter.trim()) {
+      const filterLower = searchFilter.toLowerCase();
+      clients = clients.filter(client => {
+        // Check if client name matches
+        if (client.buyer_name.toLowerCase().includes(filterLower)) {
+          return true;
+        }
+        // Check if any invoice number matches
+        return client.allInvoices.some(inv => 
+          inv.invoice_number && inv.invoice_number.toLowerCase().includes(filterLower)
+        );
+      });
+    }
+    
+    return clients;
+  }, [invoices, searchFilter]);
 
   const handleView = (invoiceId) => navigate(`/view-bill/${invoiceId}`);
   const handleEdit = (invoiceId) => navigate(`/edit-invoice/${invoiceId}`);
@@ -130,6 +148,11 @@ const Clients = () => {
     }
   };
 
+  // Clear search filter
+  const handleClearSearch = () => {
+    setSearchFilter('');
+  };
+
   const handleNewBill = (client) => {
     // Find the latest invoice for this client to get country and state
     const latestInvoice = client.allInvoices[0];
@@ -169,6 +192,25 @@ const Clients = () => {
             <button className="client-back-btn" onClick={() => navigate(-1)}>
               <i className="fas fa-arrow-left" style={{ marginRight: 8 }}></i> Back
             </button>
+            <div className="clients-search-container">
+              <input
+                type="text"
+                placeholder="Search by name or bill number..."
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                className="clients-search-input"
+              />
+              <i className="fas fa-search clients-search-icon"></i>
+              {searchFilter && (
+                <button
+                  className="clients-clear-btn"
+                  onClick={handleClearSearch}
+                  title="Clear search"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              )}
+            </div>
             <h1 className="client-title">Clients</h1>
             <button className="client-new-btn" onClick={() => navigate('/taxinvoices')}>
               + New Bill
@@ -223,8 +265,7 @@ const Clients = () => {
                           <td>
                             {inv.currency} {parseFloat(inv.total_with_gst).toFixed(2)}
                           </td>
-                          <td style={{ display: 'flex', gap: '10px', paddingLeft:'20px' }}>
-                            <div style={{ display: 'flex', gap: '10px',}}>
+                          <td style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
                             <div className="client-tooltip-container">
                               <button
                                 className="client-action-btn client-view"
@@ -279,8 +320,6 @@ const Clients = () => {
                                 <span className="client-tooltip-text">Delete</span>
                               </div>
                             )}
-                            </div>
-                           
                           </td>
                         </tr>
                       ));

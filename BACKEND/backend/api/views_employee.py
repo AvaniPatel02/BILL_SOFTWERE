@@ -6,11 +6,12 @@ from .serializers import EmployeeSerializer, EmployeeActionHistorySerializer
 from django.utils import timezone
 
 # Utility to log employee actions
-def log_employee_action(employee, action):
+def log_employee_action(employee, action, details=""):
     print(f"[DEBUG] Logging action: {action} for employee {employee.id} - {employee.name}")
     EmployeeActionHistory.objects.create(
         employee=employee,
-        action=action
+        action=action,
+        details=details
     )
     print(f"[DEBUG] Action logged: {action}")
 
@@ -23,7 +24,7 @@ class EmployeeListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         employee = serializer.save()
-        log_employee_action(employee, "Created")
+        log_employee_action(employee, "Created", "Employee created.")
 
 class EmployeeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = EmployeeSerializer
@@ -46,20 +47,20 @@ class EmployeeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
                 changed_fields.append(field)
         if 'salary' in serializer.validated_data and serializer.validated_data['salary'] != old_data['salary']:
             if serializer.validated_data['salary'] > old_data['salary']:
-                log_employee_action(employee, f"Incremented salary from {old_data['salary']} to {employee.salary}")
+                log_employee_action(employee, f"Incremented salary from {old_data['salary']} to {employee.salary}", "Salary incremented")
             else:
                 # Salary decreased or corrected, treat as edit
                 other_fields = [f for f in changed_fields if f != 'salary']
-                log_employee_action(employee, f"Edited: salary{', ' + ', '.join(other_fields) if other_fields else ''}")
+                log_employee_action(employee, f"Edited: salary{', ' + ', '.join(other_fields) if other_fields else ''}", f"Fields changed: salary{', ' + ', '.join(other_fields) if other_fields else ''}")
         elif changed_fields:
-            log_employee_action(employee, f"Edited: {', '.join(changed_fields)}")
+            log_employee_action(employee, f"Edited: {', '.join(changed_fields)}", f"Fields changed: {', '.join(changed_fields)}")
         else:
-            log_employee_action(employee, "Edited")
+            log_employee_action(employee, "Edited", "Employee details updated.")
 
     def perform_destroy(self, instance):
         print(f"[DEBUG] perform_destroy called for employee {instance.id} - {instance.name}")
         instance.soft_delete()
-        log_employee_action(instance, "Deleted")
+        log_employee_action(instance, "Deleted", "Employee soft-deleted.")
         print(f"[DEBUG] perform_destroy completed for employee {instance.id}")
 
 # List deleted employees
@@ -79,7 +80,7 @@ def restore_employee(request, pk):
     except Employee.DoesNotExist:
         return Response({'message': 'Not found'}, status=404)
     emp.restore()
-    log_employee_action(emp, "Restored")
+    log_employee_action(emp, "Restored", "Employee restored from deleted.")
     return Response({'message': 'Employee restored'}, status=200)
 
 # Permanent delete endpoint
