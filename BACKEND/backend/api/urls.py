@@ -15,24 +15,23 @@ from .views_buyer import buyer_list_create, get_all_buyer_names, add_buyer_name
 from .views_banking import (
     CompanyBillListCreateView,
     CompanyBillRetrieveUpdateDestroyView,
-    BuyerBillListCreateView,
-    BuyerBillRetrieveUpdateDestroyView,
     SalaryListCreateView,
     SalaryRetrieveUpdateDestroyView,
+    BuyerListCreateView,
+    BuyerRetrieveUpdateDestroyView,
     OtherTransactionListCreateView,
     OtherTransactionRetrieveUpdateDestroyView,
-    OtherNameListView,
-    debug_other_transactions,
-    migrate_other_transactions,
-    get_unique_buyer_names,
-    get_invoices_by_buyer,
-    other_types,
     bank_cash_transactions,
     calculate_bank_totals,
     calculate_cash_totals,
+    get_unique_buyer_names,
+    get_invoices_by_buyer,
+    other_types,
+    get_unique_other_names,
+    get_other_names_by_type,
 )
 from .views_accounting import account_list, account_statement
-from .views_balancesheet import BalanceSheetView, BalanceSheetSnapshotView
+from .views_balancesheet import BalanceSheetView, BalanceSheetSnapshotView, SettlementTestView
 
 router = DefaultRouter()
 router.register(r'invoices', InvoiceViewSet, basename='invoice')
@@ -100,9 +99,9 @@ urlpatterns += [
     path('banking/company-bill/', CompanyBillListCreateView.as_view(), name='company-bill-list-create'),
     path('banking/company-bill/<int:pk>/', CompanyBillRetrieveUpdateDestroyView.as_view(), name='company-bill-detail'),
 
-    # BuyerBill CRUD
-    path('banking/buyer-bill/', BuyerBillListCreateView.as_view(), name='buyer-bill-list-create'),
-    path('banking/buyer-bill/<int:pk>/', BuyerBillRetrieveUpdateDestroyView.as_view(), name='buyer-bill-detail'),
+    # Buyer CRUD
+    path('banking/buyer/', BuyerListCreateView.as_view(), name='buyer-list-create'),
+    path('banking/buyer/<int:pk>/', BuyerRetrieveUpdateDestroyView.as_view(), name='buyer-detail'),
 
     # Salary CRUD
     path('banking/salary/', SalaryListCreateView.as_view(), name='salary-list-create'),
@@ -112,22 +111,17 @@ urlpatterns += [
     path('banking/other/', OtherTransactionListCreateView.as_view(), name='other-transaction-list-create'),
     path('banking/other/<int:pk>/', OtherTransactionRetrieveUpdateDestroyView.as_view(), name='other-transaction-detail'),
 
-    # OtherName CRUD
-    path('banking/other-names/', OtherNameListView.as_view(), name='other-name-list-create'),
-
-    # Debug API
-    path('banking/debug-other-transactions/', debug_other_transactions, name='debug-other-transactions'),
-
-    # Migration API
-    path('banking/migrate-other-transactions/', migrate_other_transactions, name='migrate-other-transactions'),
-
     # Company Bill Form Data APIs
     path('banking/company-bill/buyer-names/', get_unique_buyer_names, name='get-unique-buyer-names'),
     path('banking/company-bill/invoices/<str:buyer_name>/', get_invoices_by_buyer, name='get-invoices-by-buyer'),
+    
+    # Other Transaction Form Data APIs
+    path('banking/other/names/', get_unique_other_names, name='get-unique-other-names'),
+    path('banking/other/names/<str:type_name>/', get_other_names_by_type, name='get-other-names-by-type'),
 ]
 
 urlpatterns += [
-    path('api/other-types/', other_types, name='other-types'),
+    path('other-types/', other_types, name='other-types'),
 ]
 
 urlpatterns += [
@@ -138,6 +132,7 @@ urlpatterns += [
 urlpatterns += [
     path('balancesheet/', BalanceSheetView.as_view(), name='balancesheet'),
     path('balancesheet/snapshot/', BalanceSheetSnapshotView.as_view(), name='balancesheet-snapshot'),
+    path('balancesheet/settlement-test/', SettlementTestView.as_view(), name='settlement-test'),
 ]
 
 urlpatterns += [

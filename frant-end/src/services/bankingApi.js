@@ -31,7 +31,8 @@ export function submitCompanyBill(data) {
 export function updateCompanyBill(id, data) {
   return fetch(`${API_BASE_URL}/banking/company-bill/${id}/`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
+    credentials: 'include',
     body: JSON.stringify(data)
   }).then(res => res.json());
 }
@@ -69,36 +70,37 @@ export function getInvoicesByBuyer(buyerName) {
   });
 }
 
-// BuyerBill CRUD
-export function listBuyerBills() {
-  return fetch(`${API_BASE_URL}/banking/buyer-bill/`, {
+// Buyer CRUD (unified Buyer model)
+export function listBuyers() {
+  return fetch(`${API_BASE_URL}/buyer/`, {
     headers: getAuthHeaders(),
     credentials: 'include',
   }).then(res => res.json());
 }
-export function getBuyerBill(id) {
-  return fetch(`${API_BASE_URL}/banking/buyer-bill/${id}/`, {
+export function getBuyer(id) {
+  return fetch(`${API_BASE_URL}/buyer/${id}/`, {
     headers: getAuthHeaders(),
     credentials: 'include',
   }).then(res => res.json());
 }
-export function submitBuyerBill(data) {
-  return fetch(`${API_BASE_URL}/banking/buyer-bill/`, {
+export function submitBuyer(data) {
+  return fetch(`${API_BASE_URL}/buyer/`, {
     method: 'POST',
     headers: getAuthHeaders(),
     credentials: 'include',
     body: JSON.stringify(data)
   }).then(res => res.json());
 }
-export function updateBuyerBill(id, data) {
-  return fetch(`${API_BASE_URL}/banking/buyer-bill/${id}/`, {
+export function updateBuyer(id, data) {
+  return fetch(`${API_BASE_URL}/buyer/${id}/`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
+    credentials: 'include',
     body: JSON.stringify(data)
   }).then(res => res.json());
 }
-export function deleteBuyerBill(id) {
-  return fetch(`${API_BASE_URL}/banking/buyer-bill/${id}/`, {
+export function deleteBuyer(id) {
+  return fetch(`${API_BASE_URL}/buyer/${id}/`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
     credentials: 'include',
@@ -129,7 +131,8 @@ export function submitSalary(data) {
 export function updateSalary(id, data) {
   return fetch(`${API_BASE_URL}/banking/salary/${id}/`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
+    credentials: 'include',
     body: JSON.stringify(data)
   }).then(res => res.json());
 }
@@ -163,9 +166,10 @@ export function submitOtherTransaction(data) {
   }).then(res => res.json());
 }
 export function updateOtherTransaction(id, data) {
-  return fetch(`${API_BASE_URL}/banking/other-transaction/${id}/`, {
+  return fetch(`${API_BASE_URL}/banking/other/${id}/`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
+    credentials: 'include',
     body: JSON.stringify(data)
   }).then(res => res.json());
 }
@@ -178,17 +182,33 @@ export function deleteOtherTransaction(id) {
 }
 
 // Add a new 'other' type
-export async function addOtherType(type) {
-  return fetch(`${API_BASE_URL}/api/other-types/`, {
+export async function addOtherType(typeName) {
+  const response = await fetch(`${API_BASE_URL}/other-types/`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type }),
-  }).then(res => res.json());
+    headers: getAuthHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({ type_name: typeName }),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
+  return response.json();
 }
 
 // Fetch all 'other' types
 export async function fetchOtherTypes() {
-  return fetch(`${API_BASE_URL}/api/other-types/`).then(res => res.json());
+  const response = await fetch(`${API_BASE_URL}/other-types/`, {
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
+  return response.json();
 }
 
 // Fetch transactions for bank/cash/all
@@ -206,34 +226,11 @@ export function fetchBankCashTransactions({ type = 'all', name = '' } = {}) {
   });
 }
 
-// Get other names for a specific type
-export async function getOtherNames(type) {
-  const token = localStorage.getItem('access_token');
-  const response = await fetch(`${API_BASE_URL}/banking/other-names/?type=${encodeURIComponent(type)}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+export async function getOtherNamesByType(typeName) {
+  const token = localStorage.getItem("access_token");
+  const response = await fetch(`${API_BASE_URL}/banking/other/names/${typeName}/`, {
+    headers: { Authorization: `Bearer ${token}` }
   });
-  if (!response.ok) {
-    throw new Error('Failed to fetch other names');
-  }
-  return await response.json();
-}
-
-// Add new other name
-export async function addOtherName(type, name) {
-  const token = localStorage.getItem('access_token');
-  const response = await fetch(`${API_BASE_URL}/banking/other-names/`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ type, name }),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to add other name');
-  }
+  if (!response.ok) throw new Error("Failed to fetch other names");
   return await response.json();
 } 

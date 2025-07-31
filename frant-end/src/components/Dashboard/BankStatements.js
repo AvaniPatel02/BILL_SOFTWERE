@@ -7,11 +7,14 @@ import { fetchBanks, fetchCashEntries } from '../../services/bankCashApi';
 import { fetchBankCashTransactions } from '../../services/bankingApi';
 import {
   updateCompanyBill,
-  updateBuyerBill,
   updateSalary,
-  updateOtherTransaction
+  updateOtherTransaction,
+  deleteCompanyBill,
+  deleteSalary,
+  deleteOtherTransaction
 } from '../../services/bankingApi';
-import './BankStatements.css';
+import { addBuyer, updateBuyer, deleteBuyer } from '../../services/buyerApi';
+import '../../styles/BankStatements.css';
 import BankStatementPDF from './BankStatementPDF';
 
 function formatDate(dateStr) {
@@ -192,7 +195,7 @@ const BankStatements = () => {
                   <tr key={idx}>
                     <td>{formatDate(tx.date)}</td>
                     <td>{getDetails(tx)}</td>
-                    <td>{tx.details || '-'}</td>
+                    <td>{tx.description || '-'}</td>
                     <td>{credit ? credit.toFixed(2) : '-'}</td>
                     <td>{debit ? debit.toFixed(2) : '-'}</td>
                     <td>{runningBalance.toFixed(2)}</td>
@@ -202,8 +205,8 @@ const BankStatements = () => {
                         onClick={() => {
                           setEditingIdx(idx);
                           setEditTx({
-                            date: tx.date,
-                            amount: tx.amount,
+                            date: tx.date || '',
+                            amount: tx.amount || '',
                             description: tx.description || ''
                           });
                         }}
@@ -214,8 +217,7 @@ const BankStatements = () => {
                         className="btn btn-sm btn-outline-danger"
                         onClick={() => {
                           if (window.confirm('Are you sure you want to delete this transaction?')) {
-                            // Add delete functionality here
-                            console.log('Delete transaction:', tx);
+                            handleDelete(tx, idx);
                           }
                         }}
                       >
@@ -243,30 +245,141 @@ const BankStatements = () => {
   async function saveEdit(tx, idx) {
     let updateFn;
     let id = tx.id;
-    let data = {
-      date: editTx.date,
-      amount: editTx.amount,
-      description: editTx.description,
-      // Add other fields as needed
-    };
+    let data = {};
 
-    if (tx.type === 'CompanyBill') updateFn = updateCompanyBill;
-    else if (tx.type === 'BuyerBill') updateFn = updateBuyerBill;
-    else if (tx.type === 'Salary') updateFn = updateSalary;
-    else if (tx.type === 'Other') updateFn = updateOtherTransaction;
+
+
+
+
+    // Map the form fields to the correct database fields based on transaction type
+    if (tx.type === 'CompanyBill') {
+      data = {
+        date: editTx.date,
+        amount: editTx.amount,
+        notice: editTx.description,  // Map description to notice field
+        company: tx.details,  // Keep the original company name
+        payment_type: tx.payment_type || 'Bank',  // Add payment_type
+        bank: tx.bank || ''  // Add bank field
+      };
+      updateFn = updateCompanyBill;
+    } else if (tx.type === 'Buyer') {
+      data = {
+        date: editTx.date,
+        amount: editTx.amount,
+        notes: editTx.description,  // Map description to notes field
+        name: tx.details,  // Keep the original buyer name
+        payment_type: tx.payment_type || 'Bank',  // Add payment_type
+        bank: tx.bank || ''  // Add bank field
+      };
+      updateFn = updateBuyer;  // Use the Buyer API instead of blocking
+    } else if (tx.type === 'Salary') {
+      data = {
+        date: editTx.date,
+        amount: editTx.amount,
+        notice: editTx.description,  // Map description to notice field
+        name: tx.details,  // Keep the original employee name
+        payment_type: tx.payment_type || 'Bank',  // Add payment_type
+        bank: tx.bank || ''  // Add bank field
+      };
+      updateFn = updateSalary;
+    } else if (tx.type === 'Other') {
+      data = {
+        date: editTx.date,
+        amount: editTx.amount,
+        notice: editTx.description,  // Map description to notice field
+        name: tx.details,  // Keep the original name (from details field)
+        type: tx.description,  // Keep the original type (from description field)
+        payment_type: tx.payment_type || 'Bank',  // Add payment_type
+        bank: tx.bank || '',  // Add bank field
+        transaction_type: tx.transaction_type || 'debit'  // Add transaction_type
+      };
+      updateFn = updateOtherTransaction;
+    } else if (tx.type === 'OpeningBalance') {
+      // OpeningBalance transactions cannot be edited
+      alert('Opening Balance transactions cannot be edited.');
+      return;
+    }
+
+    // Check if updateFn was assigned
+    if (!updateFn) {
+      console.error('No update function assigned for transaction type:', tx.type);
+      alert('Cannot update this type of transaction. Type: ' + tx.type);
+      return;
+    }
 
     try {
       await updateFn(id, data);
       setEditingIdx(null);
       setEditTx({});
-      setTransactions(prev =>
-        prev.map((item, i) => (i === idx ? { ...item, ...editTx } : item))
-      );
+      // Refresh the transactions list to get updated data
+      setLoading(true);
+      let fetchParams = {};
+      if (mode === 'Bank') {
+        if (selectedBank) {
+          fetchParams = { type: 'bank', name: selectedBank };
+        } else {
+          fetchParams = { type: 'bank' };
+        }
+      } else if (mode === 'Cash') {
+        fetchParams = { type: 'cash' };
+      } else {
+        fetchParams = { type: 'all' };
+      }
+      const updatedTransactions = await fetchBankCashTransactions(fetchParams);
+      setTransactions(updatedTransactions);
+      setLoading(false);
+      alert('Transaction updated successfully!');
     } catch (err) {
-      alert('Failed to update transaction');
+      alert('Failed to update transaction: ' + (err.message || 'Unknown error'));
+      console.error('Update error:', err);
     }
   }
 
+  async function handleDelete(tx, idx) {
+    let deleteFn;
+    let id = tx.id;
+
+    if (tx.type === 'CompanyBill') deleteFn = deleteCompanyBill;
+    else if (tx.type === 'Buyer') deleteFn = deleteBuyer;
+    else if (tx.type === 'Salary') deleteFn = deleteSalary;
+    else if (tx.type === 'Other') deleteFn = deleteOtherTransaction;
+    else if (tx.type === 'OpeningBalance') {
+      alert('Opening Balance transactions cannot be deleted.');
+      return;
+    }
+
+    // Check if deleteFn was assigned
+    if (!deleteFn) {
+      console.error('No delete function assigned for transaction type:', tx.type);
+      alert('Cannot delete this type of transaction. Type: ' + tx.type);
+      return;
+    }
+
+    try {
+      await deleteFn(id);
+      // Refresh the transactions list to get updated data
+      setLoading(true);
+      let fetchParams = {};
+      if (mode === 'Bank') {
+        if (selectedBank) {
+          fetchParams = { type: 'bank', name: selectedBank };
+        } else {
+          fetchParams = { type: 'bank' };
+        }
+      } else if (mode === 'Cash') {
+        fetchParams = { type: 'cash' };
+      } else {
+        fetchParams = { type: 'all' };
+      }
+      const updatedTransactions = await fetchBankCashTransactions(fetchParams);
+      setTransactions(updatedTransactions);
+      setLoading(false);
+      alert('Transaction deleted successfully!');
+    } catch (err) {
+      alert('Failed to delete transaction: ' + (err.message || 'Unknown error'));
+      console.error('Delete error:', err);
+    }
+  }
 
 
   return (
@@ -322,7 +435,7 @@ const BankStatements = () => {
             
             {/* Edit Modal */}
             {editingIdx !== null && (
-              <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <div className="modal show">
                 <div className="modal-dialog">
                   <div className="modal-content">
                     <div className="modal-header">
@@ -330,6 +443,15 @@ const BankStatements = () => {
                       <button type="button" className="btn-close" onClick={() => setEditingIdx(null)}></button>
                     </div>
                     <div className="modal-body">
+                      <div className="mb-3">
+                        <label className="form-label">Transaction Type</label>
+                        <input 
+                          type="text" 
+                          className="form-control" 
+                          value={transactions[editingIdx]?.type || ''} 
+                          disabled
+                        />
+                      </div>
                       <div className="mb-3">
                         <label className="form-label">Date</label>
                         <input 
@@ -343,6 +465,7 @@ const BankStatements = () => {
                         <label className="form-label">Amount</label>
                         <input 
                           type="number" 
+                          step="0.01"
                           className="form-control" 
                           value={editTx.amount || ''} 
                           onChange={e => setEditTx({...editTx, amount: e.target.value})}
@@ -361,7 +484,7 @@ const BankStatements = () => {
                     <div className="modal-footer">
                       <button type="button" className="btn btn-secondary" onClick={() => setEditingIdx(null)}>Cancel</button>
                       <button type="button" className="btn btn-primary" onClick={() => {
-                        const currentTx = editingIdx === 'opening' ? openingBalance : transactions[editingIdx];
+                        const currentTx = transactions[editingIdx];
                         saveEdit(currentTx, editingIdx);
                       }}>Save</button>
                     </div>
