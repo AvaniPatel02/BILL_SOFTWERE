@@ -19,8 +19,6 @@ from .serializers import ProfileSerializer
 from django.urls import path
 from .models import Settings
 from .serializers import SettingsSerializer
-from .models import OtherType
-from .serializers import OtherTypeSerializer
 from .models import Invoice, Buyer
 from .serializers import InvoiceSerializer, BuyerSerializer
 

@@ -6,18 +6,16 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {
   submitCompanyBill,
-  submitBuyerBill,
   submitSalary,
   submitOtherTransaction,
   getUniqueBuyerNames,
   getInvoicesByBuyer,
+  getOtherNamesByType,
   fetchOtherTypes,
-  addOtherType,
-  getOtherNames,
-  addOtherName
+  addOtherType
 } from '../../services/bankingApi';
 import { fetchBanks } from '../../services/bankCashApi';
-import { fetchBuyerNames, addBuyerName } from '../../services/buyerApi';
+import { fetchBuyerNames, addBuyerName, addBuyer } from '../../services/buyerApi';
 import { getEmployees } from '../../services/employeeApi';
 
 const sampleBuyers = ["Buyer One", "Buyer Two", "Buyer Three"];
@@ -27,13 +25,13 @@ const sampleCompanies = ["ABC Pvt Ltd", "XYZ Ltd", "Demo Company"];
 const sampleInvoices = ["INV-001", "INV-002", "INV-003"];
 
 // Helper for input fields
-const Input = ({ type = "text", ...props }) => (
-  <input className="banking-input banking-input-bankingjs" type={type} {...props} />
+const Input = ({ type = "text", value, ...props }) => (
+  <input className="banking-input banking-input-bankingjs" type={type} value={value || ''} {...props} />
 );
 
 // Helper for select fields
-const Select = ({ options, children, ...props }) => (
-  <select className="banking-input banking-input-bankingjs" {...props}>
+const Select = ({ options, children, value, ...props }) => (
+  <select className="banking-input banking-input-bankingjs" value={value || ''} {...props}>
     {children}
     {options && options.map((opt, i) => (
       <option key={i} value={opt}>{opt}</option>
@@ -72,11 +70,11 @@ const initialOther = {
   amount: "",
   notice: "",
   bank_name: "",    // NEW
+  name: "",         // Add missing name field
   paymentType: "",
   bank: "",
   transactionType: "debit",
-  manualType: false,
-  manualName: false
+  manualType: false
 };
 
 const Banking = () => {
@@ -89,13 +87,27 @@ const Banking = () => {
   const [buyerNames, setBuyerNames] = useState([]);
   const [invoicesForBuyer, setInvoicesForBuyer] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const defaultTypes = ["Partner", "Loan", "Unsecure Loan", "Fixed Assets", "Assets"];
+  const defaultTypes = ["Partner", "Loan", "Unsecure Loan", "Fixed Assets", "Assets","Expense"];
   const [otherTypes, setOtherTypes] = useState(defaultTypes);
   const [manualType, setManualType] = useState(false);
   const [newType, setNewType] = useState("");
   const [otherNames, setOtherNames] = useState([]);
   const [manualName, setManualName] = useState(false);
-  const [newName, setNewName] = useState("");
+
+  // Fetch other types when component mounts
+  useEffect(() => {
+    fetchOtherTypes()
+      .then(data => {
+        if (data && data.types) {
+          setOtherTypes(data.types);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching other types:', error);
+        toast.error(`Failed to load types: ${error.message}`);
+        // Keep default types if API fails
+      });
+  }, []);
 
   useEffect(() => {
     fetchBanks().then(data => {
@@ -197,27 +209,10 @@ const Banking = () => {
     }
   }, [visibleButton]);
 
-  // Fetch other types on mount
-  useEffect(() => {
-    fetchOtherTypes().then(data => {
-      let backendTypes = [];
-      if (Array.isArray(data)) backendTypes = data;
-      else if (data && Array.isArray(data.types)) backendTypes = data.types;
-      // Merge and deduplicate (case-insensitive)
-      const allTypes = [...defaultTypes];
-      backendTypes.forEach(type => {
-        if (!allTypes.some(def => def.toLowerCase() === type.toLowerCase())) {
-          allTypes.push(type);
-        }
-      });
-      setOtherTypes(allTypes);
-    });
-  }, []);
-
   // Fetch other names when type changes
   useEffect(() => {
     if (otherForm.type && otherForm.type !== "Loan") {
-      getOtherNames(otherForm.type)
+      getOtherNamesByType(otherForm.type)
         .then(data => {
           if (data && data.names) {
             setOtherNames(data.names);
@@ -265,11 +260,15 @@ const Banking = () => {
   };
   // Update mapOtherPayload to include partner_name and bank_name
   const mapOtherPayload = (form) => ({
-    ...form,
+    type: form.type,
+    date: form.date,
+    amount: form.amount,
+    notice: form.notice,
     payment_type: form.paymentType,
+    bank: form.bank,
     transaction_type: form.transactionType,
-    bank_name: form.type === "Loan" ? form.bank_name : "",
-    name: form.type !== "Loan" ? form.name : "",
+    bank_name: form.bank_name || "",
+    name: form.name || ""
   });
 
   // Submit handlers for each form
@@ -313,18 +312,18 @@ const Banking = () => {
     delete payload.transactionType;
     console.log('Form data:', buyerForm);
     console.log('Payload:', payload);
-    submitBuyerBill(payload)
+    addBuyer(payload)
       .then(response => {
         console.log('Backend response:', response);
         if (response && response.id) {
-          toast.success('Buyer Bill submitted!');
+          toast.success('Buyer submitted!');
           resetForm(setBuyerForm, initialBuyer);
         } else {
           toast.error('Error: ' + JSON.stringify(response));
         }
       })
       .catch(error => {
-        toast.error('Error submitting Buyer Bill');
+        toast.error('Error submitting Buyer');
         console.error(error);
       });
   };
@@ -355,34 +354,22 @@ const Banking = () => {
     e.preventDefault();
     let typeToUse = otherForm.type;
     if (otherForm.manualType && typeToUse && !otherTypes.includes(typeToUse)) {
-      await addOtherType(typeToUse);
-      // Refresh the types list
-      const updatedTypes = await fetchOtherTypes();
-      let backendTypes = [];
-      if (Array.isArray(updatedTypes)) backendTypes = updatedTypes;
-      else if (updatedTypes && Array.isArray(updatedTypes.types)) backendTypes = updatedTypes.types;
-      const allTypes = [...defaultTypes];
-      backendTypes.forEach(type => {
-        if (!allTypes.some(def => def.toLowerCase() === type.toLowerCase())) {
-          allTypes.push(type);
+      try {
+        // Save new type to database
+        await addOtherType(typeToUse);
+        
+        // Refresh types from API
+        const updatedTypes = await fetchOtherTypes();
+        if (updatedTypes && updatedTypes.types) {
+          setOtherTypes(updatedTypes.types);
         }
-      });
-      setOtherTypes(allTypes);
-    }
-
-    // Handle adding new name if manual name is selected
-    if (otherForm.manualName && newName && !otherNames.includes(newName)) {
-      await addOtherName(otherForm.type, newName);
-      // Refresh the names list
-      const updatedNames = await getOtherNames(otherForm.type);
-      if (updatedNames && updatedNames.names) {
-        setOtherNames(updatedNames.names);
+      } catch (error) {
+        console.error('Error adding new type:', error);
+        toast.error('Failed to add new type. Please try again.');
+        return;
       }
-      setOtherForm(f => ({ ...f, name: newName }));
-      setManualName(false);
-      setNewName("");
     }
-
+    
     const payload = mapOtherPayload(otherForm);
     delete payload.paymentType;
     delete payload.transactionType;
@@ -394,6 +381,7 @@ const Banking = () => {
         if (response && response.id) {
           toast.success('Other Transaction submitted!');
           resetForm(setOtherForm, initialOther);
+          setManualName(false);
         } else {
           toast.error('Error: ' + JSON.stringify(response));
         }
@@ -462,9 +450,9 @@ const Banking = () => {
               <Select value={companyForm.paymentType} onChange={e => setCompanyForm(f => ({ ...f, paymentType: e.target.value }))} required>
                 <option value="">-- Select Payment Type --</option>
                 <option value="Cash">Cash</option>
-                <option value="Banking">Banking</option>
+                <option value="Bank">Bank</option>
               </Select>
-              {companyForm.paymentType === "Banking" && (
+              {companyForm.paymentType === "Bank" && (
                 <>
                   <label>Bank</label>
                   <Select
@@ -513,9 +501,9 @@ const Banking = () => {
               <Select value={buyerForm.paymentType} onChange={e => setBuyerForm(f => ({ ...f, paymentType: e.target.value }))} required>
                 <option value="">-- Select Payment Type --</option>
                 <option value="Cash">Cash</option>
-                <option value="Banking">Banking</option>
+                <option value="Bank">Bank</option>
               </Select>
-              {buyerForm.paymentType === "Banking" && (
+              {buyerForm.paymentType === "Bank" && (
                 <>
                   <label>Bank</label>
                   <Select
@@ -558,9 +546,9 @@ const Banking = () => {
               <Select value={salaryForm.paymentType} onChange={e => setSalaryForm(f => ({ ...f, paymentType: e.target.value }))} required>
                 <option value="">-- Select Payment Type --</option>
                 <option value="Cash">Cash</option>
-                <option value="Banking">Banking</option>
+                <option value="Bank">Bank</option>
               </Select>
-              {salaryForm.paymentType === "Banking" && (
+              {salaryForm.paymentType === "Bank" && (
                 <>
                   <label>Bank</label>
                   <Select
@@ -625,25 +613,26 @@ const Banking = () => {
                         newType &&
                         !otherTypes.some(t => t.toLowerCase() === newType.toLowerCase())
                       ) {
-                        await addOtherType(newType);
-                        const updatedTypes = await fetchOtherTypes();
-                        // Merge and deduplicate again
-                        const allTypes = [...defaultTypes];
-                        let backendTypes = [];
-                        if (Array.isArray(updatedTypes)) backendTypes = updatedTypes;
-                        else if (updatedTypes && Array.isArray(updatedTypes.types)) backendTypes = updatedTypes.types;
-                        backendTypes.forEach(type => {
-                          if (!allTypes.some(def => def.toLowerCase() === type.toLowerCase())) {
-                            allTypes.push(type);
+                        try {
+                          // Save new type to database
+                          await addOtherType(newType);
+                          
+                          // Refresh types from API
+                          const updatedTypes = await fetchOtherTypes();
+                          if (updatedTypes && updatedTypes.types) {
+                            setOtherTypes(updatedTypes.types);
                           }
-                        });
-                        setOtherTypes(allTypes);
-                        setOtherForm(f => ({ ...f, type: newType }));
-                        setManualType(false);
-                        setNewType("");
+                          
+                          setOtherForm(f => ({ ...f, type: newType }));
+                          setManualType(false);
+                          setNewType("");
+                        } catch (error) {
+                          console.error('Error adding new type:', error);
+                          toast.error('Failed to add new type. Please try again.');
+                        }
                       }
                     }}
-                    style={{ padding: '9px 17px', borderRadius:'10px',backgroundColor:'#1842cf',color:'white',border: "0px"}}
+                    style={{ padding: '6px 12px' }}
                   >
                     Add
                   </button>
@@ -666,63 +655,32 @@ const Banking = () => {
                 </>
               ) : otherForm.type ? (
                 <>
-                  <label>Name</label>
-                  {/* <div style={{marginBottom: 8}}>
-                    <input
-                      type="checkbox"
-                      checked={otherForm.manualName}
-                      onChange={() => {
-                        setOtherForm(f => ({ ...f, manualName: !f.manualName, name: "" }));
-                        setNewName("");
-                      }}
+                  <label style={{marginBottom: 8}}>
+                    <input 
+                      type="checkbox" 
+                      checked={manualName} 
+                      onChange={() => setManualName(!manualName)} 
                     /> Enter Name Manually
-                  </div> */}
-                  {!otherForm.manualName ? (
+                  </label>
+                  <label>Name</label>
+                  {manualName ? (
+                    <Input
+                      placeholder="Name*"
+                      value={otherForm.name}
+                      onChange={e => setOtherForm(f => ({ ...f, name: e.target.value }))}
+                      required
+                    />
+                  ) : (
                     <Select
                       value={otherForm.name || ""}
-                      onChange={e => {
-                        if (e.target.value === "__ADD_NEW__") {
-                          setOtherForm(f => ({ ...f, manualName: true, name: "" }));
-                          setNewName("");
-                        } else {
-                          setOtherForm(f => ({ ...f, name: e.target.value }));
-                        }
-                      }}
+                      onChange={e => setOtherForm(f => ({ ...f, name: e.target.value }))}
                       required
                     >
                       <option value="">-- Select Name --</option>
-                      {otherNames.map((name, idx) => (
-                        <option key={idx} value={name}>{name}</option>
+                      {otherNames.map((name, index) => (
+                        <option key={index} value={name}>{name}</option>
                       ))}
-                      <option value="__ADD_NEW__">+ Add New Name</option>
                     </Select>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Input
-                        placeholder="Enter new name"
-                        value={newName}
-                        onChange={e => setNewName(e.target.value)}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (newName && !otherNames.includes(newName)) {
-                            await addOtherName(otherForm.type, newName);
-                            const updatedNames = await getOtherNames(otherForm.type);
-                            if (updatedNames && updatedNames.names) {
-                              setOtherNames(updatedNames.names);
-                            }
-                            setOtherForm(f => ({ ...f, name: newName }));
-                            setManualName(false);
-                            setNewName("");
-                          }
-                        }}
-                        style={{ padding: '9px 17px', borderRadius:'10px',backgroundColor:'#1842cf',color:'white',border: "0px"}}
-                      >
-                        Add
-                      </button>
-                    </div>
                   )}
                 </>
               ) : null}
@@ -742,9 +700,9 @@ const Banking = () => {
               <Select value={otherForm.paymentType} onChange={e => setOtherForm(f => ({ ...f, paymentType: e.target.value }))} required>
                 <option value="">-- Select Payment Type --</option>
                 <option value="Cash">Cash</option>
-                <option value="Banking">Banking</option>
+                <option value="Bank">Bank</option>
               </Select>
-              {otherForm.paymentType === "Banking" && (
+              {otherForm.paymentType === "Bank" && (
                 <>
                   <label>Bank</label>
                   <Select

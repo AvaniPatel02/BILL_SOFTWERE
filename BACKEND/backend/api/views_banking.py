@@ -3,130 +3,83 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q
-from .models import CompanyBill, BuyerBill, Salary, OtherTransaction, Invoice, Employee, EmployeeActionHistory, OtherType, BankAccount, CashEntry, OtherName
-from .serializers import CompanyBillSerializer, BuyerBillSerializer, SalarySerializer, OtherTransactionSerializer, OtherTypeSerializer, OtherNameSerializer
+from .models import CompanyBill, Buyer, Salary, OtherTransaction, BankAccount, CashEntry, EmployeeActionHistory, Invoice, OtherType
+from .serializers import CompanyBillSerializer, BuyerSerializer, SalarySerializer, OtherTransactionSerializer, OtherTypeSerializer
 from django.utils import timezone
 from rest_framework import status
 from decimal import Decimal
 
 # Utility to log employee actions
-
-def log_employee_action(employee, action, details=""):
+def log_employee_action(employee, action):
     EmployeeActionHistory.objects.create(
         employee=employee,
-        action=action,
-        details=details
+        action=action
     )
 
 # CompanyBill CRUD
 class CompanyBillListCreateView(generics.ListCreateAPIView):
     queryset = CompanyBill.objects.all()
     serializer_class = CompanyBillSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        company_bill = serializer.save()
-        # Removed automatic bank amount updates
-        # amount = Decimal(str(company_bill.amount))
-        # if company_bill.payment_type == 'Banking' and company_bill.bank:
-        #     bank = BankAccount.objects.filter(bank_name=company_bill.bank, is_deleted=False).first()
-        #     if bank:
-        #         bank.amount += amount
-        #         bank.save()
-        # elif company_bill.payment_type == 'Cash':
-        #     cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
-        #     if cash:
-        #         cash.amount += amount
-        #         cash.save()
+        serializer.save()
 
 class CompanyBillRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CompanyBill.objects.all()
     serializer_class = CompanyBillSerializer
-    permission_classes = [permissions.AllowAny]
-
-# BuyerBill CRUD
-class BuyerBillListCreateView(generics.ListCreateAPIView):
-    queryset = BuyerBill.objects.all()
-    serializer_class = BuyerBillSerializer
-    permission_classes = [permissions.AllowAny]
-
-    def perform_create(self, serializer):
-        buyer_bill = serializer.save()
-        # Removed automatic bank amount updates
-        # amount = Decimal(str(buyer_bill.amount))
-        # if buyer_bill.payment_type == 'Banking' and buyer_bill.bank:
-        #     bank = BankAccount.objects.filter(bank_name=buyer_bill.bank, is_deleted=False).first()
-        #     if bank:
-        #         bank.amount -= amount
-        #         bank.save()
-        # elif buyer_bill.payment_type == 'Cash':
-        #     cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
-        #     if cash:
-        #         cash.amount -= amount
-        #         cash.save()
-
-class BuyerBillRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = BuyerBill.objects.all()
-    serializer_class = BuyerBillSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAuthenticated]
 
 # Salary CRUD
 class SalaryListCreateView(generics.ListCreateAPIView):
     queryset = Salary.objects.all()
     serializer_class = SalarySerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        salary = serializer.save()
-        # Removed automatic bank amount updates
-        # amount = Decimal(str(salary.amount))
-        # if salary.payment_type == 'Banking' and salary.bank:
-        #     bank = BankAccount.objects.filter(bank_name=salary.bank, is_deleted=False).first()
-        #     if bank:
-        #         bank.amount -= amount
-        #         bank.save()
-        # elif salary.payment_type == 'Cash':
-        #     cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
-        #     if cash:
-        #         cash.amount -= amount
-        #         cash.save()
+        serializer.save()
 
 class SalaryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Salary.objects.all()
     serializer_class = SalarySerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAuthenticated]
+
+# Buyer CRUD
+class BuyerListCreateView(generics.ListCreateAPIView):
+    serializer_class = BuyerSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Buyer.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class BuyerRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = BuyerSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Include Buyer records that either belong to the current user OR have no user (from banking entries)
+        return Buyer.objects.filter(Q(user=self.request.user) | Q(user__isnull=True))
 
 # OtherTransaction CRUD
 class OtherTransactionListCreateView(generics.ListCreateAPIView):
-    queryset = OtherTransaction.objects.all()
     serializer_class = OtherTransactionSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return OtherTransaction.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        other = serializer.save(user=self.request.user)
-        # Removed automatic bank amount updates
-        # amount = Decimal(str(other.amount))
-        # if other.payment_type == 'Banking' and other.bank:
-        #     bank = BankAccount.objects.filter(bank_name=other.bank, is_deleted=False).first()
-        #     if bank:
-        #         if other.transaction_type == 'credit':
-        #             bank.amount += amount
-        #         else:
-        #             bank.amount -= amount
-        #         bank.save()
-        # elif other.payment_type == 'Cash':
-        #     cash = CashEntry.objects.filter(user=self.request.user).order_by('-date').first()
-        #     if cash:
-        #         if other.transaction_type == 'credit':
-        #             cash.amount += amount
-        #         else:
-        #             cash.amount -= amount
-        #         cash.save()
+        serializer.save(user=self.request.user)
 
 class OtherTransactionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = OtherTransaction.objects.all()
     serializer_class = OtherTransactionSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return OtherTransaction.objects.filter(user=self.request.user)
 
 # New endpoints for company bill form
 @api_view(['GET'])
@@ -171,199 +124,267 @@ def get_invoices_by_buyer(request, buyer_name):
         }, status=500) 
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def other_types(request):
     if request.method == 'GET':
-        types = OtherType.objects.all()
-        serializer = OtherTypeSerializer(types, many=True)
-        return Response({'types': [t['type'] for t in serializer.data]})
+        # Get default types
+        default_types = ["Partner", "Loan", "Unsecure Loan", "Fixed Assets", "Assets", "Expense"]
+        
+        # Get custom types from OtherType model for this user
+        custom_types = OtherType.objects.filter(user=request.user).values_list('type_name', flat=True)
+        
+        # Combine default and custom types
+        all_types = list(default_types) + list(custom_types)
+        
+        return Response({'types': all_types})
     elif request.method == 'POST':
-        serializer = OtherTypeSerializer(data=request.data)
+        # Save new custom type
+        type_name = request.data.get('type_name')
+        if not type_name:
+            return Response({'error': 'type_name is required'}, status=400)
+        
+        # Check if type already exists
+        existing_type = OtherType.objects.filter(user=request.user, type_name=type_name).first()
+        if existing_type:
+            return Response({'message': 'Type already exists'}, status=200)
+        
+        # Create new type
+        serializer = OtherTypeSerializer(data={'type_name': type_name})
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_unique_other_names(request):
+    """Get unique names from OtherTransaction grouped by type"""
+    other_names = OtherTransaction.objects.filter(
+        user=request.user, 
+        name__isnull=False, 
+        name__gt=''
+    ).values_list('name', flat=True).distinct()
+    return Response({'other_names': list(other_names)})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_other_names_by_type(request, type_name):
+    """Get names for a specific type from OtherTransaction"""
+    names = OtherTransaction.objects.filter(
+        user=request.user, 
+        type=type_name,
+        name__isnull=False, 
+        name__gt=''
+    ).values_list('name', flat=True).distinct()
+    return Response({'names': list(names)})
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def bank_cash_transactions(request):
     """
-    Returns all transactions (CompanyBill, BuyerBill, Salary, OtherTransaction) for a given bank or for cash.
+    Returns all transactions (CompanyBill, Buyer, Salary, OtherTransaction) for a given bank or for cash.
     Query params:
       - type: 'bank', 'cash', or 'all'
       - name: <bank_name> (required if type='bank')
     """
-    ttype = request.GET.get('type', 'all')
-    bank_name = request.GET.get('name', None)
-    user = request.user
-    transactions = []
+    try:
+        ttype = request.GET.get('type', 'all')
+        bank_name = request.GET.get('name', None)
+        user = request.user
+        transactions = []
 
-    # Add opening balance for bank
-    if ttype in ['all', 'bank'] and bank_name:
-        opening = BankAccount.objects.filter(user=user, bank_name=bank_name, is_opening_balance=True, is_deleted=False).first()
-        if opening:
-            transactions.append({
-                'type': 'OpeningBalance',
-                'date': opening.date if hasattr(opening, 'date') else None,
-                'amount': float(opening.amount),
-                'credit': True,
-                'debit': False,
-                'description': 'Opening Balance',
-                'bank': bank_name,
-                'details': 'Opening Balance',
-            })
-    
-    # Add opening balance for cash
-    if ttype in ['all', 'cash']:
-        opening = CashEntry.objects.filter(user=user, is_opening_balance=True, is_deleted=False).first()
-        if opening:
-            transactions.append({
-                'type': 'OpeningBalance',
-                'date': opening.date,
-                'amount': float(opening.amount),
-                'credit': True,
-                'debit': False,
-                'description': 'Opening Balance',
-                'bank': None,
-                'details': 'Opening Balance',
-            })
+        # Add opening balance for bank
+        if ttype in ['all', 'bank'] and bank_name:
+            opening = BankAccount.objects.filter(user=user, bank_name=bank_name, is_opening_balance=True, is_deleted=False).first()
+            if opening:
+                transactions.append({
+                    'id': opening.id,
+                    'type': 'OpeningBalance',
+                    'date': None,  # BankAccount doesn't have date field
+                    'amount': float(opening.amount),
+                    'credit': True,
+                    'debit': False,
+                    'description': 'Opening Balance',
+                    'bank': bank_name,
+                    'details': 'Opening Balance',
+                })
+        
+        # Add opening balance for cash
+        if ttype in ['all', 'cash']:
+            opening = CashEntry.objects.filter(user=user, is_opening_balance=True, is_deleted=False).first()
+            if opening:
+                transactions.append({
+                    'id': opening.id,
+                    'type': 'OpeningBalance',
+                    'date': opening.date,
+                    'amount': float(opening.amount),
+                    'credit': True,
+                    'debit': False,
+                    'description': 'Opening Balance',
+                    'bank': None,
+                    'details': 'Opening Balance',
+                })
 
-    if ttype in ['all', 'bank']:
-        # CompanyBill (credit)
-        cb_qs = CompanyBill.objects.all()
-        if ttype == 'bank':
-            if bank_name:
-                cb_qs = cb_qs.filter(payment_type='Banking', bank=bank_name)
-            else:
-                cb_qs = cb_qs.filter(payment_type='Banking')
-        elif ttype == 'all':
-            cb_qs = cb_qs.filter(payment_type='Banking')
-        for cb in cb_qs:
-            transactions.append({
-                'type': 'CompanyBill',
-                'date': cb.date,
-                'amount': float(cb.amount),
-                'credit': True,
-                'debit': False,
-                'description': cb.notice or '',
-                'bank': cb.bank,
-                'details': cb.company,
-            })
-        # BuyerBill (debit)
-        bb_qs = BuyerBill.objects.all()
-        if ttype == 'bank':
-            if bank_name:
-                bb_qs = bb_qs.filter(payment_type='Banking', bank=bank_name)
-            else:
-                bb_qs = bb_qs.filter(payment_type='Banking')
-        elif ttype == 'all':
-            bb_qs = bb_qs.filter(payment_type='Banking')
-        for bb in bb_qs:
-            transactions.append({
-                'type': 'BuyerBill',
-                'date': bb.date,
-                'amount': float(bb.amount),
-                'credit': False,
-                'debit': True,
-                'description': bb.notice or '',
-                'bank': bb.bank,
-                'details': bb.name,
-            })
-        # Salary (debit)
-        sal_qs = Salary.objects.all()
-        if ttype == 'bank':
-            if bank_name:
-                sal_qs = sal_qs.filter(payment_type='Banking', bank=bank_name)
-            else:
-                sal_qs = sal_qs.filter(payment_type='Banking')
-        elif ttype == 'all':
-            sal_qs = sal_qs.filter(payment_type='Banking')
-        for sal in sal_qs:
-            transactions.append({
-                'type': 'Salary',
-                'date': sal.date,
-                'amount': float(sal.amount),
-                'credit': False,
-                'debit': True,
-                'description': '',
-                'bank': sal.bank,
-                'details': sal.name,
-            })
-        # OtherTransaction (credit/debit)
-        ot_qs = OtherTransaction.objects.all()
-        if ttype == 'bank':
-            if bank_name:
-                ot_qs = ot_qs.filter(payment_type='Banking', bank=bank_name)
-            else:
-                ot_qs = ot_qs.filter(payment_type='Banking')
-        elif ttype == 'all':
-            ot_qs = ot_qs.filter(payment_type='Banking')
-        for ot in ot_qs:
-            transactions.append({
-                'type': 'Other',
-                'date': ot.date,
-                'amount': float(ot.amount),
-                'credit': ot.transaction_type == 'credit',
-                'debit': ot.transaction_type == 'debit',
-                'description': ot.notice or '',
-                'bank': ot.bank,
-                'details': ot.type,
-            })
-    if ttype in ['all', 'cash']:
-        # CompanyBill (credit)
-        cb_qs = CompanyBill.objects.filter(payment_type='Cash')
-        for cb in cb_qs:
-            transactions.append({
-                'type': 'CompanyBill',
-                'date': cb.date,
-                'amount': float(cb.amount),
-                'credit': True,
-                'debit': False,
-                'description': cb.notice or '',
-                'bank': None,
-                'details': cb.company,
-            })
-        # BuyerBill (debit)
-        bb_qs = BuyerBill.objects.filter(payment_type='Cash')
-        for bb in bb_qs:
-            transactions.append({
-                'type': 'BuyerBill',
-                'date': bb.date,
-                'amount': float(bb.amount),
-                'credit': False,
-                'debit': True,
-                'description': bb.notice or '',
-                'bank': None,
-                'details': bb.name,
-            })
-        # Salary (debit)
-        sal_qs = Salary.objects.filter(payment_type='Cash')
-        for sal in sal_qs:
-            transactions.append({
-                'type': 'Salary',
-                'date': sal.date,
-                'amount': float(sal.amount),
-                'credit': False,
-                'debit': True,
-                'description': '',
-                'bank': None,
-                'details': sal.name,
-            })
-        # OtherTransaction (credit/debit)
-        ot_qs = OtherTransaction.objects.filter(payment_type='Cash')
-        for ot in ot_qs:
-            transactions.append({
-                'type': 'Other',
-                'date': ot.date,
-                'amount': float(ot.amount),
-                'credit': ot.transaction_type == 'credit',
-                'debit': ot.transaction_type == 'debit',
-                'description': ot.notice or '',
-                'bank': None,
-                'details': ot.type,
-            })
-    # Sort by date descending
-    transactions.sort(key=lambda x: str(x['date']), reverse=True)
-    return Response(transactions)
+        if ttype in ['all', 'bank']:
+            # CompanyBill (credit)
+            cb_qs = CompanyBill.objects.all()  # CompanyBill doesn't have user field
+            if ttype == 'bank':
+                if bank_name:
+                    cb_qs = cb_qs.filter(payment_type='Bank', bank=bank_name)
+                else:
+                    cb_qs = cb_qs.filter(payment_type='Bank')
+            elif ttype == 'all':
+                cb_qs = cb_qs.all()  # Show all CompanyBill transactions for 'all' type
+            for cb in cb_qs:
+                transactions.append({
+                    'id': cb.id,
+                    'type': 'CompanyBill',
+                    'date': cb.date,
+                    'amount': float(cb.amount),
+                    'credit': True,
+                    'debit': False,
+                    'description': cb.notice or cb.company,  # Use notice if available, otherwise company name
+                    'bank': cb.bank,
+                    'payment_type': cb.payment_type,  # Add payment_type field
+                    'details': 'CompanyBill',  # Show transaction type in details column
+                })
+            # Buyer (debit) - Buyer model has nullable user field
+            bb_qs = Buyer.objects.filter(user__isnull=True)  # Only get records without user (from banking entries)
+            if ttype == 'bank':
+                if bank_name:
+                    bb_qs = bb_qs.filter(payment_type='Bank', bank=bank_name)
+                else:
+                    bb_qs = bb_qs.filter(payment_type='Bank')
+            elif ttype == 'all':
+                bb_qs = bb_qs.all()  # Show all Buyer transactions for 'all' type
+            for bb in bb_qs:
+                transactions.append({
+                    'id': bb.id,
+                    'type': 'Buyer',
+                    'date': bb.date,
+                    'amount': float(bb.amount),
+                    'credit': False,
+                    'debit': True,
+                    'description': bb.notes or bb.name,  # Use notes if available, otherwise buyer name
+                    'bank': bb.bank,
+                    'payment_type': bb.payment_type,  # Add payment_type field
+                    'details': 'Buyer',  # Show transaction type in details column
+                })
+            # Salary (debit)
+            sal_qs = Salary.objects.all()  # Salary doesn't have user field
+            if ttype == 'bank':
+                if bank_name:
+                    sal_qs = sal_qs.filter(payment_type='Bank', bank=bank_name)
+                else:
+                    sal_qs = sal_qs.filter(payment_type='Bank')
+            elif ttype == 'all':
+                sal_qs = sal_qs.all()  # Show all Salary transactions for 'all' type
+            for sal in sal_qs:
+                transactions.append({
+                    'id': sal.id,
+                    'type': 'Salary',
+                    'date': sal.date,
+                    'amount': float(sal.amount),
+                    'credit': False,
+                    'debit': True,
+                    'description': sal.name,  # Salary model only has name field
+                    'bank': sal.bank,
+                    'payment_type': sal.payment_type,  # Add payment_type field
+                    'details': 'Salary',  # Show transaction type in details column
+                })
+            # OtherTransaction (credit/debit)
+            ot_qs = OtherTransaction.objects.filter(user=user)  # OtherTransaction has user field
+            if ttype == 'bank':
+                if bank_name:
+                    ot_qs = ot_qs.filter(payment_type='Bank', bank=bank_name)
+                else:
+                    ot_qs = ot_qs.filter(payment_type='Bank')
+            elif ttype == 'all':
+                ot_qs = ot_qs.all()  # Show all OtherTransaction transactions for 'all' type
+            for ot in ot_qs:
+                transactions.append({
+                    'id': ot.id,
+                    'type': 'Other',
+                    'date': ot.date,
+                    'amount': float(ot.amount),
+                    'credit': ot.transaction_type == 'credit',
+                    'debit': ot.transaction_type == 'debit',
+                    'description': ot.name or ot.notice or '',  # Use name if available, otherwise notice
+                    'bank': ot.bank,
+                    'payment_type': ot.payment_type,  # Add payment_type field
+                    'transaction_type': ot.transaction_type,  # Add transaction_type field
+                    'details': ot.type,  # Keep showing type in details column
+                })
+        if ttype in ['all', 'cash']:
+            # CompanyBill (credit)
+            cb_qs = CompanyBill.objects.filter(payment_type='Cash')  # CompanyBill doesn't have user field
+            for cb in cb_qs:
+                transactions.append({
+                    'id': cb.id,
+                    'type': 'CompanyBill',
+                    'date': cb.date,
+                    'amount': float(cb.amount),
+                    'credit': True,
+                    'debit': False,
+                    'description': cb.notice or cb.company,  # Use notice if available, otherwise company name
+                    'bank': None,
+                    'payment_type': cb.payment_type,  # Add payment_type field
+                    'details': 'CompanyBill',  # Show transaction type in details column
+                })
+            # Buyer (debit) - Buyer model has nullable user field
+            bb_qs = Buyer.objects.filter(payment_type='Cash', user__isnull=True)  # Only get records without user
+            for bb in bb_qs:
+                transactions.append({
+                    'id': bb.id,
+                    'type': 'Buyer',
+                    'date': bb.date,
+                    'amount': float(bb.amount),
+                    'credit': False,
+                    'debit': True,
+                    'description': bb.notes or bb.name,  # Use notes if available, otherwise buyer name
+                    'bank': None,
+                    'payment_type': bb.payment_type,  # Add payment_type field
+                    'details': 'Buyer',  # Show transaction type in details column
+                })
+            # Salary (debit)
+            sal_qs = Salary.objects.filter(payment_type='Cash')  # Salary doesn't have user field
+            for sal in sal_qs:
+                transactions.append({
+                    'id': sal.id,
+                    'type': 'Salary',
+                    'date': sal.date,
+                    'amount': float(sal.amount),
+                    'credit': False,
+                    'debit': True,
+                    'description': sal.name,  # Salary model only has name field
+                    'bank': None,
+                    'payment_type': sal.payment_type,  # Add payment_type field
+                    'details': 'Salary',  # Show transaction type in details column
+                })
+            # OtherTransaction (credit/debit)
+            ot_qs = OtherTransaction.objects.filter(user=user, payment_type='Cash')  # OtherTransaction has user field
+            for ot in ot_qs:
+                transactions.append({
+                    'id': ot.id,
+                    'type': 'Other',
+                    'date': ot.date,
+                    'amount': float(ot.amount),
+                    'credit': ot.transaction_type == 'credit',
+                    'debit': ot.transaction_type == 'debit',
+                    'description': ot.name or ot.notice or '',  # Use name if available, otherwise notice
+                    'bank': None,
+                    'payment_type': ot.payment_type,  # Add payment_type field
+                    'transaction_type': ot.transaction_type,  # Add transaction_type field
+                    'details': ot.type,  # Keep showing type in details column
+                })
+        # Sort by date descending
+        transactions.sort(key=lambda x: str(x['date']) if x['date'] else '', reverse=True)
+        return Response(transactions)
+    except Exception as e:
+        import traceback
+        print(f"Error in bank_cash_transactions: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return Response({'error': str(e)}, status=500)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -374,28 +395,28 @@ def calculate_bank_totals(request, bank_name):
     
     # Get all transactions for this bank
     company_bills = CompanyBill.objects.filter(
-        payment_type='Banking', 
+        payment_type='Bank', 
         bank=bank_name
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
     
-    buyer_bills = BuyerBill.objects.filter(
-        payment_type='Banking', 
+    buyer_bills = Buyer.objects.filter(
+        payment_type='Bank', 
         bank=bank_name
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
     
     salaries = Salary.objects.filter(
-        payment_type='Banking', 
+        payment_type='Bank', 
         bank=bank_name
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
     
     other_credits = OtherTransaction.objects.filter(
-        payment_type='Banking',
+        payment_type='Bank',
         bank=bank_name,
         transaction_type='credit'
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
     
     other_debits = OtherTransaction.objects.filter(
-        payment_type='Banking',
+        payment_type='Bank',
         bank=bank_name,
         transaction_type='debit'
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
@@ -422,7 +443,7 @@ def calculate_cash_totals(request):
         payment_type='Cash'
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
     
-    buyer_bills = BuyerBill.objects.filter(
+    buyer_bills = Buyer.objects.filter(
         payment_type='Cash'
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
     
@@ -448,71 +469,4 @@ def calculate_cash_totals(request):
         'totalCredit': float(total_credit),
         'totalDebit': float(total_debit),
         'netAmount': float(net_amount)
-    }) 
-
-# OtherName views
-class OtherNameListView(generics.ListCreateAPIView):
-    queryset = OtherName.objects.all()
-    serializer_class = OtherNameSerializer
-    permission_classes = [permissions.AllowAny]
-
-    def get(self, request, *args, **kwargs):
-        type_name = request.query_params.get('type')
-        if type_name:
-            names = OtherName.objects.filter(type=type_name).values_list('name', flat=True)
-            return Response({'names': list(names)})
-        return super().get(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        type_name = request.data.get('type')
-        name = request.data.get('name')
-        
-        if not type_name or not name:
-            return Response({'error': 'Type and name are required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Check if name already exists for this type
-        if OtherName.objects.filter(type=type_name, name=name).exists():
-            return Response({'error': 'Name already exists for this type'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        other_name = OtherName.objects.create(type=type_name, name=name)
-        return Response(OtherNameSerializer(other_name).data, status=status.HTTP_201_CREATED) 
-
-# Debug API to show OtherTransaction data
-@api_view(['GET'])
-@permission_classes([permissions.AllowAny])
-def debug_other_transactions(request):
-    type_name = request.query_params.get('type')
-    if not type_name:
-        return Response({'error': 'Type parameter required'}, status=400)
-    
-    transactions = OtherTransaction.objects.filter(type=type_name).values(
-        'id', 'type', 'name', 'notice', 'amount', 'transaction_type', 'date'
-    )
-    
-    return Response({
-        'type': type_name,
-        'transactions': list(transactions),
-        'count': transactions.count()
-    }) 
-
-# Migration API to fix existing OtherTransaction data
-@api_view(['POST'])
-@permission_classes([permissions.AllowAny])
-def migrate_other_transactions(request):
-    # Find OtherTransaction records where name is empty but notice has data
-    transactions = OtherTransaction.objects.filter(
-        name__isnull=True, 
-        notice__isnull=False
-    ).exclude(notice='')
-    
-    updated_count = 0
-    for transaction in transactions:
-        # Move notice to name field
-        transaction.name = transaction.notice
-        transaction.save()
-        updated_count += 1
-    
-    return Response({
-        'message': f'Updated {updated_count} transactions',
-        'updated_count': updated_count
     }) 
