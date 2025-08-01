@@ -107,7 +107,7 @@ const Accounting = () => {
             <h2 style={{ marginBottom: 16 }}>All Accounts</h2>
             
             {/* Info message about total balance */}
-            <div style={{ 
+            {/* <div style={{ 
               marginBottom: 16, 
               padding: '8px 12px', 
               backgroundColor: '#e8f5e8', 
@@ -117,7 +117,7 @@ const Accounting = () => {
               border: '1px solid #c8e6c9'
             }}>
               💡 <strong>Total Balance:</strong> Amount column shows the calculated total balance (Debtor/Creditor/Settled) for each person.
-            </div>
+            </div> */}
             
             {/* Filter UI */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 ,alignItems: 'center' }}>
