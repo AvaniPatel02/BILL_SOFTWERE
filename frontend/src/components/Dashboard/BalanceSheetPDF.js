@@ -3,14 +3,23 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import '../../styles/balancesheet.css';
 
-const BalanceSheetPDF = ({ sheet, financialYear, onDownloadComplete }) => {
+const BalanceSheetPDF = ({ sheet, financialYear, onDownloadComplete, shouldGenerate }) => {
   const pdfRef = useRef();
+  const hasGeneratedRef = useRef(false);
 
   useEffect(() => {
-    if (pdfRef.current) {
+    if (pdfRef.current && shouldGenerate && !hasGeneratedRef.current) {
+      hasGeneratedRef.current = true;
       generatePDF();
     }
-  }, [sheet]);
+  }, [shouldGenerate]);
+
+  // Reset the flag when shouldGenerate becomes false
+  useEffect(() => {
+    if (!shouldGenerate) {
+      hasGeneratedRef.current = false;
+    }
+  }, [shouldGenerate]);
 
   const generatePDF = async () => {
     try {

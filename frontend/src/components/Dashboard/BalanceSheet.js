@@ -652,6 +652,7 @@ const BalanceSheet = () => {
               cashEntries={cashEntries}
               cashTotals={cashTotals}
               onDownloadComplete={handlePDFDownloadComplete}
+              shouldGenerate={downloadingPDF}
             />
           )}
         </div>
