@@ -300,7 +300,9 @@ const Taxinvoices = () => {
         return;
       }
 
-      const filename = `Invoice_${invoiceNumber || 'NoNumber'}_${date || ''}.pdf`;
+      const buyerName = billTo.title || 'Unknown';
+      const cleanBuyerName = buyerName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+      const filename = `${cleanBuyerName}_${invoiceNumber || 'NoNumber'}.pdf`;
       const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
       const pageWidth = 210;
       const pageHeight = 297;
@@ -1063,7 +1065,7 @@ const Taxinvoices = () => {
                 zIndex: -1
               }}
             >
-              <h1 style={{ textAlign: 'center', fontWeight: '700' }}>Tax Invoice</h1>
+              <h1 style={{ textAlign: 'center', fontWeight: '700' }}>TAX INVOICE</h1>
 
               <div className=" table-bordered pdf-main-box" style={{ border: "2px solid rgb(97, 94, 94)" }}>
                 <div className=" date-tables">
