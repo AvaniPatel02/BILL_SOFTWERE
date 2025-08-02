@@ -38,7 +38,9 @@ const AccountStatementPDF = ({
         throw new Error('Failed to generate a valid PNG image for PDF.');
       }
 
-      const filename = `AccountStatement_${data.buyer_name}_${fromDate || 'all'}_${toDate || 'all'}.pdf`;
+      const today = new Date();
+      const currentDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`; // Get current date in DD-MM-YYYY format
+      const filename = `${data.buyer_name}_Statement_${currentDate}.pdf`;
       const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
       
       const pageWidth = pdf.internal.pageSize.getWidth();

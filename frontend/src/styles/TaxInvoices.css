@@ -554,3 +554,54 @@ button.copybutton:hover {
     height: auto;
   }
 }
+
+/* PDF-specific styles for Tax Invoice */
+.pdf-main-box,
+.pdf-main-box *,
+.invoice-pdf,
+.invoice-pdf * {
+  font-family: 'Arial', sans-serif !important;
+  color: #000000 !important;
+}
+
+/* Ensure all text elements in the PDF have the correct font and color */
+.pdf-main-box h1,
+.pdf-main-box h2,
+.pdf-main-box h3,
+.pdf-main-box h4,
+.pdf-main-box h5,
+.pdf-main-box h6,
+.pdf-main-box p,
+.pdf-main-box span,
+.pdf-main-box div,
+.pdf-main-box td,
+.pdf-main-box th,
+.pdf-main-box label,
+.pdf-main-box input,
+.pdf-main-box select,
+.pdf-main-box textarea {
+  font-family: 'Arial', sans-serif !important;
+  color: #000000 !important;
+}
+
+/* Specific styling for the Tax Invoice title */
+.pdf-main-box h1 {
+  font-family: 'Arial', sans-serif !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+/* Table styling for PDF */
+.pdf-main-box table,
+.pdf-main-box table * {
+  font-family: 'Arial', sans-serif !important;
+  color: #000000 !important;
+}
+
+/* Ensure form elements also follow the styling */
+.pdf-main-box input,
+.pdf-main-box select,
+.pdf-main-box textarea {
+  font-family: 'Arial', sans-serif !important;
+  color: #000000 !important;
+}
